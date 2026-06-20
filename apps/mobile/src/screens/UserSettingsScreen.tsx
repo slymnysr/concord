@@ -1,8 +1,9 @@
 // Kullanıcı ayarları — profil, durum, hesap, gizlilik, bildirim, güvenlik, bağlantılar.
 import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../theme';
-import { api, type User } from '../api';
+import { api, uploadFile, type User } from '../api';
 import type { Nav } from '../nav';
 import { ScreenHeader, Section, Row, Avatar, InputModal, ui, statusColor } from '../ui';
 
@@ -40,6 +41,18 @@ export function UserSettingsScreen({ me, setMe, nav, onLogout, onBack }: {
 
   const refreshMe = () => api.me().then(setMe).catch(() => {});
   const toast = (m: string) => Alert.alert('Sidcord', m);
+
+  async function pickAndUpload(kind: 'avatar' | 'banner') {
+    const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.9 });
+    const a = res.canceled ? null : res.assets?.[0];
+    if (!a) return;
+    try {
+      const up = await uploadFile(a.uri, a.fileName || 'img.jpg', a.mimeType || 'image/jpeg', a.fileSize || 0);
+      await api.updateProfile(kind === 'avatar' ? { avatar_url: up.url } : { banner_url: up.url });
+      refreshMe();
+      toast(kind === 'avatar' ? 'Avatar güncellendi' : 'Banner güncellendi');
+    } catch (e: any) { toast(e?.message ?? 'Yüklenemedi'); }
+  }
 
   async function setStatus(v: 'online' | 'idle' | 'dnd' | 'offline') {
     try { await api.updateStatus(v); refreshMe(); } catch (e: any) { toast(e?.message ?? 'Olmadı'); }
@@ -133,6 +146,8 @@ export function UserSettingsScreen({ me, setMe, nav, onLogout, onBack }: {
         </View>
 
         <Section title="Profil">
+          <Row label="Avatar (fotoğraf yükle)" onPress={() => pickAndUpload('avatar')} />
+          <Row label="Banner (fotoğraf yükle)" onPress={() => pickAndUpload('banner')} />
           <Row label="Görünen ad" value={me.display_name} onPress={() => setEdit({ k: 'display_name' })} />
           <Row label="Hakkımda" value={me.bio || '—'} onPress={() => setEdit({ k: 'bio' })} />
           <Row label="Zamirler" value={me.pronouns || '—'} onPress={() => setEdit({ k: 'pronouns' })} />

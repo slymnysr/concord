@@ -25,6 +25,7 @@ import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
 import { SavedMessagesScreen } from './src/screens/SavedMessagesScreen';
 import { DeveloperScreen } from './src/screens/DeveloperScreen';
+import { QuickSwitcherScreen } from './src/screens/QuickSwitcherScreen';
 import { VoiceBar } from './src/VoiceBar';
 import { registerForPush, notifyLocal } from './src/push';
 
@@ -120,12 +121,14 @@ export default function App() {
           <ChannelSettingsScreen channelId={top.channelId} channelName={top.channelName} guildId={top.guildId} onBack={nav.pop} />
         ) : top.kind === 'savedMessages' ? (
           <SavedMessagesScreen onBack={nav.pop} />
+        ) : top.kind === 'quickSwitch' ? (
+          <QuickSwitcherScreen nav={nav} onBack={nav.pop} />
         ) : top.kind === 'discover' ? (
           <DiscoverScreen nav={nav} onBack={nav.pop} />
         ) : top.kind === 'notifications' ? (
           <NotificationsScreen onBack={nav.pop} />
         ) : top.kind === 'search' ? (
-          <SearchScreen guildId={top.guildId} nav={nav} onBack={nav.pop} />
+          <SearchScreen guildId={top.guildId} channelId={top.channelId} nav={nav} onBack={nav.pop} />
         ) : (
           <HomeScreen me={me} nav={nav} onLogout={logout} />
         )}

@@ -1,8 +1,9 @@
 // Sunucu ayarları — genel, roller, davetler, yasaklar, AutoMod, denetim kaydı.
 import { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../theme';
-import { api, type Role, type Invite, type Ban, type AutomodRule, type Guild } from '../api';
+import { api, uploadFile, type Role, type Invite, type Ban, type AutomodRule, type Guild } from '../api';
 import type { Nav } from '../nav';
 import { ScreenHeader, Section, Row, InputModal, Empty, ui } from '../ui';
 
@@ -39,6 +40,18 @@ export function ServerSettingsScreen({ guildId, guildName, nav, onBack }: {
   async function run(fn: () => Promise<any>, after?: () => void, ok?: string) {
     try { await fn(); if (ok) Alert.alert('Sidcord', ok); after?.(); }
     catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'İşlem başarısız'); }
+  }
+
+  async function pickIcon() {
+    const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.9 });
+    const a = res.canceled ? null : res.assets?.[0];
+    if (!a) return;
+    try {
+      const up = await uploadFile(a.uri, a.fileName || 'icon.jpg', a.mimeType || 'image/jpeg', a.fileSize || 0);
+      await api.guilds.update(guildId, { icon_url: up.url });
+      reloadGuild();
+      Alert.alert('Sidcord', 'Sunucu ikonu güncellendi');
+    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Yüklenemedi'); }
   }
 
   function leave() {
@@ -201,6 +214,7 @@ export function ServerSettingsScreen({ guildId, guildName, nav, onBack }: {
       <ScreenHeader title={`Ayarlar — ${guildName}`} onBack={onBack} />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <Section title="Genel">
+          <Row label="Sunucu ikonu (fotoğraf yükle)" onPress={pickIcon} />
           <Row label="Sunucu adı" value={guild?.name ?? guildName} onPress={() => setEdit({ k: 'name' })} />
           <Row label="Açıklama" value={guild?.description || '—'} onPress={() => setEdit({ k: 'description' })} />
           <Row label="Üyeler" onPress={() => nav.push({ kind: 'members', guildId, guildName })} />

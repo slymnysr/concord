@@ -14,6 +14,7 @@ export type Screen =
   | { kind: 'channelSettings'; channelId: string; channelName: string; guildId?: string }
   | { kind: 'savedMessages' }
   | { kind: 'developer' }
+  | { kind: 'quickSwitch' }
   | { kind: 'members'; guildId: string; guildName: string }
   | { kind: 'search'; guildId?: string; channelId?: string };
 

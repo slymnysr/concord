@@ -207,6 +207,9 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
       <View style={s.list}>
         <View style={s.listHead}>
           <Text style={s.guildName} numberOfLines={1}>{guildName}</Text>
+          <TouchableOpacity onPress={() => nav.push({ kind: 'quickSwitch' })}>
+            <Text style={s.headGear}>🔎</Text>
+          </TouchableOpacity>
           {selected !== 'dm' && !!selectedGuild && (
             <TouchableOpacity onPress={() => nav.push({ kind: 'serverSettings', guildId: selectedGuild.id, guildName: selectedGuild.name })}>
               <Text style={s.headGear}>⚙️</Text>

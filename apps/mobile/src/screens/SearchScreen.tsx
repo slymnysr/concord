@@ -6,20 +6,20 @@ import { api, type Message, type Channel } from '../api';
 import type { Nav } from '../nav';
 import { ScreenHeader, Empty, ui } from '../ui';
 
-export function SearchScreen({ guildId, nav, onBack }: { guildId?: string; nav: Nav; onBack: () => void }) {
+export function SearchScreen({ guildId, channelId, nav, onBack }: { guildId?: string; channelId?: string; nav: Nav; onBack: () => void }) {
   const [q, setQ] = useState('');
   const [results, setResults] = useState<Array<{ message: Message; channel: Channel }>>([]);
   const [searched, setSearched] = useState(false);
 
   async function search() {
     if (!q.trim()) return;
-    try { setResults(await api.search.messages(q.trim(), { guildId, limit: 50 })); setSearched(true); }
+    try { setResults(await api.search.messages(q.trim(), { guildId, channelId, limit: 50 })); setSearched(true); }
     catch { setResults([]); setSearched(true); }
   }
 
   return (
     <View style={ui.screen}>
-      <ScreenHeader title="Ara" onBack={onBack} />
+      <ScreenHeader title={channelId ? 'Kanalda Ara' : 'Ara'} onBack={onBack} />
       <View style={s.searchRow}>
         <TextInput
           style={[ui.input, { flex: 1 }]}
