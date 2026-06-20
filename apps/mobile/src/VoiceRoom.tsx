@@ -1,7 +1,7 @@
 // Sesli/görüntülü oda — video karoları (RTCView), kamera aç/kapa, mic/sağırlaştır/ayrıl.
 // VoiceBar'a dokununca tam ekran açılır. RTCView native → yalnız dev client/native build'de render olur.
 import { useEffect, useReducer, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Platform } from 'react-native';
 import { RTCView } from 'react-native-webrtc';
 import { colors } from './theme';
 import { voice } from './voice';
@@ -38,6 +38,27 @@ export function VoiceRoom({ visible, onClose }: { visible: boolean; onClose: () 
           <TouchableOpacity onPress={onClose}><Text style={s.min}>Küçült ▾</Text></TouchableOpacity>
         </View>
 
+        {voice.isStageChannel() && (
+          <View style={s.stageBar}>
+            <Text style={s.stageTitle}>🎤 Sahne · {voice.speakerIds().length} konuşmacı</Text>
+            {!voice.amSpeaker() ? (
+              <TouchableOpacity style={s.handBtn} onPress={() => { voice.raiseHand(!voice.myHandRaised()); force(); }}>
+                <Text style={s.handBtnText}>{voice.myHandRaised() ? '✋ Eli indir' : '✋ El kaldır'}</Text>
+              </TouchableOpacity>
+            ) : voice.handIds().length > 0 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                {voice.handIds().map((uid) => (
+                  <TouchableOpacity key={uid} style={s.handChip} onPress={() => { voice.makeSpeaker(uid, true); force(); }}>
+                    <Text style={s.handChipText}>✋ {names[uid] ?? '…'} → konuşmacı yap</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <Text style={s.stageSub}>El kaldıran yok</Text>
+            )}
+          </View>
+        )}
+
         <ScrollView contentContainerStyle={s.grid}>
           {local && (
             <View style={s.tile}>
@@ -63,6 +84,9 @@ export function VoiceRoom({ visible, onClose }: { visible: boolean; onClose: () 
           <Ctrl label={voice.isMuted() ? '🔇' : '🎤'} onPress={() => { voice.toggleMute(); force(); }} />
           <Ctrl label={voice.isDeafened() ? '🔕' : '🎧'} onPress={() => { voice.toggleDeafen(); force(); }} />
           <Ctrl label="📷" active={voice.isCameraOn()} onPress={async () => { try { await voice.toggleCamera(); } catch {} force(); }} />
+          {Platform.OS === 'android' && (
+            <Ctrl label="🖥️" active={voice.isScreenOn()} onPress={async () => { try { await voice.toggleScreen(); } catch {} force(); }} />
+          )}
           <TouchableOpacity style={s.leave} onPress={() => { voice.disconnect(); onClose(); }}>
             <Text style={s.leaveText}>Ayrıl</Text>
           </TouchableOpacity>
@@ -85,6 +109,13 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderColor: colors.line },
   title: { color: colors.ink, fontWeight: '800', fontSize: 18, flex: 1 },
   min: { color: colors.brand, fontWeight: '700' },
+  stageBar: { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderColor: colors.line, gap: 8 },
+  stageTitle: { color: colors.ink, fontWeight: '800', fontSize: 14 },
+  stageSub: { color: colors.inkTertiary, fontSize: 12 },
+  handBtn: { alignSelf: 'flex-start', backgroundColor: colors.brand + '22', borderWidth: 1, borderColor: colors.brand, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 7 },
+  handBtnText: { color: colors.brand, fontWeight: '700' },
+  handChip: { backgroundColor: colors.surface2, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 7 },
+  handChipText: { color: colors.ink, fontSize: 13, fontWeight: '600' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 12, justifyContent: 'center' },
   tile: { width: '46%', aspectRatio: 1, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.surface2, justifyContent: 'flex-end' },
   audioTile: { alignItems: 'center', justifyContent: 'center', gap: 10 },

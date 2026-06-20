@@ -18,9 +18,15 @@ class VoiceClient {
   private micStream: any = null;
   private cameraProducer: any = null;
   private cameraStream: any = null;
+  private screenProducer: any = null;
+  private screenStream: any = null;
   private consumers = new Map<string, any>();      // producerId -> consumer
   private producerOwner = new Map<string, string>(); // producerId -> userId
   private videoRemotes = new Map<string, { userId: string; source: string; stream: any }>();
+  private stage = false;
+  private meId = '';
+  stageSpeakers = new Set<string>();
+  stageHands = new Set<string>();
   private pending = new Map<string, { resolve: (v: any) => void; reject: (e: any) => void }>();
   private requestId = 0;
   private handlers: Record<string, Handler[]> = {};
@@ -39,12 +45,14 @@ class VoiceClient {
   isDeafened() { return this.deafened; }
   participants(): VoicePeer[] { return Array.from(this.peers.values()); }
 
-  async connect(channelId: string, channelName = '') {
+  async connect(channelId: string, channelName = '', opts?: { meId?: string; stage?: boolean }) {
     const token = getAccessToken();
     if (!token) throw new Error('Oturum yok');
     if (this.ws) await this.disconnect();
     this.channelId = channelId;
     this.channelName = channelName;
+    this.stage = !!opts?.stage;
+    this.meId = opts?.meId ?? '';
 
     this.ws = new WebSocket(voiceWsUrl(channelId, token));
     await new Promise<void>((resolve, reject) => {
@@ -65,6 +73,8 @@ class VoiceClient {
         const uid = String(p.userId ?? p.id ?? p);
         this.peers.set(uid, { userId: uid });
       }
+      this.stageSpeakers = new Set<string>((joinRes.stageSpeakers ?? []).map(String));
+      this.stageHands = new Set<string>((joinRes.stageHands ?? []).map(String));
       this.emit('change');
 
       await this.createSendTransport();
@@ -82,6 +92,8 @@ class VoiceClient {
         appData: { source: 'mic' },
         codecOptions: { opusFec: true, opusDtx: true },
       });
+      // Sahne kanalında dinleyiciysen mikrofon kapalı başlar
+      if (this.stage && !this.amSpeaker()) this.setMuted(true);
       this.emit('connected', { channelId });
       this.emit('change');
     } catch (e) {
@@ -156,6 +168,36 @@ class VoiceClient {
   }
   toggleCamera() { return this.cameraProducer ? this.stopCamera() : this.publishCamera(); }
 
+  // --- Ekran paylaşımı (Android; iOS broadcast extension gerektirir, desteklenmez) ---
+  isScreenOn() { return !!this.screenProducer; }
+  async publishScreen() {
+    if (!this.sendTransport || this.screenProducer) return;
+    this.screenStream = await (mediaDevices as any).getDisplayMedia();
+    const track = (this.screenStream as any).getVideoTracks()[0];
+    this.screenProducer = await this.sendTransport.produce({ track, appData: { source: 'screen' } });
+    track.addEventListener?.('ended', () => this.stopScreen());
+    this.emit('change');
+  }
+  async stopScreen() {
+    try { this.screenProducer?.close(); this.screenStream?.getTracks?.().forEach((t: any) => t.stop()); } catch {}
+    this.screenProducer = null; this.screenStream = null;
+    this.emit('change');
+  }
+  toggleScreen() { return this.screenProducer ? this.stopScreen() : this.publishScreen(); }
+
+  // --- Sahne (stage) ---
+  isStageChannel() { return this.stage; }
+  amSpeaker() { return !this.stage || this.stageSpeakers.has(this.meId); }
+  myHandRaised() { return this.stageHands.has(this.meId); }
+  speakerIds() { return Array.from(this.stageSpeakers); }
+  handIds() { return Array.from(this.stageHands); }
+  raiseHand(raise: boolean) {
+    try { this.ws?.send(JSON.stringify({ type: 'stageHand', payload: { raised: raise } })); } catch {}
+  }
+  makeSpeaker(userId: string, isSpeaker: boolean) {
+    try { this.ws?.send(JSON.stringify({ type: 'stageSpeaker', payload: { userId, isSpeaker } })); } catch {}
+  }
+
   setMuted(m: boolean) {
     this.muted = m;
     try {
@@ -179,16 +221,20 @@ class VoiceClient {
     try {
       this.audioProducer?.close();
       this.cameraProducer?.close();
+      this.screenProducer?.close();
       this.micStream?.getTracks?.().forEach((t: any) => t.stop());
       this.cameraStream?.getTracks?.().forEach((t: any) => t.stop());
+      this.screenStream?.getTracks?.().forEach((t: any) => t.stop());
       for (const c of this.consumers.values()) { try { c.close(); } catch {} }
       this.sendTransport?.close();
       this.recvTransport?.close();
       if (this.ws && this.ws.readyState === 1) { await this.request('leave').catch(() => {}); this.ws.close(); }
     } catch {}
     this.consumers.clear(); this.producerOwner.clear(); this.peers.clear(); this.videoRemotes.clear();
+    this.stageSpeakers.clear(); this.stageHands.clear(); this.stage = false;
     this.ws = null; this.device = null; this.sendTransport = null; this.recvTransport = null;
     this.audioProducer = null; this.micStream = null; this.cameraProducer = null; this.cameraStream = null;
+    this.screenProducer = null; this.screenStream = null;
     const ch = this.channelId;
     this.channelId = null; this.channelName = ''; this.muted = false; this.deafened = false;
     this.emit('change'); this.emit('disconnected', { channelId: ch });
@@ -227,6 +273,20 @@ class VoiceClient {
         const pe = this.peers.get(uid) ?? { userId: uid };
         pe.serverMute = !!msg.payload.serverMute;
         this.peers.set(uid, pe);
+        this.emit('change');
+        break;
+      }
+      case 'stageHand': {
+        const uid = String(msg.payload.userId);
+        if (msg.payload.raised) this.stageHands.add(uid); else this.stageHands.delete(uid);
+        this.emit('change');
+        break;
+      }
+      case 'stageSpeaker': {
+        const uid = String(msg.payload.userId);
+        if (msg.payload.isSpeaker) this.stageSpeakers.add(uid); else this.stageSpeakers.delete(uid);
+        this.stageHands.delete(uid);
+        if (uid === this.meId) this.setMuted(!msg.payload.isSpeaker);
         this.emit('change');
         break;
       }
