@@ -3,17 +3,22 @@
   "version": "0.1.0",
   "main": "index.ts",
   "dependencies": {
+    "@config-plugins/react-native-webrtc": "^15.0.1",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/native": "^7.3.1",
     "@react-navigation/native-stack": "^7.17.3",
     "expo": "~56.0.11",
     "expo-clipboard": "^56.0.4",
+    "expo-document-picker": "~56.0.4",
+    "expo-image-picker": "~56.0.18",
     "expo-status-bar": "~56.0.4",
+    "mediasoup-client": "^3.20.0",
     "phoenix": "^1.7.11",
     "react": "19.2.3",
     "react-native": "0.85.3",
     "react-native-safe-area-context": "^5.7.0",
-    "react-native-screens": "^4.25.2"
+    "react-native-screens": "^4.25.2",
+    "react-native-webrtc": "^124.0.7"
   },
   "devDependencies": {
     "@types/phoenix": "^1.6.4",
