@@ -11,11 +11,20 @@ const guildChannels = new Map<string, Channel>();
 let userChannel: Channel | null = null;
 const listeners = new Map<string, Set<Handler>>();
 
+export type ConnState = 'connected' | 'connecting' | 'disconnected';
+const connListeners = new Set<(s: ConnState) => void>();
+export function onConnection(cb: (s: ConnState) => void) { connListeners.add(cb); return () => { connListeners.delete(cb); }; }
+function emitConn(s: ConnState) { for (const cb of connListeners) cb(s); }
+
 export function connectGateway(): Socket | null {
   const token = getAccessToken();
   if (!token) return null;
   if (socket) return socket;
   socket = new Socket(gatewayUrl(), { params: { token } });
+  socket.onOpen(() => emitConn('connected'));
+  socket.onError(() => emitConn('disconnected'));
+  socket.onClose(() => emitConn('disconnected'));
+  emitConn('connecting');
   socket.connect();
   return socket;
 }

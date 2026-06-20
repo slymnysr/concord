@@ -1,12 +1,14 @@
 // Sidcord Mobil — giriş kapısı + ekran-yığını navigasyon.
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, BackHandler } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from './src/theme';
 import { api, loadTokens, clearTokens, type User } from './src/api';
 import { loadHost } from './src/config';
-import { disconnectGateway } from './src/gateway';
+import { disconnectGateway, joinUser } from './src/gateway';
+import { ToastHost, showToast } from './src/Toast';
+import { ConnectionBanner } from './src/ConnectionBanner';
 import type { Nav, Screen } from './src/nav';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -24,7 +26,7 @@ import { SearchScreen } from './src/screens/SearchScreen';
 import { SavedMessagesScreen } from './src/screens/SavedMessagesScreen';
 import { DeveloperScreen } from './src/screens/DeveloperScreen';
 import { VoiceBar } from './src/VoiceBar';
-import { registerForPush } from './src/push';
+import { registerForPush, notifyLocal } from './src/push';
 
 export default function App() {
   const [booting, setBooting] = useState(true);
@@ -66,11 +68,33 @@ export default function App() {
   const onLogin = useCallback((u: User) => { setStack([{ kind: 'home' }]); setMe(u); registerForPush(); }, []);
 
   const top = stack[stack.length - 1];
+  const activeRef = useRef<string | null>(null);
+  activeRef.current = top.kind === 'chat' ? top.channel.id : null;
+
+  // Global bildirim: DM mesajları + bahsetmeler → toast + yerel bildirim (Firebase'siz)
+  useEffect(() => {
+    if (!me) return;
+    const off = joinUser(me.id, (ev, payload) => {
+      if (ev === 'NOTIFICATION') {
+        const title = payload?.title ?? 'Sidcord';
+        showToast(title, { sub: payload?.body });
+        notifyLocal(title, payload?.body);
+      } else if (ev === 'MESSAGE_CREATE') {
+        const msg = payload?.message;
+        if (msg && msg.channel_id !== activeRef.current && String(msg.author_id) !== me.id) {
+          showToast('Yeni mesaj', { sub: msg.content, onPress: () => nav.push({ kind: 'chat', channel: { id: msg.channel_id, name: 'Mesaj' } }) });
+          notifyLocal('Yeni mesaj', msg.content);
+        }
+      }
+    });
+    return off;
+  }, [me, nav]);
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
         <StatusBar style="light" />
+        {me ? <ConnectionBanner /> : null}
         <View style={s.body}>
         {booting ? (
           <View style={s.center}><ActivityIndicator color={colors.brand} size="large" /></View>
@@ -107,6 +131,7 @@ export default function App() {
         )}
         </View>
         {me ? <VoiceBar /> : null}
+        <ToastHost />
       </SafeAreaView>
     </SafeAreaProvider>
   );

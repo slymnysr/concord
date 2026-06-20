@@ -17,6 +17,13 @@ Notifications.setNotificationHandler({
   } as any),
 });
 
+// Yerel bildirim — Firebase GEREKTİRMEZ. Uygulama açıkken/arka plandayken anlık bildirim gösterir.
+export async function notifyLocal(title: string, body?: string) {
+  try {
+    await Notifications.scheduleNotificationAsync({ content: { title, body: body ?? '' }, trigger: null });
+  } catch {}
+}
+
 export async function registerForPush() {
   try {
     if (!Device.isDevice) return;
