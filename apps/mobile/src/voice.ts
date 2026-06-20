@@ -16,8 +16,11 @@ class VoiceClient {
   private recvTransport: any = null;
   private audioProducer: any = null;
   private micStream: any = null;
+  private cameraProducer: any = null;
+  private cameraStream: any = null;
   private consumers = new Map<string, any>();      // producerId -> consumer
   private producerOwner = new Map<string, string>(); // producerId -> userId
+  private videoRemotes = new Map<string, { userId: string; source: string; stream: any }>();
   private pending = new Map<string, { resolve: (v: any) => void; reject: (e: any) => void }>();
   private requestId = 0;
   private handlers: Record<string, Handler[]> = {};
@@ -68,7 +71,8 @@ class VoiceClient {
       await this.createRecvTransport();
 
       for (const p of joinRes.producers ?? []) {
-        if ((p.appData?.source ?? 'mic') === 'mic') this.consume(p.producerId, String(p.userId)).catch(() => {});
+        const src = p.appData?.source ?? 'mic';
+        if (['mic', 'camera', 'screen'].includes(src)) this.consume(p.producerId, String(p.userId), src).catch(() => {});
       }
 
       this.micStream = await mediaDevices.getUserMedia({ audio: true, video: false });
@@ -106,7 +110,7 @@ class VoiceClient {
       this.request('connectTransport', { transportId: info.id, dtlsParameters }).then(() => cb()).catch(eb));
   }
 
-  private async consume(producerId: string, userId: string) {
+  private async consume(producerId: string, userId: string, source = 'mic') {
     if (!this.device || !this.recvTransport) return;
     const data = await this.request('consume', { producerId, rtpCapabilities: this.device.rtpCapabilities });
     const consumer = await this.recvTransport.consume({
@@ -114,7 +118,12 @@ class VoiceClient {
     });
     this.consumers.set(producerId, consumer);
     this.producerOwner.set(producerId, userId);
-    if (this.deafened) { try { consumer.track.enabled = false; } catch {} }
+    if (data.kind === 'video') {
+      const MS = (globalThis as any).MediaStream;
+      this.videoRemotes.set(producerId, { userId, source, stream: MS ? new MS([consumer.track]) : null });
+    } else if (this.deafened) {
+      try { consumer.track.enabled = false; } catch {}
+    }
     consumer.on('trackended', () => this.removeConsumer(producerId));
     if (!this.peers.has(userId)) this.peers.set(userId, { userId });
     this.emit('change');
@@ -124,8 +133,28 @@ class VoiceClient {
     try { this.consumers.get(producerId)?.close(); } catch {}
     this.consumers.delete(producerId);
     this.producerOwner.delete(producerId);
+    this.videoRemotes.delete(producerId);
     this.emit('change');
   }
+
+  // --- Kamera (görüntülü görüşme) ---
+  isCameraOn() { return !!this.cameraProducer; }
+  localCameraStream() { return this.cameraStream; }
+  videoStreams() { return Array.from(this.videoRemotes.entries()).map(([producerId, v]) => ({ producerId, ...v })); }
+
+  async publishCamera() {
+    if (!this.sendTransport || this.cameraProducer) return;
+    this.cameraStream = await mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false } as any);
+    const track = (this.cameraStream as any).getVideoTracks()[0];
+    this.cameraProducer = await this.sendTransport.produce({ track, appData: { source: 'camera' } });
+    this.emit('change');
+  }
+  async stopCamera() {
+    try { this.cameraProducer?.close(); this.cameraStream?.getTracks?.().forEach((t: any) => t.stop()); } catch {}
+    this.cameraProducer = null; this.cameraStream = null;
+    this.emit('change');
+  }
+  toggleCamera() { return this.cameraProducer ? this.stopCamera() : this.publishCamera(); }
 
   setMuted(m: boolean) {
     this.muted = m;
@@ -149,15 +178,17 @@ class VoiceClient {
   async disconnect() {
     try {
       this.audioProducer?.close();
+      this.cameraProducer?.close();
       this.micStream?.getTracks?.().forEach((t: any) => t.stop());
+      this.cameraStream?.getTracks?.().forEach((t: any) => t.stop());
       for (const c of this.consumers.values()) { try { c.close(); } catch {} }
       this.sendTransport?.close();
       this.recvTransport?.close();
       if (this.ws && this.ws.readyState === 1) { await this.request('leave').catch(() => {}); this.ws.close(); }
     } catch {}
-    this.consumers.clear(); this.producerOwner.clear(); this.peers.clear();
+    this.consumers.clear(); this.producerOwner.clear(); this.peers.clear(); this.videoRemotes.clear();
     this.ws = null; this.device = null; this.sendTransport = null; this.recvTransport = null;
-    this.audioProducer = null; this.micStream = null;
+    this.audioProducer = null; this.micStream = null; this.cameraProducer = null; this.cameraStream = null;
     const ch = this.channelId;
     this.channelId = null; this.channelName = ''; this.muted = false; this.deafened = false;
     this.emit('change'); this.emit('disconnected', { channelId: ch });
@@ -183,9 +214,11 @@ class VoiceClient {
         this.emit('change');
         break;
       }
-      case 'newProducer':
-        if ((msg.payload.appData?.source ?? 'mic') === 'mic') this.consume(msg.payload.producerId, String(msg.payload.userId)).catch(() => {});
+      case 'newProducer': {
+        const src = msg.payload.appData?.source ?? 'mic';
+        if (['mic', 'camera', 'screen'].includes(src)) this.consume(msg.payload.producerId, String(msg.payload.userId), src).catch(() => {});
         break;
+      }
       case 'producerClosed':
         if (msg.payload?.producerId) this.removeConsumer(String(msg.payload.producerId));
         break;
