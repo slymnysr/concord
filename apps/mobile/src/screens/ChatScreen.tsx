@@ -10,6 +10,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../theme';
 import { api, type Message, type Reaction, type User, type Member, type Friend } from '../api';
 import { joinGuild, joinUser, sendTyping } from '../gateway';
@@ -102,6 +103,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       })
       .catch(() => {});
     api.channels.ack(channel.id).catch(() => {});
+    AsyncStorage.getItem(`sidcord_draft_${channel.id}`).then((d) => { if (d) setText(d); }).catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -196,6 +198,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     if (!content || sending) return;
     setSending(true);
     setText('');
+    AsyncStorage.removeItem(`sidcord_draft_${channel.id}`).catch(() => {});
     const reply = replyTo;
     setReplyTo(null);
     try {
@@ -584,6 +587,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           value={text}
           onChangeText={(t) => {
             setText(t);
+            AsyncStorage.setItem(`sidcord_draft_${channel.id}`, t).catch(() => {});
             if (channel.guildId) {
               sendTyping(channel.guildId, channel.id);
               const mm = /(?:^|\s)([@#])(\w{0,20})$/.exec(t);
