@@ -1,7 +1,5 @@
-// Phoenix WS — gerçek zamanlı mesajlar (web gateway.ts'in mobil uyarlaması).
-// Handler haritası: aynı topic'e (guild:<id> / user:<id>) tekrar katılırken
-// EN GÜNCEL callback'i kullanır — böylece kanal/DM değiştirince eski closure'a
-// takılıp canlı mesaj kaçırma bug'ı oluşmaz.
+// Phoenix WS — gerçek zamanlı olaylar. Topic başına ÇOK dinleyici (Home + Chat aynı anda).
+// join* fonksiyonları bir abonelik-iptal (unsubscribe) döndürür; ekran unmount'ta çağrılır.
 import { Socket, Channel } from 'phoenix';
 import { gatewayUrl } from './config';
 import { getAccessToken } from './api';
@@ -10,7 +8,8 @@ type Handler = (event: string, payload: any) => void;
 
 let socket: Socket | null = null;
 const guildChannels = new Map<string, Channel>();
-const handlers = new Map<string, Handler>(); // topic -> en güncel handler
+let userChannel: Channel | null = null;
+const listeners = new Map<string, Set<Handler>>();
 
 export function connectGateway(): Socket | null {
   const token = getAccessToken();
@@ -26,9 +25,19 @@ export function disconnectGateway() {
   guildChannels.clear();
   userChannel?.leave();
   userChannel = null;
-  handlers.clear();
+  listeners.clear();
   socket?.disconnect();
   socket = null;
+}
+
+function addListener(topic: string, h: Handler): () => void {
+  let set = listeners.get(topic);
+  if (!set) { set = new Set(); listeners.set(topic, set); }
+  set.add(h);
+  return () => { set?.delete(h); };
+}
+function fanout(topic: string, ev: string, payload: any) {
+  for (const h of listeners.get(topic) ?? []) h(ev, payload);
 }
 
 const GUILD_EVENTS = [
@@ -36,50 +45,47 @@ const GUILD_EVENTS = [
   'REACTION_ADD', 'REACTION_REMOVE', 'CHANNEL_CREATE', 'CHANNEL_UPDATE',
   'CHANNEL_DELETE', 'PRESENCE_UPDATE',
 ];
+const USER_EVENTS = [
+  'MESSAGE_CREATE', 'MESSAGE_UPDATE', 'MESSAGE_DELETE', 'NOTIFICATION',
+  'CHANNEL_CREATE', 'CHANNEL_UPDATE', 'TYPING_START', 'REACTION_ADD', 'REACTION_REMOVE',
+];
 
-export function joinGuild(guildId: string, onEvent: Handler): Channel | null {
+export function joinGuild(guildId: string, onEvent: Handler): () => void {
   const s = connectGateway();
-  if (!s) return null;
+  if (!s) return () => {};
   const topic = `guild:${guildId}`;
-  handlers.set(topic, onEvent); // her çağrıda güncelle
-  const existing = guildChannels.get(guildId);
-  if (existing) return existing;
-  const ch = s.channel(topic, {});
-  for (const ev of GUILD_EVENTS) ch.on(ev, (payload: any) => handlers.get(topic)?.(ev, payload));
-  ch.join();
-  guildChannels.set(guildId, ch);
-  return ch;
+  const off = addListener(topic, onEvent);
+  if (!guildChannels.has(guildId)) {
+    const ch = s.channel(topic, {});
+    for (const ev of GUILD_EVENTS) ch.on(ev, (p: any) => fanout(topic, ev, p));
+    ch.join();
+    guildChannels.set(guildId, ch);
+  }
+  return off;
 }
 
 export function leaveGuild(guildId: string) {
   guildChannels.get(guildId)?.leave();
   guildChannels.delete(guildId);
-  handlers.delete(`guild:${guildId}`);
+  listeners.delete(`guild:${guildId}`);
 }
 
 export function sendTyping(guildId: string, channelId: string) {
   guildChannels.get(guildId)?.push('typing', { channel_id: channelId });
 }
 
-// Kişisel kanal — DM mesajları + bildirimler buradan düşer (user:<id>)
-let userChannel: Channel | null = null;
-
-const USER_EVENTS = [
-  'MESSAGE_CREATE', 'MESSAGE_UPDATE', 'MESSAGE_DELETE', 'NOTIFICATION',
-  'CHANNEL_CREATE', 'CHANNEL_UPDATE', 'TYPING_START', 'REACTION_ADD', 'REACTION_REMOVE',
-];
-
-export function joinUser(userId: string, onEvent: Handler): Channel | null {
+export function joinUser(userId: string, onEvent: Handler): () => void {
   const s = connectGateway();
-  if (!s) return null;
+  if (!s) return () => {};
   const topic = `user:${userId}`;
-  handlers.set(topic, onEvent); // her çağrıda güncelle (DM değişince eski closure'a takılma)
-  if (userChannel) return userChannel;
-  const ch = s.channel(topic, {});
-  for (const ev of USER_EVENTS) ch.on(ev, (payload: any) => handlers.get(topic)?.(ev, payload));
-  ch.join();
-  userChannel = ch;
-  return ch;
+  const off = addListener(topic, onEvent);
+  if (!userChannel) {
+    const ch = s.channel(topic, {});
+    for (const ev of USER_EVENTS) ch.on(ev, (p: any) => fanout(topic, ev, p));
+    ch.join();
+    userChannel = ch;
+  }
+  return off;
 }
 
 export function leaveUser() {

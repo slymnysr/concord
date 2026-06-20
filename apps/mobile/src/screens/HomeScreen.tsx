@@ -10,6 +10,7 @@ import { api, type Channel, type DMChannel, type Guild, type ReadState, type Use
 import type { Nav } from '../nav';
 import { InputModal } from '../ui';
 import { voice } from '../voice';
+import { joinGuild } from '../gateway';
 
 export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout: () => void }) {
   const [guilds, setGuilds] = useState<Guild[]>([]);
@@ -119,6 +120,15 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
     else api.guilds.channels(selected).then(setChannels).catch(() => {});
   }, [selected]);
 
+  // Canlı: seçili sunucuda kanal eklen/silinince listeyi tazele
+  useEffect(() => {
+    if (!selected || selected === 'dm') return;
+    const off = joinGuild(selected, (ev) => {
+      if (ev === 'CHANNEL_CREATE' || ev === 'CHANNEL_UPDATE' || ev === 'CHANNEL_DELETE') reloadChannels();
+    });
+    return off;
+  }, [selected, reloadChannels]);
+
   const refresh = async () => {
     setRefreshing(true);
     await load();
@@ -162,7 +172,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
     .sort((a, b) => a.position - b.position);
 
   async function joinVoice(ch: Channel) {
-    try { await voice.connect(ch.id, ch.name); }
+    try { await voice.connect(ch.id, ch.name, { meId: me.id, stage: ch.type === 'stage' }); }
     catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Sesli sohbet için native build (EAS dev client) gerekiyor.'); }
   }
 

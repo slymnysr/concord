@@ -187,8 +187,8 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         setMessages((prev) => prev.filter((m) => m.id !== msg.id));
       }
     };
-    if (channel.guildId) joinGuild(channel.guildId, onMsg);
-    else joinUser(me.id, onMsg);
+    const off = channel.guildId ? joinGuild(channel.guildId, onMsg) : joinUser(me.id, onMsg);
+    return off;
   }, [channel.id, channel.guildId, me.id, resolveUser, bumpReaction, noteTyping]);
 
   async function send() {
