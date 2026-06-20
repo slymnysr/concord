@@ -24,6 +24,7 @@ import { SearchScreen } from './src/screens/SearchScreen';
 import { SavedMessagesScreen } from './src/screens/SavedMessagesScreen';
 import { DeveloperScreen } from './src/screens/DeveloperScreen';
 import { VoiceBar } from './src/VoiceBar';
+import { registerForPush } from './src/push';
 
 export default function App() {
   const [booting, setBooting] = useState(true);
@@ -41,7 +42,7 @@ export default function App() {
     (async () => {
       await loadHost();
       await loadTokens();
-      try { setMe(await api.me()); } catch {}
+      try { const u = await api.me(); setMe(u); registerForPush(); } catch {}
       setBooting(false);
     })();
   }, []);
@@ -62,7 +63,7 @@ export default function App() {
     setMe(null);
   }, []);
 
-  const onLogin = useCallback((u: User) => { setStack([{ kind: 'home' }]); setMe(u); }, []);
+  const onLogin = useCallback((u: User) => { setStack([{ kind: 'home' }]); setMe(u); registerForPush(); }, []);
 
   const top = stack[stack.length - 1];
 

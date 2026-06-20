@@ -634,6 +634,11 @@ export const api = {
     presign: (input: { filename: string; content_type: string; size_bytes: number }) =>
       request<{ upload_url: string; public_url: string; key: string; filename: string }>('/uploads/presign', { method: 'POST', body: JSON.stringify(input) }),
   },
+  push: {
+    subscribe: (input: { endpoint: string; p256dh: string; auth: string }) =>
+      request<void>('/users/me/push-subscriptions', { method: 'PUT', body: JSON.stringify(input) }),
+    unsubscribeAll: () => request<void>('/users/me/push-subscriptions', { method: 'DELETE' }),
+  },
 };
 
 // Yerel dosyayı presign ile yükler, herkese açık URL döner. (emoji/çıkartma/ses/ek için ortak)
