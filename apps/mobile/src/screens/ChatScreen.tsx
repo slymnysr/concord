@@ -21,6 +21,7 @@ import { EmbedView } from '../EmbedView';
 import { PollCard } from '../PollCard';
 import { PollComposer } from '../PollComposer';
 import { InputModal } from '../ui';
+import { tap, impact } from '../haptics';
 import type { Nav } from '../nav';
 
 interface Props {
@@ -326,6 +327,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   }
 
   async function toggleReaction(msg: Message, emoji: string) {
+    tap();
     const cur = reactions[msg.id]?.find((r) => r.emoji === emoji);
     const adding = !cur?.me;
     bumpReaction(msg.id, emoji, adding ? 1 : -1, true);
@@ -496,7 +498,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           const replied = findMessage(item.replied_to_id);
           const msgReactions = reactions[item.id] ?? [];
           return (
-            <Pressable onLongPress={() => setMenuFor(item)} delayLongPress={250}>
+            <Pressable onLongPress={() => { impact(); setMenuFor(item); }} delayLongPress={250}>
               {dayDivider}
               {item.replied_to_id && (
                 <Pressable style={s.replyPreviewRow} onPress={() => jumpToMessage(item.replied_to_id)}>

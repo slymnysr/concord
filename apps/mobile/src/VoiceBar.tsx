@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from './theme';
 import { voice } from './voice';
 import { VoiceRoom } from './VoiceRoom';
+import { tap } from './haptics';
 
 export function VoiceBar() {
   const [, force] = useReducer((x) => x + 1, 0);
@@ -31,10 +32,10 @@ export function VoiceBar() {
         <TouchableOpacity style={[s.ctrlBtn, voice.isCameraOn() && s.ctrlActive]} onPress={async () => { try { await voice.toggleCamera(); } catch {} force(); }}>
           <Text style={s.ctrl}>📷</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={s.ctrlBtn} onPress={() => voice.toggleMute()}>
+        <TouchableOpacity style={s.ctrlBtn} onPress={() => { tap(); voice.toggleMute(); }}>
           <Text style={s.ctrl}>{voice.isMuted() ? '🔇' : '🎤'}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={s.ctrlBtn} onPress={() => voice.toggleDeafen()}>
+        <TouchableOpacity style={s.ctrlBtn} onPress={() => { tap(); voice.toggleDeafen(); }}>
           <Text style={s.ctrl}>{voice.isDeafened() ? '🔕' : '🎧'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={s.leaveBtn} onPress={() => voice.disconnect()}>
