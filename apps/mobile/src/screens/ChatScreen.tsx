@@ -57,6 +57,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   const [typingNames, setTypingNames] = useState<string[]>([]);
   const [atBottom, setAtBottom] = useState(true);
   const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [firstUnread, setFirstUnread] = useState<string | null>(null);
   const [emojiTarget, setEmojiTarget] = useState<'compose' | Message | null>(null);
   const [gifOpen, setGifOpen] = useState(false);
   const [mentionMembers, setMentionMembers] = useState<Member[]>([]);
@@ -96,6 +97,14 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         const ordered = list.slice().reverse();
         setMessages(ordered);
         for (const m of ordered) resolveUser(m.author_id);
+        // "Yeni mesajlar" ayracı: en son okunan mesajdan sonraki ilk mesaj
+        api.readStates.list().then((states) => {
+          if (cancelled) return;
+          const r = states.find((x) => x.channel_id === channel.id);
+          if (!r?.last_message_id) return;
+          const fu = ordered.find((m) => { try { return BigInt(m.id) > BigInt(r.last_message_id!); } catch { return false; } });
+          if (fu) setFirstUnread(fu.id);
+        }).catch(() => {});
         const tail = ordered.slice(-30);
         const results = await Promise.all(
           tail.map((m) => api.reactions.list(m.id).then((r) => [m.id, r] as const).catch(() => null)),
@@ -494,9 +503,16 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
               <View style={s.dayLine} />
             </View>
           ) : null;
+          const unreadDivider = firstUnread === item.id ? (
+            <View style={s.unreadRow}>
+              <View style={s.unreadLine} />
+              <Text style={s.unreadText}>YENİ</Text>
+            </View>
+          ) : null;
           if (item.system) {
             return (
               <View>
+                {unreadDivider}
                 {dayDivider}
                 <Text style={s.system}>→ {item.content}</Text>
               </View>
@@ -512,6 +528,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           const msgReactions = reactions[item.id] ?? [];
           return (
             <Pressable onLongPress={() => { impact(); setMenuFor(item); }} delayLongPress={250}>
+              {unreadDivider}
               {dayDivider}
               {item.replied_to_id && (
                 <Pressable style={s.replyPreviewRow} onPress={() => jumpToMessage(item.replied_to_id)}>
@@ -896,6 +913,9 @@ const s = StyleSheet.create({
   dayRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, marginTop: 14, marginBottom: 2 },
   dayLine: { flex: 1, height: 1, backgroundColor: colors.line },
   dayText: { color: colors.inkTertiary, fontSize: 11, fontWeight: '700' },
+  unreadRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, marginTop: 8 },
+  unreadLine: { flex: 1, height: 1, backgroundColor: colors.accent },
+  unreadText: { color: colors.accent, fontSize: 10, fontWeight: '800' },
   msgRow: { flexDirection: 'row', paddingHorizontal: 12, marginTop: 12, gap: 10 },
   msgRowGrouped: { marginTop: 2 },
   msgHighlight: { backgroundColor: colors.brand + '22', borderLeftWidth: 3, borderLeftColor: colors.brand },
