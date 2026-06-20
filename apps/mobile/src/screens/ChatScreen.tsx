@@ -13,7 +13,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../theme';
 import { api, type Message, type Reaction, type User, type Member, type Friend } from '../api';
-import { joinGuild, joinUser, sendTyping } from '../gateway';
+import { joinGuild, joinUser, sendTyping, onConnection } from '../gateway';
 import { MarkdownText } from '../MarkdownText';
 import { EmojiPicker } from '../EmojiPicker';
 import { GifPicker } from '../GifPicker';
@@ -54,6 +54,8 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   const [pins, setPins] = useState<Message[]>([]);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [typingNames, setTypingNames] = useState<string[]>([]);
+  const [atBottom, setAtBottom] = useState(true);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const [emojiTarget, setEmojiTarget] = useState<'compose' | Message | null>(null);
   const [gifOpen, setGifOpen] = useState(false);
   const [mentionMembers, setMentionMembers] = useState<Member[]>([]);
@@ -407,9 +409,27 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
-    atBottomRef.current = contentOffset.y + layoutMeasurement.height >= contentSize.height - 60;
+    const bottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 60;
+    atBottomRef.current = bottom;
+    setAtBottom(bottom);
     if (contentOffset.y < 80) loadOlder();
   };
+
+  function jumpToMessage(id?: string) {
+    if (!id) return;
+    const idx = messagesRef.current.findIndex((m) => m.id === id);
+    if (idx < 0) return;
+    try { listRef.current?.scrollToIndex({ index: idx, viewPosition: 0.5, animated: true }); } catch {}
+    setHighlightId(id);
+    setTimeout(() => setHighlightId((h) => (h === id ? null : h)), 1400);
+  }
+
+  // Yeniden bağlanınca mevcut kanalı tazele (kaçan mesajları yakala)
+  useEffect(() => onConnection((st) => {
+    if (st === 'connected' && messagesRef.current.length) {
+      api.channels.messages(channel.id).then((list) => setMessages(list.slice().reverse())).catch(() => {});
+    }
+  }), [channel.id]);
 
   return (
     <KeyboardAvoidingView
@@ -437,6 +457,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
         onContentSizeChange={() => {
           if (atBottomRef.current) listRef.current?.scrollToEnd({ animated: false });
+        }}
+        onScrollToIndexFailed={(info) => {
+          setTimeout(() => { try { listRef.current?.scrollToIndex({ index: info.index, viewPosition: 0.5, animated: true }); } catch {} }, 300);
         }}
         ListHeaderComponent={
           loadingOlder ? <ActivityIndicator color={colors.brand} style={{ marginVertical: 12 }} /> : null
@@ -476,13 +499,13 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
             <Pressable onLongPress={() => setMenuFor(item)} delayLongPress={250}>
               {dayDivider}
               {item.replied_to_id && (
-                <View style={s.replyPreviewRow}>
+                <Pressable style={s.replyPreviewRow} onPress={() => jumpToMessage(item.replied_to_id)}>
                   <Text style={s.replyPreviewText} numberOfLines={1}>
                     ↪ {replied ? `${users[replied.author_id]?.display_name ?? '…'}: ${replied.content}` : 'bir mesaja yanıt'}
                   </Text>
-                </View>
+                </Pressable>
               )}
-              <View style={[s.msgRow, grouped && s.msgRowGrouped]}>
+              <View style={[s.msgRow, grouped && s.msgRowGrouped, highlightId === item.id && s.msgHighlight]}>
                 {grouped ? (
                   <View style={s.avatarSpacer} />
                 ) : (
@@ -541,6 +564,12 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           );
         }}
       />
+
+      {!atBottom && (
+        <TouchableOpacity style={s.jumpFab} onPress={() => listRef.current?.scrollToEnd({ animated: true })}>
+          <Text style={s.jumpFabText}>↓ En alta in</Text>
+        </TouchableOpacity>
+      )}
 
       {typingNames.length > 0 && (
         <Text style={s.typing} numberOfLines={1}>
@@ -843,6 +872,9 @@ const s = StyleSheet.create({
   dayText: { color: colors.inkTertiary, fontSize: 11, fontWeight: '700' },
   msgRow: { flexDirection: 'row', paddingHorizontal: 12, marginTop: 12, gap: 10 },
   msgRowGrouped: { marginTop: 2 },
+  msgHighlight: { backgroundColor: colors.brand + '22', borderLeftWidth: 3, borderLeftColor: colors.brand },
+  jumpFab: { position: 'absolute', right: 14, bottom: 70, backgroundColor: colors.surface3, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: colors.line, zIndex: 5 },
+  jumpFabText: { color: colors.ink, fontWeight: '700', fontSize: 13 },
   avatar: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarImg: { width: '100%', height: '100%' },
   avatarSpacer: { width: 38 },
