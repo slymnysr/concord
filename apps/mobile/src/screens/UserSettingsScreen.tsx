@@ -4,6 +4,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Linking } 
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../theme';
 import { api, uploadFile, type User } from '../api';
+import { notifOn, setNotifOn } from '../push';
 import type { Nav } from '../nav';
 import { ScreenHeader, Section, Row, Avatar, InputModal, ui, statusColor } from '../ui';
 
@@ -30,6 +31,7 @@ export function UserSettingsScreen({ me, setMe, nav, onLogout, onBack }: {
   const [sessionCount, setSessionCount] = useState<number | null>(null);
   const [connections, setConnections] = useState<Array<{ id: string; type: string; name: string; visible: boolean }>>([]);
   const [reminders, setReminders] = useState<Array<{ id: string; remind_at: string }>>([]);
+  const [notifEnabled, setNotifEnabled] = useState(notifOn());
 
   useEffect(() => {
     api.privacy.get().then((p) => setPrivacy(p.allow_dms_from)).catch(() => {});
@@ -181,6 +183,7 @@ export function UserSettingsScreen({ me, setMe, nav, onLogout, onBack }: {
         </Section>
 
         <Section title="Gizlilik & Bildirim">
+          <Row label="Uygulama bildirimleri" value={notifEnabled ? 'Açık' : 'Kapalı'} onPress={() => { const v = !notifEnabled; setNotifEnabled(v); setNotifOn(v); }} />
           <Row label="DM'ler" value={privacy === 'everyone' ? 'Herkes' : 'Sadece arkadaşlar'} onPress={togglePrivacy} />
           <Row label="Anahtar kelime bildirimleri" value={keywords.length ? `${keywords.length} kelime` : '—'} onPress={() => setEdit({ k: 'keywords' })} />
         </Section>

@@ -63,6 +63,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   const [mentionChannels, setMentionChannels] = useState<{ id: string; name: string; type: string }[]>([]);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionKind, setMentionKind] = useState<'user' | 'channel' | null>(null);
+  const [slashCmds, setSlashCmds] = useState<Array<{ id: string; name: string; description: string }>>([]);
   const [pollOpen, setPollOpen] = useState(false);
   const [noteFor, setNoteFor] = useState<User | null>(null);
   const [threadFor, setThreadFor] = useState<Message | null>(null);
@@ -292,8 +293,20 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       api.guilds.channels(channel.guildId)
         .then((cs) => setMentionChannels(cs.filter((c) => ['text', 'announcement', 'forum', 'voice'].includes(c.type))))
         .catch(() => {});
+      api.commands.list(channel.guildId).then(setSlashCmds).catch(() => {});
     }
   }, [channel.guildId]);
+
+  const slashMatches = text.startsWith('/')
+    ? slashCmds.filter((c) => c.name.toLowerCase().startsWith(text.slice(1).split(' ')[0].toLowerCase())).slice(0, 6)
+    : [];
+  async function runSlash(cmd: { name: string }) {
+    setText('');
+    try {
+      const m = await api.commands.run(channel.id, cmd.name);
+      if (m && m.id) setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
+    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Komut çalıştırılamadı'); }
+  }
 
   const mentionUserMatches = mentionQuery !== null && mentionKind === 'user'
     ? mentionMembers.filter((mb) => (mb.nickname || mb.display_name || mb.username).toLowerCase().includes(mentionQuery.toLowerCase())).slice(0, 6)
@@ -587,6 +600,17 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           <TouchableOpacity onPress={() => setReplyTo(null)}>
             <Text style={s.replyBarClose}>✕</Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {text.startsWith('/') && slashMatches.length > 0 && (
+        <View style={s.mentionBar}>
+          {slashMatches.map((c) => (
+            <TouchableOpacity key={c.id} style={s.slashItem} onPress={() => runSlash(c)}>
+              <Text style={s.slashName}>/{c.name}</Text>
+              {!!c.description && <Text style={s.slashDesc} numberOfLines={1}>{c.description}</Text>}
+            </TouchableOpacity>
+          ))}
         </View>
       )}
 
@@ -922,6 +946,9 @@ const s = StyleSheet.create({
   mentionItem: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.surface2, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6 },
   mentionDot: { width: 18, height: 18, borderRadius: 9 },
   mentionName: { color: colors.ink, fontSize: 13, fontWeight: '600', maxWidth: 120 },
+  slashItem: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.surface2, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, width: '100%' },
+  slashName: { color: colors.brand, fontWeight: '800', fontSize: 14 },
+  slashDesc: { color: colors.inkSecondary, fontSize: 12, flex: 1 },
   sheetBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.surface1, borderTopLeftRadius: 20, borderTopRightRadius: 20,

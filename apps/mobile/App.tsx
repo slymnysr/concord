@@ -27,7 +27,7 @@ import { SavedMessagesScreen } from './src/screens/SavedMessagesScreen';
 import { DeveloperScreen } from './src/screens/DeveloperScreen';
 import { QuickSwitcherScreen } from './src/screens/QuickSwitcherScreen';
 import { VoiceBar } from './src/VoiceBar';
-import { registerForPush, notifyLocal } from './src/push';
+import { registerForPush, notifyLocal, loadNotifPref, notifOn } from './src/push';
 
 export default function App() {
   const [booting, setBooting] = useState(true);
@@ -45,6 +45,7 @@ export default function App() {
     (async () => {
       await loadHost();
       await loadTokens();
+      await loadNotifPref();
       try { const u = await api.me(); setMe(u); registerForPush(); } catch {}
       setBooting(false);
     })();
@@ -76,6 +77,7 @@ export default function App() {
   useEffect(() => {
     if (!me) return;
     const off = joinUser(me.id, (ev, payload) => {
+      if (!notifOn()) return;
       if (ev === 'NOTIFICATION') {
         const title = payload?.title ?? 'Sidcord';
         showToast(title, { sub: payload?.body });
