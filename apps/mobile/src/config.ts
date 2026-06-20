@@ -52,3 +52,15 @@ export function gatewayUrl(): string {
   }
   return `${ws}://${hostname}:4000/socket`;
 }
+
+// Voice signaling WS: çıplak host ise :4443 (dev), portlu/https ise nginx /voice-ws/
+export function voiceWsUrl(channelId: string, token: string): string {
+  const { proto, hostname, hasPort } = hostParts();
+  const q = `?token=${encodeURIComponent(token)}&channel=${encodeURIComponent(channelId)}`;
+  if (hasPort || proto === 'https') {
+    const ws = proto === 'https' ? 'wss' : 'ws';
+    const m = cachedHost.match(/^https?:\/\/(.+)$/i);
+    return `${ws}://${m ? m[1] : hostname}/voice-ws/${q}`;
+  }
+  return `ws://${hostname}:4443/${q}`;
+}
