@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { colors } from '../theme';
 import { api, uploadFile, type Emoji, type Sticker, type Sound } from '../api';
+import { voice } from '../voice';
 import { ScreenHeader, InputModal, Empty, Row, ui } from '../ui';
 
 type Tab = 'emojis' | 'stickers' | 'sounds' | 'commands' | 'events' | 'welcome' | 'insights';
@@ -62,6 +63,11 @@ export function ServerContentScreen({ guildId, guildName, onBack }: { guildId: s
       const up = await uploadFile(a.uri, a.name, a.mimeType || 'audio/mpeg', a.size || 0);
       setEdit({ k: 'soundName', url: up.url });
     } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Yüklenemedi'); }
+  }
+
+  function playSound(id: string) {
+    if (!voice.isConnected() || !voice.channelId) { Alert.alert('Sidcord', 'Önce bir sesli kanala katıl, sonra çal.'); return; }
+    api.sounds.play(id, voice.channelId).catch((e: any) => Alert.alert('Sidcord', e?.message ?? 'Çalınamadı'));
   }
 
   function createEvent(name: string) {
@@ -145,6 +151,7 @@ export function ServerContentScreen({ guildId, guildName, onBack }: { guildId: s
           renderItem={({ item }) => (
             <View style={s.listRow}>
               <Text style={s.rowText}>{item.emoji ? item.emoji + ' ' : '🔊 '}{item.name}</Text>
+              <TouchableOpacity onPress={() => playSound(item.id)}><Text style={{ color: colors.brand, marginRight: 16 }}>Çal</Text></TouchableOpacity>
               <TouchableOpacity onPress={() => run(() => api.sounds.delete(item.id))}><Text style={{ color: colors.accent }}>Sil</Text></TouchableOpacity>
             </View>
           )} />
