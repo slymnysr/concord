@@ -1,6 +1,7 @@
 // Arama — mesaj arama, sonuca dokununca kanala git.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../theme';
 import { api, type Message, type Channel } from '../api';
 import type { Nav } from '../nav';
@@ -13,11 +14,18 @@ export function SearchScreen({ guildId, channelId, nav, onBack }: { guildId?: st
   const [pinned, setPinned] = useState(false);
   const [has, setHas] = useState<string[]>([]);
   const toggleHas = (h: string) => setHas((p) => (p.includes(h) ? p.filter((x) => x !== h) : [...p, h]));
+  const [history, setHistory] = useState<string[]>([]);
+  useEffect(() => { AsyncStorage.getItem('sidcord_search_history').then((v) => { if (v) try { setHistory(JSON.parse(v)); } catch {} }).catch(() => {}); }, []);
 
-  async function search() {
-    if (!q.trim()) return;
-    try { setResults(await api.search.messages(q.trim(), { guildId, channelId, pinned, has, limit: 50 })); setSearched(true); }
+  async function search(query?: string) {
+    const term = (query ?? q).trim();
+    if (!term) return;
+    setQ(term);
+    try { setResults(await api.search.messages(term, { guildId, channelId, pinned, has, limit: 50 })); setSearched(true); }
     catch { setResults([]); setSearched(true); }
+    const next = [term, ...history.filter((x) => x !== term)].slice(0, 8);
+    setHistory(next);
+    AsyncStorage.setItem('sidcord_search_history', JSON.stringify(next)).catch(() => {});
   }
 
   return (
@@ -32,15 +40,27 @@ export function SearchScreen({ guildId, channelId, nav, onBack }: { guildId?: st
           placeholderTextColor={colors.inkTertiary}
           autoFocus
           returnKeyType="search"
-          onSubmitEditing={search}
+          onSubmitEditing={() => search()}
         />
-        <TouchableOpacity style={s.btn} onPress={search}><Text style={ui.btnText}>Ara</Text></TouchableOpacity>
+        <TouchableOpacity style={s.btn} onPress={() => search()}><Text style={ui.btnText}>Ara</Text></TouchableOpacity>
       </View>
       <View style={s.chips}>
         <Chip label="📌 Sabit" active={pinned} onPress={() => setPinned(!pinned)} />
         <Chip label="🖼️ Görsel" active={has.includes('image')} onPress={() => toggleHas('image')} />
         <Chip label="🔗 Link" active={has.includes('link')} onPress={() => toggleHas('link')} />
       </View>
+      {!searched && history.length > 0 && (
+        <View style={s.history}>
+          <Text style={s.historyTitle}>SON ARAMALAR</Text>
+          <View style={s.chips}>
+            {history.map((h) => (
+              <TouchableOpacity key={h} style={s.chip} onPress={() => search(h)}>
+                <Text style={s.chipText}>{h}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
       <FlatList
         data={results}
         keyExtractor={(r) => r.message.id}
@@ -70,7 +90,9 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 
 const s = StyleSheet.create({
   searchRow: { flexDirection: 'row', gap: 8, padding: 12 },
-  chips: { flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 10 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 12, paddingBottom: 10 },
+  history: { paddingTop: 4 },
+  historyTitle: { color: colors.inkTertiary, fontSize: 11, fontWeight: '800', paddingHorizontal: 14, marginBottom: 6 },
   chip: { backgroundColor: colors.surface2, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: colors.line },
   chipActive: { borderColor: colors.brand, backgroundColor: colors.brand + '22' },
   chipText: { color: colors.inkSecondary, fontWeight: '700', fontSize: 13 },
