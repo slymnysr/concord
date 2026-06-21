@@ -10,9 +10,11 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../theme';
-import { api, type Message, type Reaction, type User, type Member, type Friend } from '../api';
+import { api, uploadFile, type Message, type Reaction, type User, type Member, type Friend } from '../api';
+import { AudioMessage } from '../AudioMessage';
 import { joinGuild, joinUser, sendTyping, onConnection } from '../gateway';
 import { MarkdownText } from '../MarkdownText';
 import { EmojiPicker } from '../EmojiPicker';
@@ -67,6 +69,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   const [slashCmds, setSlashCmds] = useState<Array<{ id: string; name: string; description: string }>>([]);
   const [pollOpen, setPollOpen] = useState(false);
   const [noteFor, setNoteFor] = useState<User | null>(null);
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [recSecs, setRecSecs] = useState(0);
+  const recTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [threadFor, setThreadFor] = useState<Message | null>(null);
   const [recipOpen, setRecipOpen] = useState(false);
   const [removeRecipOpen, setRemoveRecipOpen] = useState(false);
@@ -264,9 +269,39 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       { text: 'Fotoğraf / Video', onPress: attachImage },
       { text: 'Dosya', onPress: attachDocument },
       { text: 'GIF', onPress: () => setGifOpen(true) },
+      { text: 'Sesli mesaj', onPress: startRec },
       { text: 'Anket oluştur', onPress: () => setPollOpen(true) },
       { text: 'Vazgeç', style: 'cancel' },
     ]);
+  }
+
+  async function startRec() {
+    try {
+      const perm = await Audio.requestPermissionsAsync();
+      if (!perm.granted) { Alert.alert('Sidcord', 'Mikrofon izni gerekli'); return; }
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      const { recording: rec } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      setRecording(rec);
+      setRecSecs(0);
+      recTimer.current = setInterval(() => setRecSecs((x) => x + 1), 1000);
+    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Kayıt başlamadı'); }
+  }
+  async function finishRec(send: boolean) {
+    const rec = recording;
+    if (recTimer.current) { clearInterval(recTimer.current); recTimer.current = null; }
+    setRecording(null);
+    if (!rec) return;
+    try {
+      await rec.stopAndUnloadAsync();
+      const uri = rec.getURI();
+      if (send && uri) {
+        setSending(true);
+        const up = await uploadFile(uri, `ses_${Date.now()}.m4a`, 'audio/m4a', 0);
+        const m = await api.channels.sendMessage(channel.id, '', undefined, [{ url: up.url, filename: up.filename, content_type: 'audio/m4a', size_bytes: 0 }]);
+        setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
+      }
+    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Gönderilemedi'); }
+    finally { setSending(false); setRecSecs(0); }
   }
 
   async function createPoll(question: string, answers: string[]) {
@@ -571,6 +606,8 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                       <Pressable key={a.id} onPress={() => setLightbox(a.url)}>
                         <Image source={{ uri: a.url }} style={s.attachment} resizeMode="cover" />
                       </Pressable>
+                    ) : (a.content_type ?? '').startsWith('audio/') ? (
+                      <AudioMessage key={a.id} url={a.url} />
                     ) : (
                       <Text key={a.id} style={s.file}>📎 {a.filename}</Text>
                     ),
@@ -644,6 +681,16 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
               <Text style={s.mentionName} numberOfLines={1}>#{c.name}</Text>
             </TouchableOpacity>
           ))}
+        </View>
+      )}
+
+      {recording && (
+        <View style={s.recBar}>
+          <Text style={{ fontSize: 14 }}>🔴</Text>
+          <Text style={s.recTime}>{Math.floor(recSecs / 60)}:{String(recSecs % 60).padStart(2, '0')}</Text>
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity onPress={() => finishRec(false)}><Text style={s.recCancel}>İptal</Text></TouchableOpacity>
+          <TouchableOpacity style={s.recSend} onPress={() => finishRec(true)}><Text style={s.recSendText}>Gönder</Text></TouchableOpacity>
         </View>
       )}
 
@@ -960,6 +1007,11 @@ const s = StyleSheet.create({
   },
   sendBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.brand, alignItems: 'center', justifyContent: 'center' },
   sendText: { color: '#06281F', fontSize: 18, fontWeight: '800' },
+  recBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: colors.surface1, borderTopWidth: 1, borderColor: colors.line },
+  recTime: { color: colors.ink, fontWeight: '800', fontSize: 15 },
+  recCancel: { color: colors.inkSecondary, fontWeight: '700', paddingHorizontal: 10 },
+  recSend: { backgroundColor: colors.brand, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 8 },
+  recSendText: { color: '#06281F', fontWeight: '800' },
   attachBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface2, alignItems: 'center', justifyContent: 'center' },
   attachIcon: { color: colors.inkSecondary, fontSize: 22, fontWeight: '700' },
   mentionBar: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: colors.surface1, borderTopWidth: 1, borderColor: colors.line },
