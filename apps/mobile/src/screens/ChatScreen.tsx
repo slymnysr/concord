@@ -98,12 +98,24 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     let cancelled = false;
     hasMoreRef.current = true;
     atBottomRef.current = true;
+    // Çevrimdışı önbellek: anında göster, sonra ağdan tazele
+    AsyncStorage.getItem(`sidcord_msgs_${channel.id}`).then((c) => {
+      if (!c || cancelled) return;
+      try {
+        const cached = JSON.parse(c) as Message[];
+        if (messagesRef.current.length === 0 && cached.length) {
+          setMessages(cached);
+          for (const m of cached) resolveUser(m.author_id);
+        }
+      } catch {}
+    }).catch(() => {});
     api.channels.messages(channel.id)
       .then(async (list) => {
         if (cancelled) return;
         if (list.length < 50) hasMoreRef.current = false;
         const ordered = list.slice().reverse();
         setMessages(ordered);
+        AsyncStorage.setItem(`sidcord_msgs_${channel.id}`, JSON.stringify(ordered.slice(-50))).catch(() => {});
         for (const m of ordered) resolveUser(m.author_id);
         // "Yeni mesajlar" ayracı: en son okunan mesajdan sonraki ilk mesaj
         api.readStates.list().then((states) => {
@@ -875,6 +887,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
             <ScrollView style={s.profileBody}>
               <View style={s.profileNameRow}>
                 <Text style={s.profileName}>{profileFor?.display_name}</Text>
+                {profileFor?.bot && <Text style={s.botBadge}>BOT</Text>}
                 <View style={[s.statusDotInline, { backgroundColor: statusColor(profileFor?.status) }]} />
               </View>
               {!!profileFor?.username && <Text style={s.profileHandle}>@{profileFor.username}</Text>}
@@ -924,10 +937,10 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
               {pins.length === 0 ? (
                 <Text style={s.pinsEmpty}>Sabitlenmiş mesaj yok.</Text>
               ) : pins.map((p) => (
-                <View key={p.id} style={s.pinRow}>
+                <TouchableOpacity key={p.id} style={s.pinRow} onPress={() => { setPinsOpen(false); setTimeout(() => jumpToMessage(p.id), 250); }}>
                   <Text style={s.pinAuthor}>{users[p.author_id]?.display_name ?? p.webhook_username ?? '…'}</Text>
                   <Text style={s.pinContent}>{p.content}</Text>
-                </View>
+                </TouchableOpacity>
               ))}
             </ScrollView>
           </Pressable>
@@ -1106,6 +1119,7 @@ const s = StyleSheet.create({
   profileBody: { paddingHorizontal: 18, paddingTop: 8 },
   profileNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   profileName: { color: colors.ink, fontWeight: '800', fontSize: 20 },
+  botBadge: { backgroundColor: colors.brand, color: '#06281F', fontSize: 10, fontWeight: '800', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
   statusDotInline: { width: 12, height: 12, borderRadius: 6 },
   profileHandle: { color: colors.inkSecondary, fontSize: 14, marginTop: 2 },
   profileBio: { color: colors.ink, fontSize: 14, lineHeight: 20, marginTop: 12 },
