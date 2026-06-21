@@ -60,6 +60,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   const [atBottom, setAtBottom] = useState(true);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [firstUnread, setFirstUnread] = useState<string | null>(null);
+  const [pending, setPending] = useState<{ tempId: string; content: string; replyId?: string }[]>([]);
   const [emojiTarget, setEmojiTarget] = useState<'compose' | Message | null>(null);
   const [gifOpen, setGifOpen] = useState(false);
   const [mentionMembers, setMentionMembers] = useState<Member[]>([]);
@@ -163,6 +164,27 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     }
   }, [channel.id, loadingOlder, resolveUser]);
 
+  // Çevrimdışı gönderme kuyruğu — bağlantı/başarı olunca boşaltılır
+  const flushQueue = useCallback(async () => {
+    let list: { tempId: string; content: string; replyId?: string }[] = [];
+    try { const c = await AsyncStorage.getItem(`sidcord_queue_${channel.id}`); list = c ? JSON.parse(c) : []; } catch {}
+    if (!list.length) return;
+    const remaining: typeof list = [];
+    for (const item of list) {
+      try {
+        const m = await api.channels.sendMessage(channel.id, item.content, item.replyId);
+        setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
+      } catch { remaining.push(item); }
+    }
+    setPending(remaining);
+    AsyncStorage.setItem(`sidcord_queue_${channel.id}`, JSON.stringify(remaining)).catch(() => {});
+  }, [channel.id]);
+
+  useEffect(() => {
+    AsyncStorage.getItem(`sidcord_queue_${channel.id}`).then((c) => { try { setPending(c ? JSON.parse(c) : []); } catch {} }).catch(() => {});
+    flushQueue();
+  }, [channel.id, flushQueue]);
+
   // Tepki sayacını yerel güncelle (canlı event + optimistic ortak yolu)
   const bumpReaction = useCallback((messageId: string, emoji: string, delta: 1 | -1, byMe: boolean) => {
     setReactions((prev) => {
@@ -240,8 +262,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       const m = await api.channels.sendMessage(channel.id, content, reply?.id);
       setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
     } catch {
-      setText(content);
-      setReplyTo(reply);
+      // Çevrimdışı → kaybetme, kuyruğa al
+      const item = { tempId: String(Date.now()), content, replyId: reply?.id };
+      setPending((p) => { const next = [...p, item]; AsyncStorage.setItem(`sidcord_queue_${channel.id}`, JSON.stringify(next)).catch(() => {}); return next; });
     } finally {
       setSending(false);
     }
@@ -539,10 +562,11 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
 
   // Yeniden bağlanınca mevcut kanalı tazele (kaçan mesajları yakala)
   useEffect(() => onConnection((st) => {
-    if (st === 'connected' && messagesRef.current.length) {
-      api.channels.messages(channel.id).then((list) => setMessages(list.slice().reverse())).catch(() => {});
+    if (st === 'connected') {
+      flushQueue();
+      if (messagesRef.current.length) api.channels.messages(channel.id).then((list) => setMessages(list.slice().reverse())).catch(() => {});
     }
-  }), [channel.id]);
+  }), [channel.id, flushQueue]);
 
   return (
     <KeyboardAvoidingView
@@ -736,6 +760,12 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
             </TouchableOpacity>
           ))}
         </View>
+      )}
+
+      {pending.length > 0 && (
+        <TouchableOpacity style={s.pendingBar} onPress={flushQueue}>
+          <Text style={s.pendingText}>⏳ {pending.length} mesaj bekliyor — dokun, yeniden dene</Text>
+        </TouchableOpacity>
       )}
 
       {recording && (
@@ -1088,6 +1118,8 @@ const s = StyleSheet.create({
   },
   sendBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.brand, alignItems: 'center', justifyContent: 'center' },
   sendText: { color: '#06281F', fontSize: 18, fontWeight: '800' },
+  pendingBar: { backgroundColor: colors.idle + '22', borderTopWidth: 1, borderColor: colors.idle, paddingVertical: 8, alignItems: 'center' },
+  pendingText: { color: colors.idle, fontWeight: '700', fontSize: 12 },
   recBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: colors.surface1, borderTopWidth: 1, borderColor: colors.line },
   recTime: { color: colors.ink, fontWeight: '800', fontSize: 15 },
   recCancel: { color: colors.inkSecondary, fontWeight: '700', paddingHorizontal: 10 },
