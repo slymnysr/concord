@@ -72,6 +72,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [recSecs, setRecSecs] = useState(0);
   const recTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [forwardMsg, setForwardMsg] = useState<Message | null>(null);
   const [forwardTargets, setForwardTargets] = useState<{ id: string; name: string; kind: string }[]>([]);
   const [forwardQuery, setForwardQuery] = useState('');
@@ -759,7 +760,8 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           value={text}
           onChangeText={(t) => {
             setText(t);
-            AsyncStorage.setItem(`sidcord_draft_${channel.id}`, t).catch(() => {});
+            if (draftTimer.current) clearTimeout(draftTimer.current);
+            draftTimer.current = setTimeout(() => { AsyncStorage.setItem(`sidcord_draft_${channel.id}`, t).catch(() => {}); }, 500);
             if (channel.guildId) {
               sendTyping(channel.guildId, channel.id);
               const mm = /(?:^|\s)([@#])(\w{0,20})$/.exec(t);

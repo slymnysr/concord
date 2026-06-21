@@ -81,6 +81,7 @@ class VoiceClient {
       await this.createRecvTransport();
 
       for (const p of joinRes.producers ?? []) {
+        if (this.meId && String(p.userId) === this.meId) continue; // kendi yayınını tüketme (yankı)
         const src = p.appData?.source ?? 'mic';
         if (['mic', 'camera', 'screen'].includes(src)) this.consume(p.producerId, String(p.userId), src).catch(() => {});
       }
@@ -261,6 +262,7 @@ class VoiceClient {
         break;
       }
       case 'newProducer': {
+        if (this.meId && String(msg.payload.userId) === this.meId) break; // kendi yayınını tüketme
         const src = msg.payload.appData?.source ?? 'mic';
         if (['mic', 'camera', 'screen'].includes(src)) this.consume(msg.payload.producerId, String(msg.payload.userId), src).catch(() => {});
         break;
