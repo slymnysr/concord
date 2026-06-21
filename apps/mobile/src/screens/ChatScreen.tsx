@@ -27,7 +27,7 @@ import { tap, impact } from '../haptics';
 import type { Nav } from '../nav';
 
 interface Props {
-  channel: { id: string; name: string; guildId?: string; type?: string; participants?: string[] };
+  channel: { id: string; name: string; guildId?: string; type?: string; participants?: string[]; focusMessageId?: string };
   me: User;
   nav: Nav;
   onBack: () => void;
@@ -125,6 +125,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       .catch(() => {});
     api.channels.ack(channel.id).catch(() => {});
     AsyncStorage.getItem(`sidcord_draft_${channel.id}`).then((d) => { if (d) setText(d); }).catch(() => {});
+    if (channel.focusMessageId) setTimeout(() => jumpToMessage(channel.focusMessageId), 600);
     return () => {
       cancelled = true;
     };

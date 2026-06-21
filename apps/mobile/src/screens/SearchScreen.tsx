@@ -48,7 +48,7 @@ export function SearchScreen({ guildId, channelId, nav, onBack }: { guildId?: st
         renderItem={({ item }) => (
           <TouchableOpacity
             style={s.row}
-            onPress={() => nav.push({ kind: 'chat', channel: { id: item.channel.id, name: item.channel.name, guildId: item.channel.guild_id } })}
+            onPress={() => nav.push({ kind: 'chat', channel: { id: item.channel.id, name: item.channel.name, guildId: item.channel.guild_id, focusMessageId: item.message.id } })}
           >
             <Text style={s.ch}>#{item.channel.name}</Text>
             <Text style={s.content} numberOfLines={2}>{item.message.content}</Text>

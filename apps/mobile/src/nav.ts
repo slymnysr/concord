@@ -1,5 +1,5 @@
 // Hafif ekran-yığını navigasyon tipleri (react-navigation yerine sade stack).
-export type OpenChannel = { id: string; name: string; guildId?: string; type?: string; participants?: string[] };
+export type OpenChannel = { id: string; name: string; guildId?: string; type?: string; participants?: string[]; focusMessageId?: string };
 
 export type Screen =
   | { kind: 'home' }
