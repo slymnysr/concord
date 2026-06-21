@@ -519,12 +519,13 @@ export const api = {
 
   // --- Zengin içerik ---
   search: {
-    messages: (q: string, opts: { guildId?: string; channelId?: string; authorId?: string; pinned?: boolean; limit?: number } = {}) => {
+    messages: (q: string, opts: { guildId?: string; channelId?: string; authorId?: string; pinned?: boolean; has?: string[]; limit?: number } = {}) => {
       const p = new URLSearchParams({ q });
       if (opts.guildId) p.set('guild_id', opts.guildId);
       if (opts.channelId) p.set('channel_id', opts.channelId);
       if (opts.authorId) p.set('author_id', opts.authorId);
       if (opts.pinned) p.set('pinned', 'true');
+      (opts.has ?? []).forEach((h) => p.append('has', h));
       if (opts.limit) p.set('limit', String(opts.limit));
       return request<Array<{ message: Message; channel: Channel }>>(`/search/messages?${p}`);
     },

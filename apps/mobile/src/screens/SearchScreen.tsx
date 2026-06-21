@@ -10,10 +10,13 @@ export function SearchScreen({ guildId, channelId, nav, onBack }: { guildId?: st
   const [q, setQ] = useState('');
   const [results, setResults] = useState<Array<{ message: Message; channel: Channel }>>([]);
   const [searched, setSearched] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const [has, setHas] = useState<string[]>([]);
+  const toggleHas = (h: string) => setHas((p) => (p.includes(h) ? p.filter((x) => x !== h) : [...p, h]));
 
   async function search() {
     if (!q.trim()) return;
-    try { setResults(await api.search.messages(q.trim(), { guildId, channelId, limit: 50 })); setSearched(true); }
+    try { setResults(await api.search.messages(q.trim(), { guildId, channelId, pinned, has, limit: 50 })); setSearched(true); }
     catch { setResults([]); setSearched(true); }
   }
 
@@ -32,6 +35,11 @@ export function SearchScreen({ guildId, channelId, nav, onBack }: { guildId?: st
           onSubmitEditing={search}
         />
         <TouchableOpacity style={s.btn} onPress={search}><Text style={ui.btnText}>Ara</Text></TouchableOpacity>
+      </View>
+      <View style={s.chips}>
+        <Chip label="📌 Sabit" active={pinned} onPress={() => setPinned(!pinned)} />
+        <Chip label="🖼️ Görsel" active={has.includes('image')} onPress={() => toggleHas('image')} />
+        <Chip label="🔗 Link" active={has.includes('link')} onPress={() => toggleHas('link')} />
       </View>
       <FlatList
         data={results}
@@ -52,8 +60,20 @@ export function SearchScreen({ guildId, channelId, nav, onBack }: { guildId?: st
   );
 }
 
+function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={[s.chip, active && s.chipActive]} onPress={onPress}>
+      <Text style={[s.chipText, active && { color: colors.ink }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 const s = StyleSheet.create({
   searchRow: { flexDirection: 'row', gap: 8, padding: 12 },
+  chips: { flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 10 },
+  chip: { backgroundColor: colors.surface2, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: colors.line },
+  chipActive: { borderColor: colors.brand, backgroundColor: colors.brand + '22' },
+  chipText: { color: colors.inkSecondary, fontWeight: '700', fontSize: 13 },
   btn: { backgroundColor: colors.brand, borderRadius: 12, paddingHorizontal: 18, justifyContent: 'center' },
   row: { paddingHorizontal: 16, paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
   ch: { color: colors.brand, fontSize: 13, fontWeight: '700' },
