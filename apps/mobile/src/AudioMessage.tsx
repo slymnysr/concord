@@ -4,9 +4,12 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Audio } from 'expo-av';
 import { colors } from './theme';
 
-export function AudioMessage({ url }: { url: string }) {
+export function AudioMessage({ url, name }: { url: string; name?: string }) {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [playing, setPlaying] = useState(false);
+  const durMatch = (name || url).match(/_(\d+)sn/);
+  const dur = durMatch ? parseInt(durMatch[1], 10) : 0;
+  const durLabel = dur ? `${Math.floor(dur / 60)}:${String(dur % 60).padStart(2, '0')}` : '';
 
   useEffect(() => () => { sound?.unloadAsync().catch(() => {}); }, [sound]);
 
@@ -31,7 +34,7 @@ export function AudioMessage({ url }: { url: string }) {
     <TouchableOpacity style={s.row} onPress={toggle}>
       <Text style={s.icon}>{playing ? '⏸' : '▶️'}</Text>
       <View style={s.bar}><View style={s.barFill} /></View>
-      <Text style={s.label}>🎤 Sesli mesaj</Text>
+      <Text style={s.label}>🎤 Sesli mesaj{durLabel ? ` · ${durLabel}` : ''}</Text>
     </TouchableOpacity>
   );
 }

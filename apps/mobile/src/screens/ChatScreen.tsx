@@ -72,6 +72,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [recSecs, setRecSecs] = useState(0);
   const recTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [forwardMsg, setForwardMsg] = useState<Message | null>(null);
+  const [forwardTargets, setForwardTargets] = useState<{ id: string; name: string; kind: string }[]>([]);
+  const [forwardQuery, setForwardQuery] = useState('');
   const [threadFor, setThreadFor] = useState<Message | null>(null);
   const [recipOpen, setRecipOpen] = useState(false);
   const [removeRecipOpen, setRemoveRecipOpen] = useState(false);
@@ -296,7 +299,8 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       const uri = rec.getURI();
       if (send && uri) {
         setSending(true);
-        const up = await uploadFile(uri, `ses_${Date.now()}.m4a`, 'audio/m4a', 0);
+        const dur = recSecs;
+        const up = await uploadFile(uri, `ses_${dur}sn_${Date.now()}.m4a`, 'audio/m4a', 0);
         const m = await api.channels.sendMessage(channel.id, '', undefined, [{ url: up.url, filename: up.filename, content_type: 'audio/m4a', size_bytes: 0 }]);
         setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
       }
@@ -329,6 +333,29 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   async function showReactors(m: Message, emoji: string) {
     try { const us = await api.reactions.users(m.id, emoji); Alert.alert(`${emoji} tepkisi`, us.length ? us.map((u) => u.display_name).join('\n') : 'Kimse yok'); } catch {}
   }
+  useEffect(() => {
+    if (!forwardMsg) return;
+    (async () => {
+      const t: { id: string; name: string; kind: string }[] = [];
+      try { for (const d of await api.dms.list()) t.push({ id: d.id, name: d.name || 'DM', kind: 'dm' }); } catch {}
+      if (channel.guildId) {
+        try { for (const c of await api.guilds.channels(channel.guildId)) if (['text', 'announcement'].includes(c.type)) t.push({ id: c.id, name: '#' + c.name, kind: 'channel' }); } catch {}
+      }
+      setForwardTargets(t);
+    })();
+  }, [forwardMsg, channel.guildId]);
+
+  async function doForward(targetId: string) {
+    const m = forwardMsg;
+    setForwardMsg(null); setForwardQuery('');
+    if (!m) return;
+    try {
+      const atts = (m.attachments ?? []).map((a) => ({ url: a.url, filename: a.filename, content_type: a.content_type || 'application/octet-stream', size_bytes: a.size_bytes || 0 }));
+      await api.channels.sendMessage(targetId, m.content, undefined, atts.length ? atts : undefined);
+      Alert.alert('Sidcord', 'İletildi');
+    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'İletilemedi'); }
+  }
+
   async function translate(text: string) {
     try {
       const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=tr&dt=t&q=${encodeURIComponent(text)}`);
@@ -620,7 +647,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                         <Image source={{ uri: a.url }} style={s.attachment} resizeMode="cover" />
                       </Pressable>
                     ) : (a.content_type ?? '').startsWith('audio/') ? (
-                      <AudioMessage key={a.id} url={a.url} />
+                      <AudioMessage key={a.id} url={a.url} name={a.filename} />
                     ) : (
                       <Text key={a.id} style={s.file}>📎 {a.filename}</Text>
                     ),
@@ -780,6 +807,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                 <Text style={s.sheetItemText}>🌐  Çevir (→ Türkçe)</Text>
               </TouchableOpacity>
             )}
+            <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); setForwardMsg(m); }}>
+              <Text style={s.sheetItemText}>↪️  İlet</Text>
+            </TouchableOpacity>
             {!!channel.guildId && (
               <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); setThreadFor(m); }}>
                 <Text style={s.sheetItemText}>🧵  Thread başlat</Text>
@@ -897,6 +927,23 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                   <Text style={s.pinAuthor}>{users[p.author_id]?.display_name ?? p.webhook_username ?? '…'}</Text>
                   <Text style={s.pinContent}>{p.content}</Text>
                 </View>
+              ))}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* İlet */}
+      <Modal visible={!!forwardMsg} transparent animationType="slide" onRequestClose={() => setForwardMsg(null)}>
+        <Pressable style={s.sheetBackdrop} onPress={() => setForwardMsg(null)}>
+          <Pressable style={s.sheet} onPress={() => {}}>
+            <Text style={s.pinsTitle}>İlet</Text>
+            <TextInput style={s.fwdSearch} value={forwardQuery} onChangeText={setForwardQuery} placeholder="Hedef ara…" placeholderTextColor={colors.inkTertiary} />
+            <ScrollView style={{ maxHeight: 320 }} keyboardShouldPersistTaps="handled">
+              {forwardTargets.filter((t) => t.name.toLowerCase().includes(forwardQuery.toLowerCase())).map((t) => (
+                <TouchableOpacity key={t.kind + t.id} style={s.sheetItem} onPress={() => doForward(t.id)}>
+                  <Text style={s.sheetItemText}>{t.kind === 'dm' ? '@ ' : ''}{t.name}</Text>
+                </TouchableOpacity>
               ))}
             </ScrollView>
           </Pressable>
@@ -1072,6 +1119,7 @@ const s = StyleSheet.create({
   lightboxImg: { width: '100%', height: '100%' },
   menuDots: { color: colors.ink, fontSize: 24, fontWeight: '800' },
   pinsTitle: { color: colors.ink, fontWeight: '800', fontSize: 16, marginBottom: 12 },
+  fwdSearch: { backgroundColor: colors.surface2, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, color: colors.ink, marginBottom: 8 },
   pinsEmpty: { color: colors.inkTertiary, paddingVertical: 16, textAlign: 'center' },
   pinRow: { paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
   pinAuthor: { color: colors.brand, fontWeight: '700', fontSize: 13 },
