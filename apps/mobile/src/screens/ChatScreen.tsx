@@ -329,6 +329,14 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   async function showReactors(m: Message, emoji: string) {
     try { const us = await api.reactions.users(m.id, emoji); Alert.alert(`${emoji} tepkisi`, us.length ? us.map((u) => u.display_name).join('\n') : 'Kimse yok'); } catch {}
   }
+  async function translate(text: string) {
+    try {
+      const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=tr&dt=t&q=${encodeURIComponent(text)}`);
+      const data = await res.json();
+      const out = (data?.[0] ?? []).map((seg: any) => seg[0]).join('');
+      Alert.alert('Çeviri → Türkçe', out || 'Çevrilemedi');
+    } catch { Alert.alert('Sidcord', 'Çeviri başarısız'); }
+  }
 
   // Bahsetme için üye + kanal listesi yükle (guild kanalları)
   useEffect(() => {
@@ -453,7 +461,12 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       opts.push({ text: 'Üyeler', onPress: () => nav.push({ kind: 'members', guildId: channel.guildId!, guildName: channel.name }) });
       opts.push({ text: 'Kanal ayarları', onPress: () => nav.push({ kind: 'channelSettings', channelId: channel.id, channelName: channel.name, guildId: channel.guildId }) });
       opts.push({ text: 'Sunucu ayarları', onPress: () => nav.push({ kind: 'serverSettings', guildId: channel.guildId!, guildName: channel.name }) });
-      opts.push({ text: 'Kanalı sustur', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'nothing' }).then(() => Alert.alert('Sidcord', 'Susturuldu')).catch(() => {}) });
+      opts.push({ text: 'Bildirim ayarı', onPress: () => Alert.alert('Bildirim ayarı', channel.name, [
+        { text: 'Tümü', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'all' }).then(() => Alert.alert('Sidcord', 'Tüm mesajlar')).catch(() => {}) },
+        { text: 'Sadece bahsetmeler', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'mentions' }).then(() => Alert.alert('Sidcord', 'Sadece bahsetmeler')).catch(() => {}) },
+        { text: 'Sessiz', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'nothing' }).then(() => Alert.alert('Sidcord', 'Susturuldu')).catch(() => {}) },
+        { text: 'Vazgeç', style: 'cancel' },
+      ]) });
     }
     if (!channel.guildId && channel.type === 'group_dm') {
       opts.push({ text: 'Kişi ekle', onPress: () => { api.friends.list().then((f) => setFriendList(f.filter((x) => x.friendship === 'accepted'))).catch(() => {}); setRecipOpen(true); } });
@@ -762,6 +775,11 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
             >
               <Text style={s.sheetItemText}>📋  Metni Kopyala</Text>
             </TouchableOpacity>
+            {!!menuFor?.content && (
+              <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); if (m?.content) translate(m.content); }}>
+                <Text style={s.sheetItemText}>🌐  Çevir (→ Türkçe)</Text>
+              </TouchableOpacity>
+            )}
             {!!channel.guildId && (
               <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); setThreadFor(m); }}>
                 <Text style={s.sheetItemText}>🧵  Thread başlat</Text>

@@ -1,6 +1,6 @@
 // Üye listesi + moderasyon: DM, rol yönetimi, takma ad, zaman aşımı, at, yasakla.
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Modal, Pressable, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Modal, Pressable, ScrollView, RefreshControl } from 'react-native';
 import { colors } from '../theme';
 import { api, type Member, type Role, type User } from '../api';
 import type { Nav } from '../nav';
@@ -14,6 +14,8 @@ export function MembersScreen({ guildId, guildName, me, nav, onBack }: {
   const [rolesFor, setRolesFor] = useState<Member | null>(null);
   const [nickFor, setNickFor] = useState<Member | null>(null);
   const [banFor, setBanFor] = useState<Member | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => { setRefreshing(true); try { await Promise.all([api.guilds.members(guildId).then(setMembers), api.guilds.roles(guildId).then(setRoles)]); } catch {} setRefreshing(false); };
 
   const load = useCallback(() => {
     api.guilds.members(guildId).then(setMembers).catch(() => {});
@@ -69,6 +71,7 @@ export function MembersScreen({ guildId, guildName, me, nav, onBack }: {
       <FlatList
         data={sorted}
         keyExtractor={(mb) => mb.user_id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand} />}
         ListEmptyComponent={<Empty text="Üye yok." />}
         renderItem={({ item }) => {
           const roleNames = item.role_ids.map((id) => roles.find((r) => r.id === id)?.name).filter(Boolean).slice(0, 2);

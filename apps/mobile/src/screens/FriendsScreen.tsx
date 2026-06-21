@@ -1,6 +1,6 @@
 // Arkadaşlar — kabul edilenler / bekleyenler / engellenenler, ekle, DM aç.
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, RefreshControl } from 'react-native';
 import { colors } from '../theme';
 import { api, type Friend, type User } from '../api';
 import type { Nav } from '../nav';
@@ -27,6 +27,8 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
 
   const load = useCallback(() => { api.friends.list().then(setFriends).catch(() => {}); }, []);
   useEffect(() => { load(); }, [load]);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => { setRefreshing(true); try { setFriends(await api.friends.list()); } catch {} setRefreshing(false); };
 
   const filtered = friends.filter((f) =>
     tab === 'accepted' ? f.friendship === 'accepted'
@@ -70,6 +72,7 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
       <FlatList
         data={filtered}
         keyExtractor={(f) => f.user_id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand} />}
         ListEmptyComponent={<Empty text={tab === 'accepted' ? 'Henüz arkadaşın yok.' : tab === 'pending' ? 'Bekleyen istek yok.' : 'Engellenen yok.'} />}
         renderItem={({ item }) => (
           <TouchableOpacity
