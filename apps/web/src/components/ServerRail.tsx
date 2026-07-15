@@ -107,8 +107,9 @@ export function ServerRail() {
             </div>
           ))}
 
-        {/* Yeni klasör oluştur */}
-        {guilds.length > 0 && (
+        {/* Yeni klasör oluştur — sunucu ikonlarını gruplamak için (Discord tarzı).
+            Yalnızca birkaç sunucu varken göster; azken gereksiz kalabalık yapmasın. */}
+        {guilds.length >= 3 && (
           <button
             onClick={async () => {
               const name = prompt('Klasör adı?');

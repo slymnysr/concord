@@ -397,10 +397,10 @@ export default function App() {
       {mode === 'discover' ? (
         <DiscoverContent />
       ) : (
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 min-h-0">
         <ChannelHeader />
         <div className="flex-1 flex min-h-0">
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
             {dmHubVisible ? (
               <FriendsHub />
             ) : channel?.type === 'stage' ? (
@@ -438,7 +438,7 @@ export default function App() {
                 >
                   <VoiceStage />
                 </ErrorBoundary>
-                <div className="flex-1 min-h-0 border-t border-line">
+                <div className="flex-1 min-h-0 flex flex-col border-t border-line">
                   <MessageList />
                 </div>
               </>
@@ -918,17 +918,18 @@ function VoiceStage() {
   const audioPeers = new Set<string>();
   for (const r of voice.remoteStreams()) if (r.kind === 'audio') audioPeers.add(r.userId);
 
+  // Video/ekran paylaşımı varsa büyük ızgara; yalnızca ses varsa kompakt panel
+  const hasVisual = videoTiles.length > 0 || available.length > 0 || hiddenCamList.length > 0;
+
   return (
-    <div className="shrink-0 max-h-[55%] flex flex-col bg-gradient-to-b from-surface-1 via-surface-1 to-brand-900/10 border-b border-line overflow-hidden">
-      <div className="flex-1 p-4 overflow-y-auto min-h-[120px]">
+    <div className={'shrink-0 flex flex-col bg-gradient-to-b from-surface-1 via-surface-1 to-brand-900/10 border-b border-line overflow-hidden ' + (hasVisual ? 'max-h-[55%]' : '')}>
+      <div className={'overflow-y-auto ' + (hasVisual ? 'flex-1 p-4 min-h-[120px]' : 'px-4 py-2')}>
         {videoTiles.length === 0 && available.length === 0 && hiddenCamList.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-center gap-3">
-            <Mic size={20} className="text-brand-500" />
-            <p className="text-sm text-ink-secondary">
-              {audioPeers.size > 0
-                ? `${audioPeers.size + 1} kullanıcı bağlı · video açmak için aşağıdaki butonları kullan`
-                : 'Sesli sohbet aktif · video açmak için aşağıdaki butonları kullan'}
-            </p>
+          <div className="flex items-center gap-2">
+            <Mic size={13} className="text-status-online shrink-0" />
+            <span className="text-[11px] text-ink-secondary truncate">
+              Sesli sohbet · {audioPeers.size + 1} kişi bağlı
+            </span>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 auto-rows-fr">
@@ -971,10 +972,7 @@ function VoiceStage() {
       </div>
 
       {audioPeers.size > 0 && (
-        <div className="shrink-0 border-t border-line px-3 py-2 max-h-32 overflow-y-auto space-y-1">
-          <div className="text-[10px] font-bold uppercase text-ink-tertiary tracking-wider px-1 mb-1">
-            Bağlı kullanıcılar — {audioPeers.size}
-          </div>
+        <div className="shrink-0 border-t border-line px-2 py-1 max-h-28 overflow-y-auto space-y-0.5">
           {Array.from(audioPeers).map((uid) => (
             <PeerVolumeRow key={uid} userId={uid} />
           ))}
