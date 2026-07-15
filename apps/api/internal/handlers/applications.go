@@ -257,11 +257,12 @@ func (h *Handler) ResetApplicationToken(w http.ResponseWriter, r *http.Request) 
 func (h *Handler) CreateBotSession(w http.ResponseWriter, r *http.Request) {
 	uid := middleware.UserIDFrom(r.Context())
 	var isBot bool
-	if h.Pool.QueryRow(r.Context(), `SELECT bot FROM users WHERE id = $1`, uid).Scan(&isBot) != nil || !isBot {
+	var botName string
+	if h.Pool.QueryRow(r.Context(), `SELECT bot, display_name FROM users WHERE id = $1`, uid).Scan(&isBot, &botName) != nil || !isBot {
 		writeError(w, http.StatusForbidden, "not_bot", "bu endpoint yalnızca bot hesapları için")
 		return
 	}
-	access, exp, err := h.Iss.AccessToken(uid)
+	access, exp, err := h.Iss.AccessToken(uid, botName)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "token üretilemedi")
 		return

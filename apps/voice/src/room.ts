@@ -8,6 +8,7 @@ const log = pino({ name: 'voice/room', level: 'info' });
 
 export interface Peer {
   id: string;          // user_id (snowflake string)
+  name?: string;       // görünen ad — presence'ta doğrudan gösterim için
   socketId: string;    // websocket bağlantısı kimliği
   sendTransport?: msTypes.WebRtcTransport;
   recvTransport?: msTypes.WebRtcTransport;
@@ -30,9 +31,10 @@ export class Room {
     return await getRouter(this.channelId);
   }
 
-  async addPeer(userId: string, socketId: string): Promise<Peer> {
+  async addPeer(userId: string, socketId: string, name?: string): Promise<Peer> {
     const peer: Peer = {
       id: userId,
+      name,
       socketId,
       producers: new Map(),
       consumers: new Map(),
@@ -89,6 +91,14 @@ export function getRoom(channelId: string): Room {
 
 export function listPeerIds(channelId: string): string[] {
   return Array.from(rooms.get(channelId)?.peers.keys() ?? []);
+}
+
+// Presence için id + görünen ad — istemci ID→ad lookup'ı gerektirmeden gösterir
+export function listPeers(channelId: string): { id: string; name: string }[] {
+  return Array.from(rooms.get(channelId)?.peers.values() ?? []).map((p) => ({
+    id: p.id,
+    name: p.name ?? '',
+  }));
 }
 
 // === Sunucu susturma / sağırlaştırma (mod yetkisi, enforced) ===

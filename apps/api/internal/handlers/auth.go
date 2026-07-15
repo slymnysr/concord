@@ -220,7 +220,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) issueTokens(r *http.Request, user *repo.User) (*authResp, error) {
-	access, exp, err := h.Iss.AccessToken(user.ID)
+	access, exp, err := h.Iss.AccessToken(user.ID, user.DisplayName)
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,7 @@
 // Voice presence için HTTP endpoint — web istemcisi sesli kanala katılmadan da
 // hangi kullanıcının bağlı olduğunu öğrenebilsin diye.
 import { createServer } from 'node:http';
-import { listPeerIds, setVoiceState, findUserRoom } from './room.js';
+import { listPeers, setVoiceState, findUserRoom } from './room.js';
 import { broadcastToChannel } from './signaling.js';
 import pino from 'pino';
 
@@ -63,8 +63,8 @@ export function startHTTP() {
     const url = new URL(req.url, `http://localhost:${port}`);
     if (url.pathname === '/presence') {
       const channels = (url.searchParams.get('channels') ?? '').split(',').filter(Boolean);
-      const out: Record<string, string[]> = {};
-      for (const c of channels) out[c] = listPeerIds(c);
+      const out: Record<string, { id: string; name: string }[]> = {};
+      for (const c of channels) out[c] = listPeers(c);
       return res.end(JSON.stringify(out));
     }
 

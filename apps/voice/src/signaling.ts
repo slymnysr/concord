@@ -74,7 +74,7 @@ interface Message {
   replyTo?: string;
 }
 
-type AuthedSocket = WebSocket & { userId?: string; channelId?: string; socketId?: string };
+type AuthedSocket = WebSocket & { userId?: string; userName?: string; channelId?: string; socketId?: string };
 
 export function startSignaling() {
   const wss = new WebSocketServer({ port: config.port });
@@ -91,8 +91,11 @@ export function startSignaling() {
     }
 
     try {
-      const decoded = jwt.verify(token, config.jwtSecret) as { uid?: number; sub?: string };
-      ws.userId = String(decoded.uid ?? decoded.sub ?? '');
+      const decoded = jwt.verify(token, config.jwtSecret) as { uid?: string | number; sub?: string; name?: string };
+      // sub (JWT'de string) tercih edilir; uid JS'te sayı olarak gelirse Snowflake
+      // ID'si 2^53 sınırını aşıp hassasiyet kaybeder (…792 → …790). sub kayıpsızdır.
+      ws.userId = String(decoded.sub ?? decoded.uid ?? '');
+      ws.userName = typeof decoded.name === 'string' ? decoded.name : '';
       if (!ws.userId) throw new Error('uid missing');
     } catch (e) {
       log.warn({ err: String(e) }, 'auth failed');
@@ -109,7 +112,7 @@ export function startSignaling() {
     // Diğer üyelere bildir (yeni peer geldi)
     broadcast(wss, channelId, ws.userId!, {
       type: 'peer:joined',
-      payload: { userId: ws.userId },
+      payload: { userId: ws.userId, name: ws.userName },
     });
 
     ws.on('message', async (raw) => {
@@ -167,7 +170,7 @@ async function handleMessage(ws: AuthedSocket, wss: WebSocketServer, msg: Messag
           return;
         }
       }
-      await room.addPeer(ws.userId, ws.socketId!);
+      await room.addPeer(ws.userId, ws.socketId!, ws.userName);
       // Kalıcı server-mute/deaf durumunu API'den yükle (voice server yeniden başlamış olabilir)
       await loadPersistedVoiceState(ws.channelId, ws.userId);
       const peerIds = listPeerIds(ws.channelId).filter((id) => id !== ws.userId);

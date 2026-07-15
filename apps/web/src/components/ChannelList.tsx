@@ -392,10 +392,26 @@ function VoiceConnectedRow({ userId, user }: { userId: string; user: any }) {
   const member = useAppSelector((s) => (guildId ? s.members.byGuild[guildId]?.find((m) => m.user_id === userId) : null));
   const myRoleIds = useAppSelector((s) => (guildId ? s.members.byGuild[guildId]?.find((m) => m.user_id === me?.id)?.role_ids ?? [] : []));
   const roles = useAppSelector((s) => (guildId ? s.guildRoles?.byGuild?.[guildId] ?? [] : []));
-  // İsim çözümle: önce ben, sonra üye listesi, sonra props.user (ham ID gösterme)
-  const displayName = isSelf
-    ? (me?.display_name ?? 'Sen')
-    : ((member as any)?.nickname || member?.display_name || user?.display_name || 'Yükleniyor…');
+  const dispatch = useAppDispatch();
+  // Voice presence'ın taşıdığı görünen ad — ID→ad lookup'ı gerektirmez (en güvenilir kaynak)
+  const voiceName = useAppSelector((s) => s.presence.voiceNamesByUser[userId]);
+  // İsim çözümle: guild takma adı > üye adı > presence adı > props.user > tek-sefer çekilen
+  const resolvedName = (member as any)?.nickname || member?.display_name || voiceName || user?.display_name;
+  const [fetchedName, setFetchedName] = useState<string | null>(null);
+  // Store'da yoksa kullanıcıyı tek sefer çek — "Yükleniyor…" takılı kalmasın
+  useEffect(() => {
+    if (isSelf || resolvedName) return;
+    let cancelled = false;
+    api.users.user(userId)
+      .then((u) => {
+        if (cancelled) return;
+        setFetchedName(u.display_name);
+        dispatch(upsertUser(u as any));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [userId, isSelf, resolvedName, dispatch]);
+  const displayName = isSelf ? (me?.display_name ?? 'Sen') : (resolvedName || fetchedName || 'Yükleniyor…');
   const [speaking, setSpeaking] = useState(false);
   const [muted, setMuted] = useState(() => voice.getUserVolume(userId) === 0);
   const [volume, setVolume] = useState(() => Math.round(voice.getUserVolume(userId) * 100));

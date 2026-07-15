@@ -362,6 +362,8 @@ export const acceptInviteThunk = createAsyncThunk(
 interface PresenceState {
   onlineByGuild: Record<string, string[]>;
   voiceByChannel: Record<string, string[]>;
+  // Ses katılımcısı userId -> görünen ad (voice presence'tan; ID→ad lookup'ı gerektirmez)
+  voiceNamesByUser: Record<string, string>;
   // Rich presence: guild -> userId -> aktivite (Oynuyor/Dinliyor/...)
   activityByGuild: Record<string, Record<string, { type: string; name: string; started_at?: number }>>;
   // Canlı durum: guild -> userId -> online/idle/dnd (görünmezler presence'ta hiç yok)
@@ -374,13 +376,14 @@ export const fetchVoicePresence = createAsyncThunk(
     if (channelIds.length === 0) return {};
     const params = new URLSearchParams({ channels: channelIds.join(',') });
     const res = await fetch(httpUrl(`/voice-api/presence?${params}`));
-    return (await res.json()) as Record<string, string[]>;
+    // Yeni biçim: kanal -> {id,name}[]; eski biçim (string[]) de desteklenir
+    return (await res.json()) as Record<string, ({ id: string; name: string } | string)[]>;
   },
 );
 
 const presenceSlice = createSlice({
   name: 'presence',
-  initialState: { onlineByGuild: {}, voiceByChannel: {}, activityByGuild: {}, statusByGuild: {} } as PresenceState,
+  initialState: { onlineByGuild: {}, voiceByChannel: {}, voiceNamesByUser: {}, activityByGuild: {}, statusByGuild: {} } as PresenceState,
   reducers: {
     setGuildPresence(
       state,
@@ -398,8 +401,13 @@ const presenceSlice = createSlice({
   },
   extraReducers: (b) => {
     b.addCase(fetchVoicePresence.fulfilled, (s, a) => {
-      for (const [cid, ids] of Object.entries(a.payload)) {
-        s.voiceByChannel[cid] = ids;
+      for (const [cid, peers] of Object.entries(a.payload)) {
+        // Kimlik listesi (id[]) — voice yönlendirme/identity için
+        s.voiceByChannel[cid] = peers.map((p) => (typeof p === 'string' ? p : p.id));
+        // Görünen adları eşle — eski string[] biçiminde ad yok, atlanır
+        for (const p of peers) {
+          if (typeof p !== 'string' && p.name) s.voiceNamesByUser[p.id] = p.name;
+        }
       }
     });
   },
