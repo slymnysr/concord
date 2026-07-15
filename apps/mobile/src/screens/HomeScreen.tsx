@@ -38,20 +38,20 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
     setCreateChan(false);
     if (!name.trim() || !selected || selected === 'dm') return;
     try { await api.channels.create(selected, name.trim()); reloadChannels(); }
-    catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Kanal oluşturulamadı'); }
+    catch (e: any) { Alert.alert('Concord', e?.message ?? 'Kanal oluşturulamadı'); }
   }
   async function doRenameChannel(name: string) {
     const ch = renameChan; setRenameChan(null);
     if (!ch || !name.trim()) return;
     try { await api.channels.update(ch.id, { name: name.trim() }); reloadChannels(); }
-    catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Olmadı'); }
+    catch (e: any) { Alert.alert('Concord', e?.message ?? 'Olmadı'); }
   }
   function channelMenu(ch: Channel) {
     Alert.alert(`#${ch.name}`, undefined, [
       { text: 'Ayarlar', onPress: () => nav.push({ kind: 'channelSettings', channelId: ch.id, channelName: ch.name, guildId: ch.guild_id }) },
       { text: 'Yeniden adlandır', onPress: () => setRenameChan(ch) },
-      { text: 'Sustur', onPress: () => api.channels.muteSettings(ch.id, { notif_level: 'nothing' }).then(() => Alert.alert('Sidcord', 'Susturuldu')).catch(() => {}) },
-      { text: 'Sil', style: 'destructive', onPress: () => api.channels.delete(ch.id).then(reloadChannels).catch((e) => Alert.alert('Sidcord', e?.message ?? 'Silinemedi')) },
+      { text: 'Sustur', onPress: () => api.channels.muteSettings(ch.id, { notif_level: 'nothing' }).then(() => Alert.alert('Concord', 'Susturuldu')).catch(() => {}) },
+      { text: 'Sil', style: 'destructive', onPress: () => api.channels.delete(ch.id).then(reloadChannels).catch((e) => Alert.alert('Concord', e?.message ?? 'Silinemedi')) },
       { text: 'Vazgeç', style: 'cancel' },
     ]);
   }
@@ -173,7 +173,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
 
   async function joinVoice(ch: Channel) {
     try { await voice.connect(ch.id, ch.name, { meId: me.id, stage: ch.type === 'stage' }); }
-    catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Sesli sohbet için native build (EAS dev client) gerekiyor.'); }
+    catch (e: any) { Alert.alert('Concord', e?.message ?? 'Sesli sohbet için native build (EAS dev client) gerekiyor.'); }
   }
 
   const openChannel = (ch: { id: string; name: string; guildId?: string; type?: string; participants?: string[] }) =>

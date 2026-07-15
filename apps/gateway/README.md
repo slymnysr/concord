@@ -1,4 +1,4 @@
-# Sidcord Gateway
+# Concord Gateway
 
 Phoenix tabanlı WebSocket gateway. Tüm gerçek zamanlı bağlantıların giriş noktası.
 

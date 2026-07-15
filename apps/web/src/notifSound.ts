@@ -33,13 +33,13 @@ function soundEnabled(key: string): boolean {
 }
 
 export function playMessageSound() {
-  if (!soundEnabled('sidcord_sound_message')) return;
+  if (!soundEnabled('concord_sound_message')) return;
   tone(523, 80);
   setTimeout(() => tone(659, 110), 70);
 }
 
 export function playMentionSound() {
-  if (!soundEnabled('sidcord_sound_mention')) return;
+  if (!soundEnabled('concord_sound_mention')) return;
   tone(659, 100);
   setTimeout(() => tone(880, 100), 90);
   setTimeout(() => tone(1047, 150), 180);
@@ -49,13 +49,13 @@ export function playMentionSound() {
 export function showDesktopNotification(title: string, body: string) {
   try {
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
-    if (localStorage.getItem('sidcord_desktop_notif') === '0') return;
+    if (localStorage.getItem('concord_desktop_notif') === '0') return;
     // Sekme odaktaysa rahatsız etme (uygulama içi göstergeler zaten var)
     if (typeof document !== 'undefined' && !document.hidden && document.hasFocus()) return;
     const n = new Notification(title, {
       body: (body || '').slice(0, 140),
       icon: '/favicon.svg',
-      tag: 'sidcord-msg',
+      tag: 'concord-msg',
     });
     n.onclick = () => {
       try { window.focus(); } catch {}

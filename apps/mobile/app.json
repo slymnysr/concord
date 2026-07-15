@@ -1,22 +1,22 @@
 {
   "expo": {
-    "name": "Sidcord",
-    "slug": "sidcord",
+    "name": "Concord",
+    "slug": "concord",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "sidcord",
+    "scheme": "concord",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sidcord.app",
+      "bundleIdentifier": "com.concord.app",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Sesli sohbet için mikrofon erişimi gerekir.",
         "NSCameraUsageDescription": "Görüntülü görüşme ve avatar için kamera erişimi gerekir."
       }
     },
     "android": {
-      "package": "com.sidcord.app",
+      "package": "com.concord.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

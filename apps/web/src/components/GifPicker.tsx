@@ -3,8 +3,8 @@ import { Search } from 'lucide-react';
 import { api } from '../api';
 import { useAppDispatch } from '../store';
 
-// Giphy public API. Kendi anahtarınızı localStorage 'sidcord_giphy_key' ile override edebilirsiniz.
-const GIPHY_KEY = (typeof localStorage !== 'undefined' && localStorage.getItem('sidcord_giphy_key')) || 'dc6zaTOxFJmzC';
+// Giphy public API. Kendi anahtarınızı localStorage 'concord_giphy_key' ile override edebilirsiniz.
+const GIPHY_KEY = (typeof localStorage !== 'undefined' && localStorage.getItem('concord_giphy_key')) || 'dc6zaTOxFJmzC';
 
 interface Gif {
   id: string;
@@ -91,7 +91,7 @@ export function GifPicker({ channelId, onClose }: Props) {
         {loading ? (
           <p className="text-sm text-ink-tertiary text-center py-8">Yükleniyor…</p>
         ) : err ? (
-          <p className="text-sm text-accent-500 text-center py-8 px-3">{err}<br /><span className="text-xs text-ink-tertiary">Kendi Giphy anahtarın için: localStorage <code>sidcord_giphy_key</code></span></p>
+          <p className="text-sm text-accent-500 text-center py-8 px-3">{err}<br /><span className="text-xs text-ink-tertiary">Kendi Giphy anahtarın için: localStorage <code>concord_giphy_key</code></span></p>
         ) : gifs.length === 0 ? (
           <p className="text-sm text-ink-tertiary text-center py-8">Sonuç yok.</p>
         ) : (

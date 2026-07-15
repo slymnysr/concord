@@ -1,4 +1,4 @@
-# Sidcord Mobil CI — her PR/push'ta tip kontrolü (tsc) + Metro paketleme (expo export).
+# Concord Mobil CI — her PR/push'ta tip kontrolü (tsc) + Metro paketleme (expo export).
 # Cihaz/backend testi değil; ama derleme/paketleme regresyonlarını yakalar.
 name: Mobile CI
 

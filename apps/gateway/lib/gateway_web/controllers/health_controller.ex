@@ -4,7 +4,7 @@ defmodule GatewayWeb.HealthController do
   def index(conn, _params) do
     json(conn, %{
       status: "ok",
-      service: "sidcord-gateway",
+      service: "concord-gateway",
       version: "0.0.1"
     })
   end

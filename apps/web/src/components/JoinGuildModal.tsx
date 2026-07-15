@@ -12,7 +12,7 @@ export function JoinGuildModal() {
 
   // Davet bağlantısı da yapıştırılırsa kodu çıkar
   function normalize(input: string) {
-    const m = input.trim().match(/(?:sidcord\.com\/(?:invite|davet)\/)?([a-z0-9]{4,16})/i);
+    const m = input.trim().match(/(?:concord\.com\/(?:invite|davet)\/)?([a-z0-9]{4,16})/i);
     return m ? m[1] : input.trim();
   }
 

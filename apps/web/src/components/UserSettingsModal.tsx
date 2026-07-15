@@ -130,7 +130,7 @@ function ProfileTab() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + localStorage.getItem('sidcord_access'),
+          Authorization: 'Bearer ' + localStorage.getItem('concord_access'),
         },
         body: JSON.stringify({ banner_url: presign.public_url }),
       });
@@ -147,7 +147,7 @@ function ProfileTab() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + localStorage.getItem('sidcord_access'),
+          Authorization: 'Bearer ' + localStorage.getItem('concord_access'),
         },
         body: JSON.stringify({ display_name: displayName, bio, pronouns, accent_color: accent, avatar_decoration: decoration }),
       });
@@ -174,7 +174,7 @@ function ProfileTab() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + localStorage.getItem('sidcord_access'),
+          Authorization: 'Bearer ' + localStorage.getItem('concord_access'),
         },
         body: JSON.stringify({ avatar_url: presign.public_url }),
       });
@@ -672,7 +672,7 @@ function KeywordManager() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
           maxLength={50}
-          placeholder="Kelime ekle (ör. sidcord, duyuru)"
+          placeholder="Kelime ekle (ör. concord, duyuru)"
           className="flex-1 bg-surface-1 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-1.5 text-sm text-ink-primary"
         />
         <button onClick={add} disabled={!input.trim()} className="px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:opacity-50 text-white text-sm font-semibold">Ekle</button>
@@ -1061,7 +1061,7 @@ function NotificationsTab() {
     try {
       const reg = await navigator.serviceWorker.register('/sw.js');
       await navigator.serviceWorker.ready;
-      // Sidcord public VAPID key (dev için sabit). Production'da backend'den getirilir.
+      // Concord public VAPID key (dev için sabit). Production'da backend'den getirilir.
       // Bu placeholder — gerçek push gönderim için backend webpush kütüphanesi ile imzalanır.
       const sub = await reg.pushManager.subscribe({ userVisibleOnly: true });
       const json = sub.toJSON() as any;
@@ -1092,7 +1092,7 @@ function NotificationsTab() {
       <div className="bg-surface-2 rounded-xl border border-line p-4">
         <h3 className="text-sm font-bold text-ink-primary mb-2">Masaüstü Bildirimleri</h3>
         <p className="text-sm text-ink-secondary mb-3">
-          Sidcord sekmesi açık değilken bile DM ve mention bildirimleri göstersin.
+          Concord sekmesi açık değilken bile DM ve mention bildirimleri göstersin.
         </p>
         {err && <p className="text-accent-500 text-sm mb-2">{err}</p>}
         {enabled === 'granted' && subscribed ? (
@@ -1121,9 +1121,9 @@ function NotificationsTab() {
 
       <div className="bg-surface-2 rounded-xl border border-line p-4 mt-4 space-y-1">
         <h3 className="text-sm font-bold text-ink-primary mb-2">Bildirim Tercihleri</h3>
-        <AudioToggle storageKey="sidcord_desktop_notif" label="Masaüstü bildirimi göster" desc="Sekme arka plandayken DM/mention için sistem bildirimi" />
-        <AudioToggle storageKey="sidcord_sound_mention" label="Mention/DM sesi" desc="Biri seni etiketlediğinde veya DM attığında ses çal" />
-        <AudioToggle storageKey="sidcord_sound_message" label="Mesaj sesi" desc="Açık olmayan kanallara mesaj geldiğinde ses çal" />
+        <AudioToggle storageKey="concord_desktop_notif" label="Masaüstü bildirimi göster" desc="Sekme arka plandayken DM/mention için sistem bildirimi" />
+        <AudioToggle storageKey="concord_sound_mention" label="Mention/DM sesi" desc="Biri seni etiketlediğinde veya DM attığında ses çal" />
+        <AudioToggle storageKey="concord_sound_message" label="Mesaj sesi" desc="Açık olmayan kanallara mesaj geldiğinde ses çal" />
         <div className="flex gap-2 pt-2">
           <button onClick={() => playMentionSound()} className="text-xs px-2.5 py-1 rounded-lg bg-surface-3 hover:bg-surface-1 text-ink-secondary">▶ Mention sesi</button>
           <button onClick={() => playMessageSound()} className="text-xs px-2.5 py-1 rounded-lg bg-surface-3 hover:bg-surface-1 text-ink-secondary">▶ Mesaj sesi</button>
@@ -1137,11 +1137,11 @@ function NotificationsTab() {
 
 function VoiceTab() {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-  const [inputId, setInputId] = useState(localStorage.getItem('sidcord_input_device') ?? 'default');
-  const [outputId, setOutputId] = useState(localStorage.getItem('sidcord_output_device') ?? 'default');
-  const [videoId, setVideoId] = useState(localStorage.getItem('sidcord_video_device') ?? 'default');
-  const [ptt, setPtt] = useState(localStorage.getItem('sidcord_ptt') === '1');
-  const [pttKey, setPttKey] = useState(localStorage.getItem('sidcord_ptt_key') ?? 'Space');
+  const [inputId, setInputId] = useState(localStorage.getItem('concord_input_device') ?? 'default');
+  const [outputId, setOutputId] = useState(localStorage.getItem('concord_output_device') ?? 'default');
+  const [videoId, setVideoId] = useState(localStorage.getItem('concord_video_device') ?? 'default');
+  const [ptt, setPtt] = useState(localStorage.getItem('concord_ptt') === '1');
+  const [pttKey, setPttKey] = useState(localStorage.getItem('concord_ptt_key') ?? 'Space');
   const [capturing, setCapturing] = useState(false);
 
   useEffect(() => {
@@ -1154,19 +1154,19 @@ function VoiceTab() {
   function saveDevice(kind: 'input' | 'output' | 'video', id: string) {
     if (kind === 'input') {
       setInputId(id);
-      localStorage.setItem('sidcord_input_device', id);
+      localStorage.setItem('concord_input_device', id);
     } else if (kind === 'output') {
       setOutputId(id);
-      localStorage.setItem('sidcord_output_device', id);
+      localStorage.setItem('concord_output_device', id);
     } else {
       setVideoId(id);
-      localStorage.setItem('sidcord_video_device', id);
+      localStorage.setItem('concord_video_device', id);
     }
   }
 
   function togglePtt(v: boolean) {
     setPtt(v);
-    localStorage.setItem('sidcord_ptt', v ? '1' : '0');
+    localStorage.setItem('concord_ptt', v ? '1' : '0');
   }
 
   useEffect(() => {
@@ -1175,7 +1175,7 @@ function VoiceTab() {
       e.preventDefault();
       const k = e.code || e.key;
       setPttKey(k);
-      localStorage.setItem('sidcord_ptt_key', k);
+      localStorage.setItem('concord_ptt_key', k);
       setCapturing(false);
     }
     window.addEventListener('keydown', onKey, { once: true });
@@ -1275,17 +1275,17 @@ function VoiceTab() {
 
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-1">
         <h3 className="text-sm font-bold text-ink-primary mb-2">Ses İşleme</h3>
-        <AudioToggle storageKey="sidcord_echo_cancel" label="Yankı engelleme" desc="Hoparlör sesinin mikrofona geri dönmesini önler" />
-        <AudioToggle storageKey="sidcord_noise_suppress" label="Gürültü engelleme" desc="Arka plan gürültüsünü bastırır (tarayıcı yerleşik)" />
+        <AudioToggle storageKey="concord_echo_cancel" label="Yankı engelleme" desc="Hoparlör sesinin mikrofona geri dönmesini önler" />
+        <AudioToggle storageKey="concord_noise_suppress" label="Gürültü engelleme" desc="Arka plan gürültüsünü bastırır (tarayıcı yerleşik)" />
         <AudioToggle
-          storageKey="sidcord_rnnoise"
+          storageKey="concord_rnnoise"
           label="🤖 Gelişmiş gürültü engelleme (RNNoise)"
           desc="Yapay zekâ tabanlı — klavye/fan gibi gürültüleri çok daha iyi temizler, cihazında çalışır"
           defaultOn={false}
         />
-        <AudioToggle storageKey="sidcord_auto_gain" label="Otomatik kazanç" desc="Mikrofon seviyesini otomatik dengeler" />
+        <AudioToggle storageKey="concord_auto_gain" label="Otomatik kazanç" desc="Mikrofon seviyesini otomatik dengeler" />
         <AudioToggle
-          storageKey="sidcord_music_mode"
+          storageKey="concord_music_mode"
           label="🎵 Müzik modu"
           desc="Stereo + yüksek bitrate; tüm ses işleme kapatılır (enstrüman/müzik paylaşımı için)"
           defaultOn={false}
@@ -1296,7 +1296,7 @@ function VoiceTab() {
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-1">
         <h3 className="text-sm font-bold text-ink-primary mb-2">Görüntü</h3>
         <AudioToggle
-          storageKey="sidcord_video_blur"
+          storageKey="concord_video_blur"
           label="✨ Arka planı bulanıklaştır"
           desc="Kamerada sadece sen net görünürsün (cihazında işlenir, ilk açılışta model indirilir)"
           defaultOn={false}
@@ -1307,8 +1307,8 @@ function VoiceTab() {
           <div className="flex-1">
             <label className="block text-xs font-semibold text-ink-secondary mb-1">Yayın çözünürlüğü</label>
             <select
-              defaultValue={localStorage.getItem('sidcord_stream_res') ?? '720'}
-              onChange={(e) => localStorage.setItem('sidcord_stream_res', e.target.value)}
+              defaultValue={localStorage.getItem('concord_stream_res') ?? '720'}
+              onChange={(e) => localStorage.setItem('concord_stream_res', e.target.value)}
               className="w-full bg-surface-1 border border-line rounded-lg px-2 py-1.5 text-sm text-ink-primary outline-none focus:border-brand-500/50"
               aria-label="Yayın çözünürlüğü"
             >
@@ -1320,8 +1320,8 @@ function VoiceTab() {
           <div className="flex-1">
             <label className="block text-xs font-semibold text-ink-secondary mb-1">Kare hızı</label>
             <select
-              defaultValue={localStorage.getItem('sidcord_stream_fps') ?? '30'}
-              onChange={(e) => localStorage.setItem('sidcord_stream_fps', e.target.value)}
+              defaultValue={localStorage.getItem('concord_stream_fps') ?? '30'}
+              onChange={(e) => localStorage.setItem('concord_stream_fps', e.target.value)}
               className="w-full bg-surface-1 border border-line rounded-lg px-2 py-1.5 text-sm text-ink-primary outline-none focus:border-brand-500/50"
               aria-label="Yayın kare hızı"
             >
@@ -1367,23 +1367,23 @@ function AudioToggle({ storageKey, label, desc, defaultOn = true }: { storageKey
 }
 
 function AppearanceTab() {
-  const [density, setDensity] = useState(localStorage.getItem('sidcord_density') ?? 'cozy');
-  const [theme, setTheme] = useState(localStorage.getItem('sidcord_theme') ?? 'dark');
-  const [zoom, setZoom] = useState(() => parseInt(localStorage.getItem('sidcord_zoom') ?? '100', 10));
+  const [density, setDensity] = useState(localStorage.getItem('concord_density') ?? 'cozy');
+  const [theme, setTheme] = useState(localStorage.getItem('concord_theme') ?? 'dark');
+  const [zoom, setZoom] = useState(() => parseInt(localStorage.getItem('concord_zoom') ?? '100', 10));
 
   function applyDensity(v: string) {
     setDensity(v);
-    localStorage.setItem('sidcord_density', v);
+    localStorage.setItem('concord_density', v);
     document.documentElement.dataset.density = v;
   }
   function applyTheme(v: string) {
     setTheme(v);
-    localStorage.setItem('sidcord_theme', v);
+    localStorage.setItem('concord_theme', v);
     document.documentElement.dataset.theme = v;
   }
   function applyZoom(v: number) {
     setZoom(v);
-    localStorage.setItem('sidcord_zoom', String(v));
+    localStorage.setItem('concord_zoom', String(v));
     (document.documentElement.style as any).zoom = String(v / 100);
   }
   useEffect(() => {

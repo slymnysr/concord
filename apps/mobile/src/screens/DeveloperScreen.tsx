@@ -15,13 +15,13 @@ export function DeveloperScreen({ onBack }: { onBack: () => void }) {
   useEffect(() => { load(); }, []);
 
   async function run(fn: () => Promise<any>, ok?: string) {
-    try { await fn(); if (ok) Alert.alert('Sidcord', ok); load(); }
-    catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'İşlem başarısız'); }
+    try { await fn(); if (ok) Alert.alert('Concord', ok); load(); }
+    catch (e: any) { Alert.alert('Concord', e?.message ?? 'İşlem başarısız'); }
   }
 
   function appMenu(a: App) {
     Alert.alert(a.name, `@${a.bot_username}`, [
-      { text: 'Token sıfırla', onPress: () => api.applications.resetToken(a.id).then((r) => Alert.alert('Bot Token', `${r.token}\n\nGüvenli bir yere kaydet — tekrar gösterilmez.`)).catch((e) => Alert.alert('Sidcord', e?.message ?? 'Olmadı')) },
+      { text: 'Token sıfırla', onPress: () => api.applications.resetToken(a.id).then((r) => Alert.alert('Bot Token', `${r.token}\n\nGüvenli bir yere kaydet — tekrar gösterilmez.`)).catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı')) },
       { text: a.public ? 'Gizli yap' : 'Herkese açık yap', onPress: () => run(() => api.applications.update(a.id, { public: !a.public })) },
       { text: 'Sil', style: 'destructive', onPress: () => run(() => api.applications.remove(a.id)) },
       { text: 'Vazgeç', style: 'cancel' },

@@ -24,13 +24,13 @@ export function MembersScreen({ guildId, guildName, me, nav, onBack }: {
   useEffect(() => { load(); }, [load]);
 
   async function run(fn: () => Promise<any>, ok?: string) {
-    try { await fn(); if (ok) Alert.alert('Sidcord', ok); load(); }
-    catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'İşlem başarısız'); }
+    try { await fn(); if (ok) Alert.alert('Concord', ok); load(); }
+    catch (e: any) { Alert.alert('Concord', e?.message ?? 'İşlem başarısız'); }
   }
 
   async function openDM(mb: Member) {
     try { const r = await api.dms.open(mb.user_id); nav.push({ kind: 'chat', channel: { id: r.channel_id, name: mb.display_name } }); }
-    catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'DM açılamadı'); }
+    catch (e: any) { Alert.alert('Concord', e?.message ?? 'DM açılamadı'); }
   }
 
   function timeoutMenu(mb: Member) {

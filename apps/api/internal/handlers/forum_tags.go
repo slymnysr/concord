@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
 )
 
 type forumTagView struct {

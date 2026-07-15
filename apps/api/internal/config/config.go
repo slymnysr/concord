@@ -33,7 +33,7 @@ func Load() *Config {
 
 	return &Config{
 		Port:          getEnv("API_PORT", "8080"),
-		PostgresDSN:   getEnv("POSTGRES_DSN", "postgres://sidcord:sidcord_dev@localhost:5433/sidcord?sslmode=disable"),
+		PostgresDSN:   getEnv("POSTGRES_DSN", "postgres://concord:concord_dev@localhost:5433/concord?sslmode=disable"),
 		RedisAddr:     getEnv("REDIS_HOST", "localhost") + ":" + getEnv("REDIS_PORT", "6379"),
 		RedisPassword: getEnv("REDIS_PASSWORD", ""),
 		// NOT: Gateway'in (Elixir) default'u ile AYNI olmalı, yoksa WS token doğrulaması 403 verir
@@ -47,7 +47,7 @@ func Load() *Config {
 		SMTPPort:           getEnv("SMTP_PORT", "1025"),
 		SMTPUser:           getEnv("SMTP_USER", ""),
 		SMTPPass:           getEnv("SMTP_PASS", ""),
-		MailFrom:           getEnv("MAIL_FROM", "Sidcord <no-reply@sidcord.local>"),
+		MailFrom:           getEnv("MAIL_FROM", "Concord <no-reply@concord.local>"),
 		WebBaseURL:         getEnv("WEB_BASE_URL", "http://localhost:3000"),
 	}
 }

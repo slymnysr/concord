@@ -32,7 +32,7 @@ func (h *Handler) parseAndStoreEmbeds(messageID int64, content string) {
 		if err != nil {
 			continue
 		}
-		req.Header.Set("User-Agent", "Sidcord-LinkPreview/1.0")
+		req.Header.Set("User-Agent", "Concord-LinkPreview/1.0")
 		resp, err := client.Do(req)
 		if err != nil {
 			continue

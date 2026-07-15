@@ -1,4 +1,4 @@
-# Sidcord Web
+# Concord Web
 
 React + Vite + TypeScript + Redux Toolkit + Tailwind. Tarayıcı istemcisi.
 

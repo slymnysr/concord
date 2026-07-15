@@ -1,8 +1,8 @@
 {
-  "name": "sidcord",
+  "name": "concord",
   "version": "0.0.1",
   "private": true,
-  "description": "Sidcord - Türkiye Discord alternatifi",
+  "description": "Concord - Türkiye Discord alternatifi",
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "build": "turbo run build",

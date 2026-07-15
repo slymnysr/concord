@@ -3,8 +3,8 @@ defmodule GatewayWeb.Endpoint do
 
   @session_options [
     store: :cookie,
-    key: "_sidcord_gateway_key",
-    signing_salt: "sidcord_salt_change_me"
+    key: "_concord_gateway_key",
+    signing_salt: "concord_salt_change_me"
   ]
 
   socket "/socket", GatewayWeb.UserSocket,
@@ -16,7 +16,7 @@ defmodule GatewayWeb.Endpoint do
     longpoll: false
 
   plug Corsica,
-    origins: ["http://localhost:3000", ~r{^https?://.*\.sidcord\.com$}],
+    origins: ["http://localhost:3000", ~r{^https?://.*\.concord\.com$}],
     allow_credentials: true,
     allow_headers: :all
 

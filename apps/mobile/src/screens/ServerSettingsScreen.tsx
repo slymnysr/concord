@@ -38,8 +38,8 @@ export function ServerSettingsScreen({ guildId, guildName, nav, onBack }: {
   }, [view, guildId]);
 
   async function run(fn: () => Promise<any>, after?: () => void, ok?: string) {
-    try { await fn(); if (ok) Alert.alert('Sidcord', ok); after?.(); }
-    catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'İşlem başarısız'); }
+    try { await fn(); if (ok) Alert.alert('Concord', ok); after?.(); }
+    catch (e: any) { Alert.alert('Concord', e?.message ?? 'İşlem başarısız'); }
   }
 
   async function pickIcon() {
@@ -50,8 +50,8 @@ export function ServerSettingsScreen({ guildId, guildName, nav, onBack }: {
       const up = await uploadFile(a.uri, a.fileName || 'icon.jpg', a.mimeType || 'image/jpeg', a.fileSize || 0);
       await api.guilds.update(guildId, { icon_url: up.url });
       reloadGuild();
-      Alert.alert('Sidcord', 'Sunucu ikonu güncellendi');
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Yüklenemedi'); }
+      Alert.alert('Concord', 'Sunucu ikonu güncellendi');
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Yüklenemedi'); }
   }
 
   function leave() {

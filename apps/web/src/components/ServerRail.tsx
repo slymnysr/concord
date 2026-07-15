@@ -82,23 +82,23 @@ export function ServerRail() {
               key={g.id}
               draggable
               onDragStart={(e) => {
-                e.dataTransfer.setData('text/sidcord-guild', g.id);
+                e.dataTransfer.setData('text/concord-guild', g.id);
                 e.dataTransfer.effectAllowed = 'move';
               }}
               onDragOver={(e) => {
-                if (e.dataTransfer.types.includes('text/sidcord-guild')) e.preventDefault();
+                if (e.dataTransfer.types.includes('text/concord-guild')) e.preventDefault();
               }}
               onDrop={(e) => {
                 e.preventDefault();
-                const draggedId = e.dataTransfer.getData('text/sidcord-guild');
+                const draggedId = e.dataTransfer.getData('text/concord-guild');
                 if (!draggedId || draggedId === g.id) return;
                 try {
-                  const order = JSON.parse(localStorage.getItem('sidcord_guild_order') ?? '[]') as string[];
+                  const order = JSON.parse(localStorage.getItem('concord_guild_order') ?? '[]') as string[];
                   const filtered = order.filter((id) => id !== draggedId && guilds.some((x) => x.id === id));
                   const targetIdx = filtered.indexOf(g.id);
                   const insertAt = targetIdx >= 0 ? targetIdx : idx;
                   filtered.splice(insertAt, 0, draggedId);
-                  localStorage.setItem('sidcord_guild_order', JSON.stringify(filtered));
+                  localStorage.setItem('concord_guild_order', JSON.stringify(filtered));
                   location.reload();
                 } catch {}
               }}
@@ -168,7 +168,7 @@ function GuildIcon({ guild, active }: { guild: APIGuild; active: boolean }) {
     }
     return { hasUnread: unread, totalMentions: mentions };
   });
-  const muted = typeof localStorage !== 'undefined' && localStorage.getItem('sidcord_guildmute_' + guild.id) === '1';
+  const muted = typeof localStorage !== 'undefined' && localStorage.getItem('concord_guildmute_' + guild.id) === '1';
 
   return (
     <div className={'relative ' + (muted ? 'opacity-50' : '')}>
@@ -240,7 +240,7 @@ function GuildContextMenu({
     try {
       await fetch(httpUrl(`/api/v1/guilds/${guild.id}/leave`), {
         method: 'POST',
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('sidcord_access') },
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('concord_access') },
       });
       location.reload();
     } catch {}
@@ -311,7 +311,7 @@ function FolderView({
           onRemove();
         }}
         onDragOver={(e) => {
-          if (e.dataTransfer.types.includes('text/sidcord-guild')) {
+          if (e.dataTransfer.types.includes('text/concord-guild')) {
             e.preventDefault();
             setOver(true);
           }
@@ -320,7 +320,7 @@ function FolderView({
         onDrop={(e) => {
           e.preventDefault();
           setOver(false);
-          const id = e.dataTransfer.getData('text/sidcord-guild');
+          const id = e.dataTransfer.getData('text/concord-guild');
           if (id) onDropToFolder(id);
         }}
         title={folder.name + ' (sağ tık ile sil)'}

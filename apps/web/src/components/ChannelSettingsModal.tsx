@@ -506,7 +506,7 @@ function IntegrationsTab({ channel }: { channel: APIChannel }) {
     setCreating(true);
     setNewUrl(null);
     try {
-      const wh = await api.webhooks.create(channel.id, 'Sidcord Webhook');
+      const wh = await api.webhooks.create(channel.id, 'Concord Webhook');
       setNewUrl(`${location.origin}/api/v1/webhooks/${wh.id}/${wh.token}`);
       await refresh();
     } catch (e: any) {

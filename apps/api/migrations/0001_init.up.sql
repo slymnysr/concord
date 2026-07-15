@@ -1,4 +1,4 @@
--- Sidcord ilk şema
+-- Concord ilk şema
 -- Snowflake ID = BIGINT (64-bit), uygulamada üretilir
 
 CREATE TABLE users (
@@ -114,7 +114,7 @@ CREATE TABLE attachments (
 );
 
 -- Otomatik updated_at trigger
-CREATE OR REPLACE FUNCTION sidcord_set_updated_at() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION concord_set_updated_at() RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
@@ -122,8 +122,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_users_updated BEFORE UPDATE ON users
-    FOR EACH ROW EXECUTE FUNCTION sidcord_set_updated_at();
+    FOR EACH ROW EXECUTE FUNCTION concord_set_updated_at();
 CREATE TRIGGER trg_guilds_updated BEFORE UPDATE ON guilds
-    FOR EACH ROW EXECUTE FUNCTION sidcord_set_updated_at();
+    FOR EACH ROW EXECUTE FUNCTION concord_set_updated_at();
 CREATE TRIGGER trg_channels_updated BEFORE UPDATE ON channels
-    FOR EACH ROW EXECUTE FUNCTION sidcord_set_updated_at();
+    FOR EACH ROW EXECUTE FUNCTION concord_set_updated_at();

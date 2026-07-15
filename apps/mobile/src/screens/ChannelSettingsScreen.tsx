@@ -24,8 +24,8 @@ export function ChannelSettingsScreen({ channelId, channelName, onBack }: {
   useEffect(() => { reload(); }, [reload]);
 
   async function run(fn: () => Promise<any>, ok?: string) {
-    try { await fn(); if (ok) Alert.alert('Sidcord', ok); reload(); }
-    catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'İşlem başarısız'); }
+    try { await fn(); if (ok) Alert.alert('Concord', ok); reload(); }
+    catch (e: any) { Alert.alert('Concord', e?.message ?? 'İşlem başarısız'); }
   }
 
   function slowMenu() {

@@ -11,8 +11,8 @@ import { api } from './api';
 // Bildirim aç/kapa tercihi (uygulama-içi toast + yerel bildirim)
 let _notifOn = true;
 export function notifOn() { return _notifOn; }
-export async function loadNotifPref() { try { _notifOn = (await AsyncStorage.getItem('sidcord_notif_on')) !== '0'; } catch {} }
-export async function setNotifOn(v: boolean) { _notifOn = v; try { await AsyncStorage.setItem('sidcord_notif_on', v ? '1' : '0'); } catch {} }
+export async function loadNotifPref() { try { _notifOn = (await AsyncStorage.getItem('concord_notif_on')) !== '0'; } catch {} }
+export async function setNotifOn(v: boolean) { _notifOn = v; try { await AsyncStorage.setItem('concord_notif_on', v ? '1' : '0'); } catch {} }
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -40,7 +40,7 @@ export async function registerForPush() {
 
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
-        name: 'Sidcord',
+        name: 'Concord',
         importance: Notifications.AndroidImportance.DEFAULT,
       });
     }

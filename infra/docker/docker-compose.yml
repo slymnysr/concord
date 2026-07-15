@@ -1,29 +1,29 @@
-# Sidcord geliştirme ortamı veritabanları
+# Concord geliştirme ortamı veritabanları
 # Kullanım: docker compose -f infra/docker/docker-compose.yml up -d
 
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: sidcord-postgres
+    container_name: concord-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: sidcord
-      POSTGRES_PASSWORD: sidcord_dev
-      POSTGRES_DB: sidcord
+      POSTGRES_USER: concord
+      POSTGRES_PASSWORD: concord_dev
+      POSTGRES_DB: concord
     ports:
       - "5433:5432"  # lokal postgres 5432'yi tutuyor, çakışmayı önle
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sidcord"]
+      test: ["CMD-SHELL", "pg_isready -U concord"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: sidcord-redis
+    container_name: concord-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -38,7 +38,7 @@ services:
 
   scylla:
     image: scylladb/scylla:5.4
-    container_name: sidcord-scylla
+    container_name: concord-scylla
     restart: unless-stopped
     ports:
       - "9042:9042"  # CQL
@@ -60,14 +60,14 @@ services:
   # Yerel obje deposu (S3 uyumlu) — geliştirmede Cloudflare R2 yerine
   minio:
     image: minio/minio:latest
-    container_name: sidcord-minio
+    container_name: concord-minio
     restart: unless-stopped
     ports:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: sidcord
-      MINIO_ROOT_PASSWORD: sidcord_dev_minio
+      MINIO_ROOT_USER: concord
+      MINIO_ROOT_PASSWORD: concord_dev_minio
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
@@ -80,7 +80,7 @@ services:
   # Geliştirme SMTP sunucusu — gönderilen tüm mailler http://localhost:8025 arayüzünde görünür
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: sidcord-mailhog
+    container_name: concord-mailhog
     restart: unless-stopped
     ports:
       - "1025:1025"

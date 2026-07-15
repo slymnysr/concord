@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
+	"github.com/concord/api/internal/repo"
 	"go.uber.org/zap"
 )
 
@@ -82,6 +82,14 @@ func (h *Handler) CreateMessage(w http.ResponseWriter, r *http.Request) {
 		}
 		if !perms.Has(chanPerms, perms.SendMessages) {
 			writeError(w, http.StatusForbidden, "missing_permission", "bu kanala mesaj atma izni yok")
+			return
+		}
+
+		// Zaman aşımı (timeout) yaptırımı — süresi dolana kadar mesaj gönderilemez
+		if until, terr := h.Moderation.ActiveTimeout(r.Context(), *ch.GuildID, uid); terr == nil && until != nil {
+			w.Header().Set("Retry-After", strconv.Itoa(int(time.Until(*until).Seconds())+1))
+			writeError(w, http.StatusForbidden, "communication_disabled",
+				"zaman aşımı uygulandı — "+until.Format(time.RFC3339)+" tarihine kadar mesaj gönderemezsin")
 			return
 		}
 
@@ -317,7 +325,7 @@ func (h *Handler) publishMessage(ctx context.Context, ch *repo.Channel, m *repo.
 	if ch.GuildID != nil {
 		base["guild_id"] = strconv.FormatInt(*ch.GuildID, 10)
 		payload, _ := json.Marshal(base)
-		topic := "sidcord:guild:" + strconv.FormatInt(*ch.GuildID, 10)
+		topic := "concord:guild:" + strconv.FormatInt(*ch.GuildID, 10)
 		_, _ = h.Redis.Publish(ctx, topic, payload).Result()
 		return
 	}
@@ -331,7 +339,7 @@ func (h *Handler) publishMessage(ctx context.Context, ch *repo.Channel, m *repo.
 	for rows.Next() {
 		var uid int64
 		if err := rows.Scan(&uid); err == nil {
-			_, _ = h.Redis.Publish(ctx, "sidcord:user:"+strconv.FormatInt(uid, 10), payload).Result()
+			_, _ = h.Redis.Publish(ctx, "concord:user:"+strconv.FormatInt(uid, 10), payload).Result()
 		}
 	}
 }

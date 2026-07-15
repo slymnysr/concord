@@ -175,10 +175,10 @@ function NotificationsBell() {
     const t = setInterval(refreshCount, 15000);
     // Gerçek-zamanlı: yeni bildirim gelince (App → gateway → window) anında tazele
     function onNotif() { refreshCount(); }
-    window.addEventListener('sidcord:notification', onNotif);
+    window.addEventListener('concord:notification', onNotif);
     return () => {
       clearInterval(t);
-      window.removeEventListener('sidcord:notification', onNotif);
+      window.removeEventListener('concord:notification', onNotif);
     };
   }, []);
 
@@ -394,7 +394,7 @@ function PinsButton({ channelId }: { channelId: string }) {
                       onClick={() => {
                         setOpen(false);
                         setTimeout(() => {
-                          window.dispatchEvent(new CustomEvent('sidcord:jump-to-message', { detail: { messageId: m.id, channelId } }));
+                          window.dispatchEvent(new CustomEvent('concord:jump-to-message', { detail: { messageId: m.id, channelId } }));
                         }, 100);
                       }}
                     >

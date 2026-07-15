@@ -64,18 +64,18 @@ export function ChannelList() {
   const isOwner = useAppSelector((s) => s.guilds.list.find((g) => g.id === s.guilds.selectedId)?.owner_id === meId);
 
   // Metin/Ses bölüm katlama (localStorage'da kalıcı)
-  const [collapsedText, setCollapsedTextRaw] = useState(() => localStorage.getItem('sidcord_collapse_text') === '1');
-  const [collapsedVoice, setCollapsedVoiceRaw] = useState(() => localStorage.getItem('sidcord_collapse_voice') === '1');
+  const [collapsedText, setCollapsedTextRaw] = useState(() => localStorage.getItem('concord_collapse_text') === '1');
+  const [collapsedVoice, setCollapsedVoiceRaw] = useState(() => localStorage.getItem('concord_collapse_voice') === '1');
   const setCollapsedText = (v: boolean | ((p: boolean) => boolean)) =>
     setCollapsedTextRaw((p) => {
       const n = typeof v === 'function' ? v(p) : v;
-      localStorage.setItem('sidcord_collapse_text', n ? '1' : '0');
+      localStorage.setItem('concord_collapse_text', n ? '1' : '0');
       return n;
     });
   const setCollapsedVoice = (v: boolean | ((p: boolean) => boolean)) =>
     setCollapsedVoiceRaw((p) => {
       const n = typeof v === 'function' ? v(p) : v;
-      localStorage.setItem('sidcord_collapse_voice', n ? '1' : '0');
+      localStorage.setItem('concord_collapse_voice', n ? '1' : '0');
       return n;
     });
   const usersById = useAppSelector((s) => s.users.byId);
@@ -130,7 +130,7 @@ export function ChannelList() {
     beforeId?: string,
   ) {
     e.preventDefault();
-    const draggedId = e.dataTransfer.getData('text/sidcord-channel');
+    const draggedId = e.dataTransfer.getData('text/concord-channel');
     if (!draggedId || !guildId) return;
     const dragged = all.find((c) => c.id === draggedId);
     if (!dragged || dragged.type === 'category') return;
@@ -170,11 +170,11 @@ export function ChannelList() {
         key={ch.id}
         draggable
         onDragStart={(e) => {
-          e.dataTransfer.setData('text/sidcord-channel', ch.id);
+          e.dataTransfer.setData('text/concord-channel', ch.id);
           e.dataTransfer.effectAllowed = 'move';
         }}
         onDragOver={(e) => {
-          if (e.dataTransfer.types.includes('text/sidcord-channel')) {
+          if (e.dataTransfer.types.includes('text/concord-channel')) {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
           }
@@ -251,7 +251,7 @@ export function ChannelList() {
                     <ul
                       className="space-y-0.5 mb-3"
                       onDragOver={(e) => {
-                        if (e.dataTransfer.types.includes('text/sidcord-channel')) e.preventDefault();
+                        if (e.dataTransfer.types.includes('text/concord-channel')) e.preventDefault();
                       }}
                       onDrop={(e) => onDropChannel(e, { parentId: null, siblings: uncategorized })}
                     >
@@ -284,7 +284,7 @@ export function ChannelList() {
                     <ul
                       className="space-y-0.5 mb-3"
                       onDragOver={(e) => {
-                        if (e.dataTransfer.types.includes('text/sidcord-channel')) e.preventDefault();
+                        if (e.dataTransfer.types.includes('text/concord-channel')) e.preventDefault();
                       }}
                       onDrop={(e) => onDropChannel(e, { parentId: null, siblings: uncategorized })}
                     >
@@ -365,7 +365,7 @@ function CategorySection({
         <ul
           className="space-y-0.5 min-h-[8px]"
           onDragOver={(e) => {
-            if (e.dataTransfer.types.includes('text/sidcord-channel')) e.preventDefault();
+            if (e.dataTransfer.types.includes('text/concord-channel')) e.preventDefault();
           }}
           onDrop={onDropEmpty}
         >
@@ -903,7 +903,7 @@ function GuildHeader() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (guild) setMuted(localStorage.getItem('sidcord_guildmute_' + guild.id) === '1');
+    if (guild) setMuted(localStorage.getItem('concord_guildmute_' + guild.id) === '1');
   }, [guild?.id]);
 
   useEffect(() => {
@@ -925,7 +925,7 @@ function GuildHeader() {
   async function muteGuildFor(seconds: number) {
     if (!guild) return;
     setMuted(true);
-    localStorage.setItem('sidcord_guildmute_' + guild.id, '1');
+    localStorage.setItem('concord_guildmute_' + guild.id, '1');
     await api.guilds.notifSettings(guild.id, 'nothing', seconds).catch(() => {});
     dispatch(addToast({ kind: 'success', message: seconds > 0 ? 'Sunucu geçici olarak susturuldu' : 'Sunucu susturuldu' }));
     setGuildMuteOpen(false);
@@ -934,7 +934,7 @@ function GuildHeader() {
   async function unmuteGuild() {
     if (!guild) return;
     setMuted(false);
-    localStorage.setItem('sidcord_guildmute_' + guild.id, '0');
+    localStorage.setItem('concord_guildmute_' + guild.id, '0');
     await api.guilds.notifSettings(guild.id, 'all', 0).catch(() => {});
     setOpen(false);
   }

@@ -1,4 +1,4 @@
-module github.com/sidcord/api
+module github.com/concord/api
 
 go 1.25.0
 

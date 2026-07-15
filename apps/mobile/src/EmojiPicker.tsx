@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from './theme';
 import { EMOJI_GROUPS, ALL_EMOJIS } from './emojiData';
 
-const RECENT_KEY = 'sidcord_recent_emojis';
+const RECENT_KEY = 'concord_recent_emojis';
 
 export function EmojiPicker({ visible, onPick, onClose }: {
   visible: boolean; onPick: (emoji: string) => void; onClose: () => void;

@@ -1,4 +1,4 @@
-# Sidcord
+# Concord
 
 Türkiye için yerli Discord alternatifi. **İşlevsel parite hedefine ulaşıldı** (~300 özellik: metin/ses/video, forum-sahne-duyuru kanalları, roller/izinler, AutoMod, bot API'si, anketler, 2FA, e-posta akışları, oyun algılamalı masaüstü uygulaması...). Ayrıntılı parite haritası: [`DISCORD_GAP_ANALIZ.md`](DISCORD_GAP_ANALIZ.md).
 
@@ -52,7 +52,7 @@ pnpm db:up   # PostgreSQL(5433) Redis MinIO MailHog ScyllaDB
 Migration'lar `apps/api/migrations/` altında (şu an 53). Uygulama:
 
 ```bash
-PGPASSWORD=sidcord_dev psql -h localhost -p 5433 -U sidcord -d sidcord -f apps/api/migrations/XXXX.up.sql
+PGPASSWORD=concord_dev psql -h localhost -p 5433 -U concord -d concord -f apps/api/migrations/XXXX.up.sql
 ```
 
 ### 3. Bağımlılıklar

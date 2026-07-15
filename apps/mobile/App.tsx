@@ -1,4 +1,4 @@
-// Sidcord Mobil — giriş kapısı + ekran-yığını navigasyon.
+// Concord Mobil — giriş kapısı + ekran-yığını navigasyon.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, BackHandler } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -79,7 +79,7 @@ export default function App() {
     const off = joinUser(me.id, (ev, payload) => {
       if (!notifOn()) return;
       if (ev === 'NOTIFICATION') {
-        const title = payload?.title ?? 'Sidcord';
+        const title = payload?.title ?? 'Concord';
         showToast(title, { sub: payload?.body });
         notifyLocal(title, payload?.body);
       } else if (ev === 'MESSAGE_CREATE') {

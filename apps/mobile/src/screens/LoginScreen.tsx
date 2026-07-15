@@ -45,21 +45,21 @@ export function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
       await setHost(host);
       if (step === 'email') {
         await api.forgotPassword(value.trim());
-        Alert.alert('Sidcord', 'Sıfırlama bağlantısı e-postana gönderildi. Koddan sonra "Kodu girdim" ile devam et.');
+        Alert.alert('Concord', 'Sıfırlama bağlantısı e-postana gönderildi. Koddan sonra "Kodu girdim" ile devam et.');
       } else if (step === 'reset_token') {
         setResetToken(value.trim());
         setForgot('reset_pw');
       } else if (step === 'reset_pw') {
         await api.resetPassword(resetToken, value);
-        Alert.alert('Sidcord', 'Şifren güncellendi, şimdi giriş yapabilirsin.');
+        Alert.alert('Concord', 'Şifren güncellendi, şimdi giriş yapabilirsin.');
       }
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'İşlem başarısız'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'İşlem başarısız'); }
   }
 
   return (
     <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={s.logo}>Sidcord</Text>
+        <Text style={s.logo}>Concord</Text>
         <Text style={s.subtitle}>{mode === 'login' ? 'Hesabına giriş yap' : 'Yeni hesap oluştur'}</Text>
 
         <Text style={s.label}>Sunucu adresi</Text>

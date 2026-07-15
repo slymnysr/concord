@@ -73,7 +73,7 @@ func (r *Guilds) ByID(ctx context.Context, id int64) (*Guild, error) {
 
 func (r *Guilds) ForUser(ctx context.Context, userID int64) ([]Guild, error) {
 	rows, err := r.pool.Query(ctx, `
-        SELECT g.id, g.name, g.icon_text, g.icon_color, g.icon_url_v2, g.banner_url, g.owner_id, g.description, g.is_public, g.vanity_url_code, g.afk_channel_id, g.system_channel_id, g.verification_level, g.explicit_content_filter, g.auto_role_id, g.created_at
+        SELECT g.id, g.name, g.icon_text, g.icon_color, g.icon_url_v2, g.banner_url, g.owner_id, g.description, g.is_public, g.vanity_url_code, g.afk_channel_id, g.afk_timeout_sec, g.system_channel_id, g.verification_level, g.explicit_content_filter, g.auto_role_id, g.created_at
         FROM guilds g
         JOIN guild_members m ON m.guild_id = g.id
         WHERE m.user_id = $1

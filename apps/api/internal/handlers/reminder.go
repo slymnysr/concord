@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/repo"
 )
 
 type createReminderReq struct {
@@ -163,7 +163,7 @@ func (h *Handler) DispatchDueReminders(ctx context.Context) {
 				"notification": n,
 				"ts":           time.Now().UnixMilli(),
 			})
-			_, _ = h.Redis.Publish(ctx, "sidcord:user:"+strconv.FormatInt(d.userID, 10), payload).Result()
+			_, _ = h.Redis.Publish(ctx, "concord:user:"+strconv.FormatInt(d.userID, 10), payload).Result()
 		}
 	}
 }

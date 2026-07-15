@@ -1,9 +1,9 @@
-// Sidcord Service Worker — Web Push notifications
+// Concord Service Worker — Web Push notifications
 self.addEventListener('install', (e) => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 
 self.addEventListener('push', (event) => {
-  let data = { title: 'Sidcord', body: 'Yeni bildirim' };
+  let data = { title: 'Concord', body: 'Yeni bildirim' };
   try {
     if (event.data) data = event.data.json();
   } catch {}
@@ -12,7 +12,7 @@ self.addEventListener('push', (event) => {
       body: data.body,
       icon: '/brand/logo.svg',
       badge: '/brand/logo.svg',
-      tag: data.tag || 'sidcord',
+      tag: data.tag || 'concord',
       data: data.url ? { url: data.url } : undefined,
     })
   );

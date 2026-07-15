@@ -15,7 +15,7 @@ type Mailer struct {
 	Port string
 	User string
 	Pass string
-	From string // "Sidcord <no-reply@sidcord.local>"
+	From string // "Concord <no-reply@concord.local>"
 }
 
 func New(host, port, user, pass, from string) *Mailer {
@@ -63,7 +63,7 @@ func Layout(title, body, actionURL, actionLabel string) string {
 	return fmt.Sprintf(
 		`<!doctype html><html lang="tr"><body style="margin:0;background:#0E1117;font-family:sans-serif;padding:32px">
 <div style="max-width:520px;margin:0 auto;background:#161B22;border-radius:16px;padding:32px;color:#E6EDF3">
-<h2 style="margin:0 0 6px;color:#00D9A6">Sidcord</h2>
+<h2 style="margin:0 0 6px;color:#00D9A6">Concord</h2>
 <h3 style="margin:0 0 16px">%s</h3>
 <div style="line-height:1.6;font-size:14px">%s</div>%s
 <p style="color:#666;font-size:11px;margin-top:28px">Bu işlemi sen başlatmadıysan bu maili yok sayabilirsin.</p>

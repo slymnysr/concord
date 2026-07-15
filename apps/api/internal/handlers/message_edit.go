@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
+	"github.com/concord/api/internal/repo"
 )
 
 type editMessageReq struct {
@@ -169,7 +169,7 @@ func (h *Handler) publishMessageEvent(ctx context.Context, ch *repo.Channel, m *
 	if ch.GuildID != nil {
 		base["guild_id"] = strconv.FormatInt(*ch.GuildID, 10)
 		payload, _ := json.Marshal(base)
-		h.Redis.Publish(ctx, "sidcord:guild:"+strconv.FormatInt(*ch.GuildID, 10), payload)
+		h.Redis.Publish(ctx, "concord:guild:"+strconv.FormatInt(*ch.GuildID, 10), payload)
 		return
 	}
 	payload, _ := json.Marshal(base)
@@ -181,7 +181,7 @@ func (h *Handler) publishMessageEvent(ctx context.Context, ch *repo.Channel, m *
 	for rows.Next() {
 		var uid int64
 		if err := rows.Scan(&uid); err == nil {
-			h.Redis.Publish(ctx, "sidcord:user:"+strconv.FormatInt(uid, 10), payload)
+			h.Redis.Publish(ctx, "concord:user:"+strconv.FormatInt(uid, 10), payload)
 		}
 	}
 }

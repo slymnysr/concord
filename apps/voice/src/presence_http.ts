@@ -22,7 +22,7 @@ export function startHTTP() {
     }
 
     if (req.url === '/health') {
-      return res.end(JSON.stringify({ status: 'ok', service: 'sidcord-voice' }));
+      return res.end(JSON.stringify({ status: 'ok', service: 'concord-voice' }));
     }
 
     // POST /control/voice-state — API'den gelen mod susturma/sağırlaştırma komutu (enforced)

@@ -7,8 +7,8 @@ import rnnoiseWasmUrl from '@sapphi-red/web-noise-suppressor/rnnoise.wasm?url';
 import rnnoiseSimdWasmUrl from '@sapphi-red/web-noise-suppressor/rnnoise_simd.wasm?url';
 import rnnoiseWorkletUrl from '@sapphi-red/web-noise-suppressor/rnnoiseWorklet.js?url';
 
-const RNNOISE_KEY = 'sidcord_rnnoise';
-const MUSIC_KEY = 'sidcord_music_mode';
+const RNNOISE_KEY = 'concord_rnnoise';
+const MUSIC_KEY = 'concord_music_mode';
 
 export function isRnnoiseEnabled(): boolean {
   return localStorage.getItem(RNNOISE_KEY) === '1';

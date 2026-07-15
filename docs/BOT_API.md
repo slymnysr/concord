@@ -1,4 +1,4 @@
-# Sidcord Bot API
+# Concord Bot API
 
 Bot oluşturma: **Kullanıcı Ayarları → Geliştirici → Oluştur**. Token yalnızca oluşturma/sıfırlama anında gösterilir.
 

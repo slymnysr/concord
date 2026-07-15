@@ -1,12 +1,12 @@
-# Sidcord ↔ Discord — Eksik Özellik & Yol Haritası
+# Concord ↔ Discord — Eksik Özellik & Yol Haritası
 
-> **Amaç:** Sidcord'u Discord'a karşı işlevsel paritede tutmak. Bu dosya, kodun tamamı taranarak (33 migration, ~40 handler, ~130 route, ~40 frontend bileşeni) çıkarılmıştır.
-> **Tarih:** 2026-06 · **Son migration:** 0033 · **Kural:** Görsel kopya değil, işlevsel parite. Sidcord kendi marka kimliğine sahip.
+> **Amaç:** Concord'u Discord'a karşı işlevsel paritede tutmak. Bu dosya, kodun tamamı taranarak (33 migration, ~40 handler, ~130 route, ~40 frontend bileşeni) çıkarılmıştır.
+> **Tarih:** 2026-06 · **Son migration:** 0033 · **Kural:** Görsel kopya değil, işlevsel parite. Concord kendi marka kimliğine sahip.
 > **Nasıl kullanılır:** Bölüm 2'deki tabloları önceliğe göre sırayla işleyeceğiz. Bir madde bitince ✅ işaretle.
 
 ---
 
-## 1. ✅ Sidcord'da ZATEN VAR OLANLAR (tekrar yapma!)
+## 1. ✅ Concord'da ZATEN VAR OLANLAR (tekrar yapma!)
 
 **Mesajlaşma:** metin/resim/dosya/ses-mesajı, markdown (bold/italic/underline/strike/code/spoiler/blockquote/`>>>`/heading/list/iç-içe-liste/timestamp `<t:>`/rol-mention/maskelink/subtext/jumbo-emoji/www-link), tepkiler + kimler-verdi + süper-tepki patlaması, yanıt + yanıt-ping toggle, düzenle + (düzenlendi), sil, sabitle + pin paneli, **ilet (kanal seçici)**, **kaydet (yer imi)**, **zamanlanmış mesaj**, **hatırlatıcı**, okunmadı işaretle, mention-highlight, spoiler ek, çoklu-resim grid, link embed (OG unfurl), davet kartı, çift-tık 👍, **@silent**, metin makroları (/shrug /me /tableflip /spoiler), arama (+`from:` operatörü), yazıyor göstergesi (avatarlı), tarih ayraçları, sonsuz kaydırma.
 
@@ -28,9 +28,9 @@
 ## ➕ EK ÖZELLİKLER (2026-06 yeni tarama — ilk 51 dışı)
 İlk 51 gözden geçirildi; çoğu zaten vardı (sunucu klasörleri, `<t:unix>` timestamp markdown vb. mevcut). Bulunan gerçek gaplar:
 - **EK-1 Per-user ses seviyesi slider'ı** ✅ BİTTİ: voice.ts altyapısı (GainNode %0-200) vardı ama UI sadece binary mute idi. VoiceConnectedRow sağ-tık menüsüne 0-200% slider eklendi (changeVolume→setUserVolume).
-- **EK-2 Mesaja git (jump-to-message)** ✅ BİTTİ: SearchModal sadece kanala zıplıyordu. `sidcord:jump-to-message` CustomEvent + MessageList dinleyici (elemana kaydır + flash vurgu + yüklü değilse loadOlderMessages fallback); arama/sabit/kayıtlı mesaj hepsi bu ortak handler'ı kullanır.
+- **EK-2 Mesaja git (jump-to-message)** ✅ BİTTİ: SearchModal sadece kanala zıplıyordu. `concord:jump-to-message` CustomEvent + MessageList dinleyici (elemana kaydır + flash vurgu + yüklü değilse loadOlderMessages fallback); arama/sabit/kayıtlı mesaj hepsi bu ortak handler'ı kullanır.
 - **EK-3 Per-kanal bildirim seviyesi** ✅ BİTTİ: kanal sağ-tık menüsüne 'Bildirim Ayarları' alt-menüsü (Tüm Mesajlar / Sadece @bahsetmeler / Hiçbiri); backend notif_level zaten destekliyordu. E2E ✓.
-- **EK-4 Yanıt önizleme zıplaması** ✅ BİTTİ: yanıt önizlemesine tıklayınca artık ortak sidcord:jump-to-message handler'ı (load-older fallback'li) kullanılır; eskiden yüklü olmayan orijinale gidemiyordu.
+- **EK-4 Yanıt önizleme zıplaması** ✅ BİTTİ: yanıt önizlemesine tıklayınca artık ortak concord:jump-to-message handler'ı (load-older fallback'li) kullanılır; eskiden yüklü olmayan orijinale gidemiyordu.
 - **EK-7 GÜVENLİK DENETİMİ: moderasyon/ban/blok — 5 bug** ✅ (2026-06): ban/kick/blok akışları uçtan-uca test edildi, bulunan gerçek bug'lar:
   1. **Moderasyon hiyerarşisi yoktu** → düşük rollü mod, kendinden YÜKSEK rollü üyeyi kick/ban/timeout/voice-mute edebiliyordu. `canModerateTarget` helper'ı eklendi (actor en yüksek rol > target; owner muaf), Ban/Kick/Timeout/SetMemberVoiceState'e uygulandı.
   2. **Banlanan kullanıcı tekrar katılabiliyordu** → AcceptAndJoin ve JoinPublicGuild ban kontrolü yapmıyordu; eklendi (davet+public → 403).
@@ -49,7 +49,7 @@
 ### 2.1 — Mesajlaşma & İçerik
 | # | Özellik | Öncelik | Efor | Not |
 |---|---------|---------|------|-----|
-| 1 | **GIF seçici (Tenor/Giphy)** | 🔴 | M | ✅ BİTTİ (2026-06): GifPicker (Giphy trending+arama, debounce), MessageInput'a GIF butonu+popover. Seçilen GIF image/gif eki olarak gönderilir (inline render). Key: GIPHY_KEY (localStorage `sidcord_giphy_key` ile override). |
+| 1 | **GIF seçici (Tenor/Giphy)** | 🔴 | M | ✅ BİTTİ (2026-06): GifPicker (Giphy trending+arama, debounce), MessageInput'a GIF butonu+popover. Seçilen GIF image/gif eki olarak gönderilir (inline render). Key: GIPHY_KEY (localStorage `concord_giphy_key` ile override). |
 | 2 | **Forum etiketleri (tags)** | 🟡 | M | ✅ BİTTİ (2026-06): `forum_tags`+`thread_tags` (mig 0035); /channels/:id/forum-tags GET/POST, /forum-tags/:id DELETE; CreateThread `tag_ids`, ListThreads `tag_ids` döndürür; ChannelSettings etiket yöneticisi; ForumView filtre çipleri+post etiketleri+oluştururken seçim. E2E ✓. |
 | 3 | **Slash komut argümanları/seçenekleri** | 🟡 | M | ✅ BİTTİ (2026-06): guild_commands.options JSONB (mig 0039); CreateCommand options[], RunCommand args ikamesi ({ad}+{user}, zorunlu kontrol); MentionPicker '/' ipucu (<zorunlu>/[ops]); MessageInput pozisyonel argüman parse; ServerSettings argüman builder. E2E ✓. |
 | 4 | **Mesaj düzenleme geçmişi** | 🟢 | M | ✅ BİTTİ (2026-06): message_edits tablosu (mig 0042); EditMessage eski içeriği saklar; GET /messages/:id/edits; MessageList'te (düzenlendi) tıklanır → geçmiş popover'ı (eski sürümler, üstü çizili). E2E ✓.|
@@ -190,7 +190,7 @@ MD'lerden bağımsız tam kod denetimi yapıldı; aşağıdaki eksikler bulunup 
 | Grup DM yönetimi (backend vardı, UI eksikti) | ✅ yeniden adlandır + sahip çıkarma + 👑; owner_id listede |
 | DM araması (backend vardı, UI bağlı değildi) | ✅ SearchModal DM modu |
 
-**Bilinçli kapsam dışı (niş):** TTS mesajları, sunucu şablonları, üye prune, OAuth2 provider ("Sidcord ile giriş"), otomatik oyun algılama (masaüstü uygulamasına), video simulcast.
+**Bilinçli kapsam dışı (niş):** TTS mesajları, sunucu şablonları, üye prune, OAuth2 provider ("Concord ile giriş"), otomatik oyun algılama (masaüstü uygulamasına), video simulcast.
 
 ## 4. KALİTE TURU (2026-06-11) — motorların tam kapasitesi
 

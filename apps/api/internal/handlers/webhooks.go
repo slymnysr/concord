@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
+	"github.com/concord/api/internal/repo"
 )
 
 type createWebhookReq struct {

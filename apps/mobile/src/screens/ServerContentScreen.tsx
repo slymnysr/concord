@@ -42,8 +42,8 @@ export function ServerContentScreen({ guildId, guildName, onBack }: { guildId: s
   useEffect(() => { reload(); }, [reload]);
 
   async function run(fn: () => Promise<any>, ok?: string) {
-    try { await fn(); if (ok) Alert.alert('Sidcord', ok); reload(); }
-    catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'İşlem başarısız'); }
+    try { await fn(); if (ok) Alert.alert('Concord', ok); reload(); }
+    catch (e: any) { Alert.alert('Concord', e?.message ?? 'İşlem başarısız'); }
   }
 
   async function pickImageThen(setKey: 'emojiName' | 'stickerName') {
@@ -53,7 +53,7 @@ export function ServerContentScreen({ guildId, guildName, onBack }: { guildId: s
     try {
       const up = await uploadFile(a.uri, a.fileName || `img_${Date.now()}.png`, a.mimeType || 'image/png', a.fileSize || 0);
       setEdit({ k: setKey, url: up.url });
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Yüklenemedi'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Yüklenemedi'); }
   }
   async function pickSound() {
     const res = await DocumentPicker.getDocumentAsync({ type: 'audio/*', copyToCacheDirectory: true });
@@ -62,20 +62,20 @@ export function ServerContentScreen({ guildId, guildName, onBack }: { guildId: s
     try {
       const up = await uploadFile(a.uri, a.name, a.mimeType || 'audio/mpeg', a.size || 0);
       setEdit({ k: 'soundName', url: up.url });
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Yüklenemedi'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Yüklenemedi'); }
   }
 
   function playSound(id: string) {
-    if (!voice.isConnected() || !voice.channelId) { Alert.alert('Sidcord', 'Önce bir sesli kanala katıl, sonra çal.'); return; }
-    api.sounds.play(id, voice.channelId).catch((e: any) => Alert.alert('Sidcord', e?.message ?? 'Çalınamadı'));
+    if (!voice.isConnected() || !voice.channelId) { Alert.alert('Concord', 'Önce bir sesli kanala katıl, sonra çal.'); return; }
+    api.sounds.play(id, voice.channelId).catch((e: any) => Alert.alert('Concord', e?.message ?? 'Çalınamadı'));
   }
 
   function createEvent(name: string) {
     const at = (sec: number) => new Date(Date.now() + sec * 1000).toISOString();
     Alert.alert('Ne zaman?', name, [
-      { text: '1 saat sonra', onPress: () => run(() => api.events.create(guildId, { name, scheduled_start_at: at(3600), entity_type: 'external', entity_location: 'Sidcord' }), 'Etkinlik oluşturuldu') },
-      { text: 'Yarın', onPress: () => run(() => api.events.create(guildId, { name, scheduled_start_at: at(86400), entity_type: 'external', entity_location: 'Sidcord' }), 'Etkinlik oluşturuldu') },
-      { text: 'Gelecek hafta', onPress: () => run(() => api.events.create(guildId, { name, scheduled_start_at: at(604800), entity_type: 'external', entity_location: 'Sidcord' }), 'Etkinlik oluşturuldu') },
+      { text: '1 saat sonra', onPress: () => run(() => api.events.create(guildId, { name, scheduled_start_at: at(3600), entity_type: 'external', entity_location: 'Concord' }), 'Etkinlik oluşturuldu') },
+      { text: 'Yarın', onPress: () => run(() => api.events.create(guildId, { name, scheduled_start_at: at(86400), entity_type: 'external', entity_location: 'Concord' }), 'Etkinlik oluşturuldu') },
+      { text: 'Gelecek hafta', onPress: () => run(() => api.events.create(guildId, { name, scheduled_start_at: at(604800), entity_type: 'external', entity_location: 'Concord' }), 'Etkinlik oluşturuldu') },
       { text: 'Vazgeç', style: 'cancel' },
     ]);
   }

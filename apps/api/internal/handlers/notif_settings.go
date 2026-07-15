@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sidcord/api/internal/middleware"
+	"github.com/concord/api/internal/middleware"
 )
 
 type notifSettingsReq struct {

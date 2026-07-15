@@ -1,4 +1,4 @@
-// Sidcord voice istemcisi — mediasoup-client + WebSocket signaling
+// Concord voice istemcisi — mediasoup-client + WebSocket signaling
 // Audio + video (kamera) + ekran paylaşımı destekler.
 import { Device, types as msTypes } from 'mediasoup-client';
 import { tokenStore } from './api';
@@ -19,8 +19,8 @@ export interface RemoteStreamInfo {
 
 // Yayın kalitesi tercihi (kamera + ekran) — VoiceTab'dan ayarlanır
 export function streamQuality(): { width: number; height: number; fps: number; camBitrate: number; screenBitrate: number } {
-  const res = parseInt(localStorage.getItem('sidcord_stream_res') ?? '720', 10);
-  const fps = parseInt(localStorage.getItem('sidcord_stream_fps') ?? '30', 10);
+  const res = parseInt(localStorage.getItem('concord_stream_res') ?? '720', 10);
+  const fps = parseInt(localStorage.getItem('concord_stream_fps') ?? '30', 10);
   const table: Record<number, { w: number; h: number; cam: number; scr: number }> = {
     480: { w: 854, h: 480, cam: 1_000_000, scr: 1_500_000 },
     720: { w: 1280, h: 720, cam: 2_500_000, scr: 3_000_000 },
@@ -290,7 +290,7 @@ class VoiceClient {
     }
 
     // Mikrofonu otomatik aç (kullanıcının seçtiği input cihazıyla)
-    const inputId = localStorage.getItem('sidcord_input_device');
+    const inputId = localStorage.getItem('concord_input_device');
     const musicMode = isMusicMode();
     // Kullanıcı ayarları (varsayılan açık) — VoiceTab'dan kontrol edilir.
     // Müzik modunda tüm ses işleme kapatılır (enstrüman/müzik sesini bozar) + stereo.
@@ -302,9 +302,9 @@ class VoiceClient {
           channelCount: { ideal: 2 },
         }
       : {
-          echoCancellation: localStorage.getItem('sidcord_echo_cancel') !== '0',
-          noiseSuppression: localStorage.getItem('sidcord_noise_suppress') !== '0',
-          autoGainControl: localStorage.getItem('sidcord_auto_gain') !== '0',
+          echoCancellation: localStorage.getItem('concord_echo_cancel') !== '0',
+          noiseSuppression: localStorage.getItem('concord_noise_suppress') !== '0',
+          autoGainControl: localStorage.getItem('concord_auto_gain') !== '0',
         };
     if (inputId && inputId !== 'default') {
       audioConstraints.deviceId = { exact: inputId };
@@ -349,9 +349,9 @@ class VoiceClient {
     this.startSpeakingAnalyzer('__self__', this.micStream);
 
     // PTT: kullanıcı tuşa basana kadar mikrofonu kapalı tut
-    const pttEnabled = localStorage.getItem('sidcord_ptt') === '1';
+    const pttEnabled = localStorage.getItem('concord_ptt') === '1';
     if (pttEnabled) {
-      const pttKey = localStorage.getItem('sidcord_ptt_key') ?? 'Space';
+      const pttKey = localStorage.getItem('concord_ptt_key') ?? 'Space';
       audioTrack.enabled = false;
       this.audioProducer.pause();
       const down = (e: KeyboardEvent) => {
@@ -406,7 +406,7 @@ class VoiceClient {
   async publishCamera(): Promise<MediaStream> {
     if (!this.sendTransport) throw new Error('not connected');
     if (this.cameraStream) return this.cameraStream;
-    const videoId = localStorage.getItem('sidcord_video_device');
+    const videoId = localStorage.getItem('concord_video_device');
     const q = streamQuality();
     const videoConstraints: MediaTrackConstraints = {
       width: { ideal: q.width },
@@ -579,7 +579,7 @@ class VoiceClient {
   }
 
   getUserVolume(userId: string): number {
-    const v = localStorage.getItem('sidcord_vol_' + userId);
+    const v = localStorage.getItem('concord_vol_' + userId);
     if (v === null) return 1;
     const n = parseFloat(v);
     return Number.isFinite(n) ? Math.min(2, Math.max(0, n)) : 1;
@@ -587,7 +587,7 @@ class VoiceClient {
 
   setUserVolume(userId: string, vol: number) {
     const v = Math.min(2, Math.max(0, vol));
-    localStorage.setItem('sidcord_vol_' + userId, String(v));
+    localStorage.setItem('concord_vol_' + userId, String(v));
     for (const [producerId, info] of this.remotes.entries()) {
       if (info.userId === userId && info.kind === 'audio') {
         const gain = this.audioGains.get(producerId);
@@ -848,7 +848,7 @@ class VoiceClient {
       el.srcObject = stream;
       el.autoplay = true;
       // Output device seçimi (Chrome destekli)
-      const outputId = localStorage.getItem('sidcord_output_device');
+      const outputId = localStorage.getItem('concord_output_device');
       if (outputId && outputId !== 'default' && 'setSinkId' in el) {
         (el as any).setSinkId(outputId).catch(() => {});
       }
@@ -938,7 +938,7 @@ class VoiceClient {
         else this.stageSpeakers.delete(uid);
         this.stageHands.delete(uid); // konuşmacı olunca el iner
         // Bensem mikrofonu aç/kapat (konuşmacı=aç, dinleyici=kapat)
-        const myId = String((window as any).__sidcord_store?.getState?.()?.auth?.user?.id ?? '');
+        const myId = String((window as any).__concord_store?.getState?.()?.auth?.user?.id ?? '');
         if (uid === myId) this.setMicrophoneEnabled(isSpeaker);
         this.emit('stage:changed', {});
         break;

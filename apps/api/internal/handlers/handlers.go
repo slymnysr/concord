@@ -7,14 +7,14 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
-	"github.com/sidcord/api/internal/auth"
-	"github.com/sidcord/api/internal/automod"
-	"github.com/sidcord/api/internal/config"
-	"github.com/sidcord/api/internal/events"
-	"github.com/sidcord/api/internal/mailer"
-	"github.com/sidcord/api/internal/repo"
-	"github.com/sidcord/api/internal/snowflake"
-	"github.com/sidcord/api/internal/storage"
+	"github.com/concord/api/internal/auth"
+	"github.com/concord/api/internal/automod"
+	"github.com/concord/api/internal/config"
+	"github.com/concord/api/internal/events"
+	"github.com/concord/api/internal/mailer"
+	"github.com/concord/api/internal/repo"
+	"github.com/concord/api/internal/snowflake"
+	"github.com/concord/api/internal/storage"
 	"go.uber.org/zap"
 )
 
@@ -85,7 +85,7 @@ func New(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool, rdb *redis.
 func (h *Handler) Health(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status":  "ok",
-		"service": "sidcord-api",
+		"service": "concord-api",
 	})
 }
 

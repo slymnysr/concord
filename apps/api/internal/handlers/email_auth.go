@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/sidcord/api/internal/auth"
-	"github.com/sidcord/api/internal/mailer"
-	"github.com/sidcord/api/internal/middleware"
+	"github.com/concord/api/internal/auth"
+	"github.com/concord/api/internal/mailer"
+	"github.com/concord/api/internal/middleware"
 	"go.uber.org/zap"
 )
 
@@ -75,7 +75,7 @@ func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	link := h.cfg.WebBaseURL + "/?reset_token=" + raw
-	body := fmt.Sprintf("Merhaba %s,<br><br>Sidcord hesabın için şifre sıfırlama isteği aldık. Aşağıdaki butonla yeni şifreni belirleyebilirsin. Bağlantı <b>1 saat</b> geçerlidir.", displayName)
+	body := fmt.Sprintf("Merhaba %s,<br><br>Concord hesabın için şifre sıfırlama isteği aldık. Aşağıdaki butonla yeni şifreni belirleyebilirsin. Bağlantı <b>1 saat</b> geçerlidir.", displayName)
 	if err := h.Mailer.Send(email, "Şifre sıfırlama", mailer.Layout("Şifreni sıfırla", body, link, "Yeni Şifre Belirle")); err != nil {
 		h.logger.Warn("reset maili gönderilemedi", zap.Error(err), zap.String("to", email))
 	}
@@ -138,10 +138,10 @@ func (h *Handler) sendVerifyEmail(r *http.Request, userID int64, targetEmail, ne
 		return err
 	}
 	link := h.cfg.PublicBaseURL + "/api/v1/auth/verify-email?token=" + raw
-	title, body := "E-postanı doğrula", "Sidcord hesabının e-posta adresini doğrulamak için aşağıdaki butona tıkla. Bağlantı <b>24 saat</b> geçerlidir."
+	title, body := "E-postanı doğrula", "Concord hesabının e-posta adresini doğrulamak için aşağıdaki butona tıkla. Bağlantı <b>24 saat</b> geçerlidir."
 	if newEmail != "" {
 		title = "E-posta değişikliğini onayla"
-		body = "Sidcord hesabının e-posta adresini <b>" + newEmail + "</b> olarak değiştirmek istedin. Onaylamak için aşağıdaki butona tıkla."
+		body = "Concord hesabının e-posta adresini <b>" + newEmail + "</b> olarak değiştirmek istedin. Onaylamak için aşağıdaki butona tıkla."
 	}
 	return h.Mailer.Send(targetEmail, title, mailer.Layout(title, body, link, "Doğrula"))
 }
@@ -246,5 +246,5 @@ func (h *Handler) ConfirmEmailVerify(w http.ResponseWriter, r *http.Request) {
 	}
 	_, _ = h.Pool.Exec(r.Context(),
 		`UPDATE email_tokens SET used_at = NOW() WHERE token_hash = $1`, hashEmailToken(token))
-	writeHTML(http.StatusOK, "✅ E-posta doğrulandı", "Hesabın doğrulandı. Bu pencereyi kapatıp Sidcord'a dönebilirsin.")
+	writeHTML(http.StatusOK, "✅ E-posta doğrulandı", "Hesabın doğrulandı. Bu pencereyi kapatıp Concord'a dönebilirsin.")
 }

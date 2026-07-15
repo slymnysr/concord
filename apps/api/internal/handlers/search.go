@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/repo"
 )
 
 type searchResult struct {

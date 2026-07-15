@@ -294,7 +294,7 @@ function OverviewTab({ guildId }: { guildId: string }) {
           <div className="text-sm font-semibold text-ink-primary mb-1.5">Özel Davet Bağlantısı (vanity)</div>
           <div className="flex gap-2">
             <div className="flex items-center bg-surface-1 border border-line rounded-lg px-2 flex-1">
-              <span className="text-ink-tertiary text-sm">sidcord.com/</span>
+              <span className="text-ink-tertiary text-sm">concord.com/</span>
               <input
                 value={vanity}
                 onChange={(e) => setVanity(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
@@ -2226,7 +2226,7 @@ function GuildInvitesTab({ guildId }: { guildId: string }) {
         <ul className="space-y-2">
           {invites.map((inv) => (
             <li key={inv.code} className="flex items-center gap-3 bg-surface-2 border border-line rounded-xl px-4 py-2.5">
-              <code className="text-sm text-brand-400 font-mono flex-1">sidcord.com/davet/{inv.code}</code>
+              <code className="text-sm text-brand-400 font-mono flex-1">concord.com/davet/{inv.code}</code>
               <span className="text-xs text-ink-tertiary">
                 {users[inv.inviter_id]?.display_name ?? '—'} · {inv.uses}{inv.max_uses ? `/${inv.max_uses}` : ''} kullanım
               </span>

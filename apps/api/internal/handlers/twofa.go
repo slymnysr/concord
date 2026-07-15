@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/sidcord/api/internal/auth"
-	"github.com/sidcord/api/internal/middleware"
+	"github.com/concord/api/internal/auth"
+	"github.com/concord/api/internal/middleware"
 )
 
 // POST /users/me/2fa/enable — secret üret (henüz aktif değil, verify ile aktifleşir)

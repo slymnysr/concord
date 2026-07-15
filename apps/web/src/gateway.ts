@@ -1,4 +1,4 @@
-// Sidcord WebSocket bağlantısı (Phoenix Channels) + presence
+// Concord WebSocket bağlantısı (Phoenix Channels) + presence
 import { Socket, Channel, Presence } from 'phoenix';
 import { tokenStore } from './api';
 import { wsUrl } from './serverConfig';
@@ -17,9 +17,9 @@ export function connectGateway(): Socket | null {
 
   socket = new Socket(wsUrl('/socket'), { params: { token }, logger: () => {} });
   // Bağlantı durumu olaylarını yayınla → ConnectionBanner dinler
-  socket.onOpen(() => { window.dispatchEvent(new CustomEvent('sidcord:gw', { detail: 'connected' })); });
-  socket.onClose(() => { window.dispatchEvent(new CustomEvent('sidcord:gw', { detail: 'disconnected' })); });
-  socket.onError(() => { window.dispatchEvent(new CustomEvent('sidcord:gw', { detail: 'disconnected' })); });
+  socket.onOpen(() => { window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'connected' })); });
+  socket.onClose(() => { window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'disconnected' })); });
+  socket.onError(() => { window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'disconnected' })); });
   socket.connect();
   return socket;
 }
@@ -58,7 +58,7 @@ export function setPresenceStatus(status: 'online' | 'idle' | 'dnd' | 'offline')
 // Aktif aktivite — localStorage'da kalıcı; yeni guild kanallarına join'de otomatik gönderilir
 let currentActivity: UserActivity | null = null;
 try {
-  const raw = localStorage.getItem('sidcord_activity');
+  const raw = localStorage.getItem('concord_activity');
   if (raw) currentActivity = JSON.parse(raw);
 } catch {}
 
@@ -76,8 +76,8 @@ export function setActivity(
   // elle ayarladığı aktivite localStorage'da korunur, oyun kapanınca ona dönülür.
   if (persist) {
     try {
-      if (currentActivity) localStorage.setItem('sidcord_activity', JSON.stringify(currentActivity));
-      else localStorage.removeItem('sidcord_activity');
+      if (currentActivity) localStorage.setItem('concord_activity', JSON.stringify(currentActivity));
+      else localStorage.removeItem('concord_activity');
     } catch {}
   }
   for (const ch of guildChannels.values()) {

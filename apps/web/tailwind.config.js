@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Sidcord brand
+        // Concord brand
         brand: {
           50: '#E6FAF4',
           100: '#CCF5E9',

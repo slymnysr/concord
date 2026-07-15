@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
 )
 
 func parseInt64(s string) (int64, error) { return strconv.ParseInt(s, 10, 64) }

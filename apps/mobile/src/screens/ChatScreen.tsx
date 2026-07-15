@@ -101,7 +101,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     hasMoreRef.current = true;
     atBottomRef.current = true;
     // Çevrimdışı önbellek: anında göster, sonra ağdan tazele
-    AsyncStorage.getItem(`sidcord_msgs_${channel.id}`).then((c) => {
+    AsyncStorage.getItem(`concord_msgs_${channel.id}`).then((c) => {
       if (!c || cancelled) return;
       try {
         const cached = JSON.parse(c) as Message[];
@@ -117,7 +117,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         if (list.length < 50) hasMoreRef.current = false;
         const ordered = list.slice().reverse();
         setMessages(ordered);
-        AsyncStorage.setItem(`sidcord_msgs_${channel.id}`, JSON.stringify(ordered.slice(-50))).catch(() => {});
+        AsyncStorage.setItem(`concord_msgs_${channel.id}`, JSON.stringify(ordered.slice(-50))).catch(() => {});
         for (const m of ordered) resolveUser(m.author_id);
         // "Yeni mesajlar" ayracı: en son okunan mesajdan sonraki ilk mesaj
         api.readStates.list().then((states) => {
@@ -138,7 +138,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       })
       .catch(() => {});
     api.channels.ack(channel.id).catch(() => {});
-    AsyncStorage.getItem(`sidcord_draft_${channel.id}`).then((d) => { if (d) setText(d); }).catch(() => {});
+    AsyncStorage.getItem(`concord_draft_${channel.id}`).then((d) => { if (d) setText(d); }).catch(() => {});
     if (channel.focusMessageId) setTimeout(() => jumpToMessage(channel.focusMessageId), 600);
     return () => {
       cancelled = true;
@@ -167,7 +167,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   // Çevrimdışı gönderme kuyruğu — bağlantı/başarı olunca boşaltılır
   const flushQueue = useCallback(async () => {
     let list: { tempId: string; content: string; replyId?: string }[] = [];
-    try { const c = await AsyncStorage.getItem(`sidcord_queue_${channel.id}`); list = c ? JSON.parse(c) : []; } catch {}
+    try { const c = await AsyncStorage.getItem(`concord_queue_${channel.id}`); list = c ? JSON.parse(c) : []; } catch {}
     if (!list.length) return;
     const remaining: typeof list = [];
     for (const item of list) {
@@ -177,11 +177,11 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       } catch { remaining.push(item); }
     }
     setPending(remaining);
-    AsyncStorage.setItem(`sidcord_queue_${channel.id}`, JSON.stringify(remaining)).catch(() => {});
+    AsyncStorage.setItem(`concord_queue_${channel.id}`, JSON.stringify(remaining)).catch(() => {});
   }, [channel.id]);
 
   useEffect(() => {
-    AsyncStorage.getItem(`sidcord_queue_${channel.id}`).then((c) => { try { setPending(c ? JSON.parse(c) : []); } catch {} }).catch(() => {});
+    AsyncStorage.getItem(`concord_queue_${channel.id}`).then((c) => { try { setPending(c ? JSON.parse(c) : []); } catch {} }).catch(() => {});
     flushQueue();
   }, [channel.id, flushQueue]);
 
@@ -255,7 +255,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     if (!content || sending) return;
     setSending(true);
     setText('');
-    AsyncStorage.removeItem(`sidcord_draft_${channel.id}`).catch(() => {});
+    AsyncStorage.removeItem(`concord_draft_${channel.id}`).catch(() => {});
     const reply = replyTo;
     setReplyTo(null);
     try {
@@ -264,7 +264,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     } catch {
       // Çevrimdışı → kaybetme, kuyruğa al
       const item = { tempId: String(Date.now()), content, replyId: reply?.id };
-      setPending((p) => { const next = [...p, item]; AsyncStorage.setItem(`sidcord_queue_${channel.id}`, JSON.stringify(next)).catch(() => {}); return next; });
+      setPending((p) => { const next = [...p, item]; AsyncStorage.setItem(`concord_queue_${channel.id}`, JSON.stringify(next)).catch(() => {}); return next; });
     } finally {
       setSending(false);
     }
@@ -286,7 +286,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       ]);
       setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
     } catch (e: any) {
-      Alert.alert('Sidcord', e?.message ?? 'Gönderilemedi');
+      Alert.alert('Concord', e?.message ?? 'Gönderilemedi');
     } finally {
       setSending(false);
     }
@@ -318,13 +318,13 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   async function startRec() {
     try {
       const perm = await Audio.requestPermissionsAsync();
-      if (!perm.granted) { Alert.alert('Sidcord', 'Mikrofon izni gerekli'); return; }
+      if (!perm.granted) { Alert.alert('Concord', 'Mikrofon izni gerekli'); return; }
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
       const { recording: rec } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
       setRecording(rec);
       setRecSecs(0);
       recTimer.current = setInterval(() => setRecSecs((x) => x + 1), 1000);
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Kayıt başlamadı'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Kayıt başlamadı'); }
   }
   async function finishRec(send: boolean) {
     const rec = recording;
@@ -341,7 +341,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         const m = await api.channels.sendMessage(channel.id, '', undefined, [{ url: up.url, filename: up.filename, content_type: 'audio/m4a', size_bytes: 0 }]);
         setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
       }
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Gönderilemedi'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Gönderilemedi'); }
     finally { setSending(false); setRecSecs(0); }
   }
 
@@ -350,20 +350,20 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     try {
       const m = await api.polls.create(channel.id, { question, answers: answers.map((text) => ({ text })) });
       setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Anket oluşturulamadı'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Anket oluşturulamadı'); }
   }
 
   async function profileDM(u: User) {
     setProfileFor(null);
     try { const r = await api.dms.open(u.id); nav.push({ kind: 'chat', channel: { id: r.channel_id, name: u.display_name } }); }
-    catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'DM açılamadı'); }
+    catch (e: any) { Alert.alert('Concord', e?.message ?? 'DM açılamadı'); }
   }
   function profileMore(u: User) {
     Alert.alert(u.display_name, `@${u.username}`, [
-      { text: 'Arkadaş ekle', onPress: () => api.friends.send({ user_id: u.id }).then(() => Alert.alert('Sidcord', 'İstek gönderildi')).catch((e) => Alert.alert('Sidcord', e?.message ?? 'Olmadı')) },
+      { text: 'Arkadaş ekle', onPress: () => api.friends.send({ user_id: u.id }).then(() => Alert.alert('Concord', 'İstek gönderildi')).catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı')) },
       { text: 'Not ekle', onPress: () => setNoteFor(u) },
-      { text: 'Engelle', style: 'destructive', onPress: () => api.block(u.id).then(() => { setProfileFor(null); Alert.alert('Sidcord', 'Engellendi'); }).catch(() => {}) },
-      { text: 'Şikayet et', style: 'destructive', onPress: () => api.report(u.id).then(() => Alert.alert('Sidcord', 'Şikayet alındı')).catch(() => {}) },
+      { text: 'Engelle', style: 'destructive', onPress: () => api.block(u.id).then(() => { setProfileFor(null); Alert.alert('Concord', 'Engellendi'); }).catch(() => {}) },
+      { text: 'Şikayet et', style: 'destructive', onPress: () => api.report(u.id).then(() => Alert.alert('Concord', 'Şikayet alındı')).catch(() => {}) },
       { text: 'Vazgeç', style: 'cancel' },
     ]);
   }
@@ -389,8 +389,8 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     try {
       const atts = (m.attachments ?? []).map((a) => ({ url: a.url, filename: a.filename, content_type: a.content_type || 'application/octet-stream', size_bytes: a.size_bytes || 0 }));
       await api.channels.sendMessage(targetId, m.content, undefined, atts.length ? atts : undefined);
-      Alert.alert('Sidcord', 'İletildi');
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'İletilemedi'); }
+      Alert.alert('Concord', 'İletildi');
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'İletilemedi'); }
   }
 
   async function translate(text: string) {
@@ -399,7 +399,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       const data = await res.json();
       const out = (data?.[0] ?? []).map((seg: any) => seg[0]).join('');
       Alert.alert('Çeviri → Türkçe', out || 'Çevrilemedi');
-    } catch { Alert.alert('Sidcord', 'Çeviri başarısız'); }
+    } catch { Alert.alert('Concord', 'Çeviri başarısız'); }
   }
 
   // Bahsetme için üye + kanal listesi yükle (guild kanalları)
@@ -421,7 +421,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     try {
       const m = await api.commands.run(channel.id, cmd.name);
       if (m && m.id) setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Komut çalıştırılamadı'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Komut çalıştırılamadı'); }
   }
 
   const mentionUserMatches = mentionQuery !== null && mentionKind === 'user'
@@ -445,7 +445,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     try {
       const m = await api.channels.sendMessage(channel.id, '', undefined, [{ url, filename: 'gif.gif', content_type: 'image/gif', size_bytes: 0 }]);
       setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'GIF gönderilemedi'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'GIF gönderilemedi'); }
   }
 
   function onEmojiPick(e: string) {
@@ -491,14 +491,14 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     try {
       const updated = await api.messages.edit(m.id, value.trim());
       setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, ...updated } : x)));
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Düzenlenemedi'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Düzenlenemedi'); }
   }
 
   async function togglePin(m: Message) {
     try {
       if (m.pinned) await api.messages.unpin(m.id); else await api.messages.pin(m.id);
       setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, pinned: !m.pinned } : x)));
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Olmadı'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Olmadı'); }
   }
 
   function remindMenu(m: Message) {
@@ -526,9 +526,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       opts.push({ text: 'Kanal ayarları', onPress: () => nav.push({ kind: 'channelSettings', channelId: channel.id, channelName: channel.name, guildId: channel.guildId }) });
       opts.push({ text: 'Sunucu ayarları', onPress: () => nav.push({ kind: 'serverSettings', guildId: channel.guildId!, guildName: channel.name }) });
       opts.push({ text: 'Bildirim ayarı', onPress: () => Alert.alert('Bildirim ayarı', channel.name, [
-        { text: 'Tümü', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'all' }).then(() => Alert.alert('Sidcord', 'Tüm mesajlar')).catch(() => {}) },
-        { text: 'Sadece bahsetmeler', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'mentions' }).then(() => Alert.alert('Sidcord', 'Sadece bahsetmeler')).catch(() => {}) },
-        { text: 'Sessiz', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'nothing' }).then(() => Alert.alert('Sidcord', 'Susturuldu')).catch(() => {}) },
+        { text: 'Tümü', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'all' }).then(() => Alert.alert('Concord', 'Tüm mesajlar')).catch(() => {}) },
+        { text: 'Sadece bahsetmeler', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'mentions' }).then(() => Alert.alert('Concord', 'Sadece bahsetmeler')).catch(() => {}) },
+        { text: 'Sessiz', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'nothing' }).then(() => Alert.alert('Concord', 'Susturuldu')).catch(() => {}) },
         { text: 'Vazgeç', style: 'cancel' },
       ]) });
     }
@@ -791,7 +791,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           onChangeText={(t) => {
             setText(t);
             if (draftTimer.current) clearTimeout(draftTimer.current);
-            draftTimer.current = setTimeout(() => { AsyncStorage.setItem(`sidcord_draft_${channel.id}`, t).catch(() => {}); }, 500);
+            draftTimer.current = setTimeout(() => { AsyncStorage.setItem(`concord_draft_${channel.id}`, t).catch(() => {}); }, 500);
             if (channel.guildId) {
               sendTyping(channel.guildId, channel.id);
               const mm = /(?:^|\s)([@#])(\w{0,20})$/.exec(t);
@@ -868,7 +868,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
             <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); if (m) togglePin(m); }}>
               <Text style={s.sheetItemText}>📌  {menuFor?.pinned ? 'Sabiti Kaldır' : 'Sabitle'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); if (m) api.savedMessages.save(m.id).then(() => Alert.alert('Sidcord', 'Kaydedildi')).catch(() => {}); }}>
+            <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); if (m) api.savedMessages.save(m.id).then(() => Alert.alert('Concord', 'Kaydedildi')).catch(() => {}); }}>
               <Text style={s.sheetItemText}>🔖  Kaydet</Text>
             </TouchableOpacity>
             <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); if (m) remindMenu(m); }}>
@@ -880,7 +880,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
               </TouchableOpacity>
             )}
             {channel.type === 'announcement' && (
-              <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); if (m) api.messages.crosspost(channel.id, m.id).then(() => Alert.alert('Sidcord', 'Yayınlandı')).catch((e) => Alert.alert('Sidcord', e?.message ?? 'Olmadı')); }}>
+              <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); if (m) api.messages.crosspost(channel.id, m.id).then(() => Alert.alert('Concord', 'Yayınlandı')).catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı')); }}>
                 <Text style={s.sheetItemText}>📣  Yayınla</Text>
               </TouchableOpacity>
             )}
@@ -1008,7 +1008,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
               {friendList.length === 0 ? (
                 <Text style={s.pinsEmpty}>Eklenecek arkadaş yok.</Text>
               ) : friendList.map((f) => (
-                <TouchableOpacity key={f.user_id} style={s.sheetItem} onPress={() => api.dms.addRecipient(channel.id, f.user_id).then(() => { setRecipOpen(false); Alert.alert('Sidcord', 'Eklendi'); }).catch((e) => Alert.alert('Sidcord', e?.message ?? 'Olmadı'))}>
+                <TouchableOpacity key={f.user_id} style={s.sheetItem} onPress={() => api.dms.addRecipient(channel.id, f.user_id).then(() => { setRecipOpen(false); Alert.alert('Concord', 'Eklendi'); }).catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı'))}>
                   <Text style={s.sheetItemText}>{f.display_name}</Text>
                 </TouchableOpacity>
               ))}
@@ -1026,7 +1026,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
               {(channel.participants ?? []).filter((id) => id !== me.id).length === 0 ? (
                 <Text style={s.pinsEmpty}>Çıkarılacak kişi yok.</Text>
               ) : (channel.participants ?? []).filter((id) => id !== me.id).map((id) => (
-                <TouchableOpacity key={id} style={s.sheetItem} onPress={() => api.dms.removeRecipient(channel.id, id).then(() => { setRemoveRecipOpen(false); Alert.alert('Sidcord', 'Çıkarıldı'); }).catch((e) => Alert.alert('Sidcord', e?.message ?? 'Olmadı'))}>
+                <TouchableOpacity key={id} style={s.sheetItem} onPress={() => api.dms.removeRecipient(channel.id, id).then(() => { setRemoveRecipOpen(false); Alert.alert('Concord', 'Çıkarıldı'); }).catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı'))}>
                   <Text style={s.sheetItemText}>{users[id]?.display_name ?? id}</Text>
                 </TouchableOpacity>
               ))}
@@ -1040,7 +1040,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         title={`Not — ${noteFor?.display_name ?? ''}`}
         placeholder="Bu kişi hakkında not (sadece sen görürsün)"
         onCancel={() => setNoteFor(null)}
-        onSubmit={(v) => { const u = noteFor; setNoteFor(null); if (u) api.setNote(u.id, v).then(() => Alert.alert('Sidcord', 'Not kaydedildi')).catch(() => {}); }}
+        onSubmit={(v) => { const u = noteFor; setNoteFor(null); if (u) api.setNote(u.id, v).then(() => Alert.alert('Concord', 'Not kaydedildi')).catch(() => {}); }}
       />
       <InputModal
         visible={!!threadFor}
@@ -1052,7 +1052,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           const m = threadFor; setThreadFor(null);
           if (m && v.trim()) {
             try { const t = await api.threads.create(channel.id, { name: v.trim(), starter_message_id: m.id }); nav.push({ kind: 'chat', channel: { id: t.id, name: t.name, guildId: channel.guildId } }); }
-            catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Thread oluşturulamadı'); }
+            catch (e: any) { Alert.alert('Concord', e?.message ?? 'Thread oluşturulamadı'); }
           }
         }}
       />

@@ -42,7 +42,7 @@ export function UserSettingsScreen({ me, setMe, nav, onLogout, onBack }: {
   }, []);
 
   const refreshMe = () => api.me().then(setMe).catch(() => {});
-  const toast = (m: string) => Alert.alert('Sidcord', m);
+  const toast = (m: string) => Alert.alert('Concord', m);
 
   async function pickAndUpload(kind: 'avatar' | 'banner') {
     const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.9 });

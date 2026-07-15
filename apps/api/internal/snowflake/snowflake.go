@@ -1,4 +1,4 @@
-// Sidcord Snowflake — Discord-stili 64-bit dağıtık ID üretici.
+// Concord Snowflake — Discord-stili 64-bit dağıtık ID üretici.
 // Layout:
 //   1 bit (her zaman 0) | 42 bit timestamp (ms) | 10 bit worker_id | 11 bit sequence
 // Bizim epoch: 2026-01-01 00:00 UTC

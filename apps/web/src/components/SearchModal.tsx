@@ -109,7 +109,7 @@ export function SearchModal() {
     const mid = r.message.id;
     const cid = r.channel.id;
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('sidcord:jump-to-message', { detail: { messageId: mid, channelId: cid } }));
+      window.dispatchEvent(new CustomEvent('concord:jump-to-message', { detail: { messageId: mid, channelId: cid } }));
     }, 350);
   }
 

@@ -1,4 +1,4 @@
-// Sidcord mobil API istemcisi — web api.ts'in tam mobil uyarlaması (namespace'li).
+// Concord mobil API istemcisi — web api.ts'in tam mobil uyarlaması (namespace'li).
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiBase } from './config';
 
@@ -7,8 +7,8 @@ let refreshToken: string | null = null;
 
 export async function loadTokens() {
   try {
-    accessToken = await AsyncStorage.getItem('sidcord_access');
-    refreshToken = await AsyncStorage.getItem('sidcord_refresh');
+    accessToken = await AsyncStorage.getItem('concord_access');
+    refreshToken = await AsyncStorage.getItem('concord_refresh');
   } catch {}
 }
 
@@ -16,8 +16,8 @@ async function saveTokens(access: string, refresh: string) {
   accessToken = access;
   refreshToken = refresh;
   try {
-    await AsyncStorage.setItem('sidcord_access', access);
-    await AsyncStorage.setItem('sidcord_refresh', refresh);
+    await AsyncStorage.setItem('concord_access', access);
+    await AsyncStorage.setItem('concord_refresh', refresh);
   } catch {}
 }
 
@@ -25,7 +25,7 @@ export async function clearTokens() {
   accessToken = null;
   refreshToken = null;
   try {
-    await AsyncStorage.multiRemove(['sidcord_access', 'sidcord_refresh']);
+    await AsyncStorage.multiRemove(['concord_access', 'concord_refresh']);
   } catch {}
 }
 

@@ -1,4 +1,4 @@
-# Sidcord Backend — Discord Özellik Denetimi
+# Concord Backend — Discord Özellik Denetimi
 
 **Tarih:** 2026-05-25
 **Mevcut backend kapsamı:** ~50 endpoint, 18 tablo, 4 servis (API, Gateway, Voice, Storage)
@@ -468,7 +468,7 @@
 
 ## 23. Real-time Olaylar (Gateway)
 
-| Event | Discord | Sidcord | Durum |
+| Event | Discord | Concord | Durum |
 |---|---|---|---|
 | READY (login sonrası) | ✓ | ❌ | Yok |
 | MESSAGE_CREATE | ✓ | ✅ | — |
@@ -496,7 +496,7 @@
 | INTERACTION_CREATE | ✓ | ❌ | (slash command) |
 | THREAD_CREATE/UPDATE/DELETE | ✓ | ❌ | — |
 | WEBHOOKS_UPDATE | ✓ | ❌ | — |
-| NOTIFICATION (Sidcord özel) | — | ✅ | — |
+| NOTIFICATION (Concord özel) | — | ✅ | — |
 
 ## 24. Limits & Rate Limiting
 

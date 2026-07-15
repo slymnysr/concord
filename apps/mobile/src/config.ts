@@ -1,9 +1,9 @@
-// Sunucu adresi — telefon, bilgisayardaki Sidcord servislerinin LAN IP'sine bağlanır.
+// Sunucu adresi — telefon, bilgisayardaki Concord servislerinin LAN IP'sine bağlanır.
 // Tek "host" girilir (örn. http://192.168.1.34); API 8080, gateway 4000 portundan türetilir.
 // Prod'da tek origin (nginx) girildiğinde portsuz da çalışır.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const HOST_KEY = 'sidcord_host';
+const HOST_KEY = 'concord_host';
 
 let cachedHost = '';
 

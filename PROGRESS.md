@@ -1,4 +1,4 @@
-# Sidcord — İlerleme Raporu
+# Concord — İlerleme Raporu
 
 ## Çalışan Servisler
 
@@ -70,7 +70,7 @@
 
 ## Test Hesabı
 
-- E-posta: `slmnys@sidcord.com`
+- E-posta: `slmnys@concord.com`
 - Parola: `sifre12345`
 - Kullanıcı: `slmnys`
 
@@ -79,21 +79,21 @@
 ```bash
 # Tüm servisleri yeniden başlat
 pkill -f 'bin/api'; pkill -f 'mix phx.server'; pkill -f 'tsx watch'
-cd /home/slmnys/sidcord/apps/api && \
-  POSTGRES_DSN='postgres://sidcord:sidcord_dev@localhost:5433/sidcord?sslmode=disable' \
+cd /home/slmnys/concord/apps/api && \
+  POSTGRES_DSN='postgres://concord:concord_dev@localhost:5433/concord?sslmode=disable' \
   JWT_SECRET='dev_jwt_secret_change_in_prod_at_least_32_chars' \
-  nohup ./bin/api > /tmp/sidcord-api.log 2>&1 &
+  nohup ./bin/api > /tmp/concord-api.log 2>&1 &
 
-cd /home/slmnys/sidcord/apps/gateway && \
+cd /home/slmnys/concord/apps/gateway && \
   . /home/slmnys/.asdf/asdf.sh && \
-  SIDCORD_JWT_SECRET='dev_jwt_secret_change_in_prod_at_least_32_chars' \
-  nohup mix phx.server > /tmp/sidcord-gateway.log 2>&1 &
+  CONCORD_JWT_SECRET='dev_jwt_secret_change_in_prod_at_least_32_chars' \
+  nohup mix phx.server > /tmp/concord-gateway.log 2>&1 &
 
-cd /home/slmnys/sidcord/apps/voice && \
-  nohup pnpm dev > /tmp/sidcord-voice.log 2>&1 &
+cd /home/slmnys/concord/apps/voice && \
+  nohup pnpm dev > /tmp/concord-voice.log 2>&1 &
 
-cd /home/slmnys/sidcord/apps/web && \
-  nohup pnpm dev > /tmp/sidcord-web.log 2>&1 &
+cd /home/slmnys/concord/apps/web && \
+  nohup pnpm dev > /tmp/concord-web.log 2>&1 &
 ```
 
 ## Sırada (öncelik sırası)

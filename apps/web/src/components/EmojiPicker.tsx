@@ -81,20 +81,20 @@ export function EmojiPicker({ onPick, onClose }: Props) {
   >([]);
   const [recent, setRecent] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('sidcord_recent_emojis') || '[]');
+      return JSON.parse(localStorage.getItem('concord_recent_emojis') || '[]');
     } catch {
       return [];
     }
   });
   const [favs, setFavs] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('sidcord_fav_emojis') || '[]');
+      return JSON.parse(localStorage.getItem('concord_fav_emojis') || '[]');
     } catch {
       return [];
     }
   });
 
-  const [tone, setTone] = useState<number>(() => parseInt(localStorage.getItem('sidcord_skin_tone') || '0', 10));
+  const [tone, setTone] = useState<number>(() => parseInt(localStorage.getItem('concord_skin_tone') || '0', 10));
 
   // Tam Unicode seti (1900+) — lazy: picker ilk açıldığında yüklenir, sonra cache'ten gelir
   const [groups, setGroups] = useState<EmojiGroup[] | null>(null);
@@ -126,7 +126,7 @@ export function EmojiPicker({ onPick, onClose }: Props) {
   function toggleFav(emoji: string) {
     setFavs((prev) => {
       const next = prev.includes(emoji) ? prev.filter((x) => x !== emoji) : [emoji, ...prev].slice(0, 24);
-      try { localStorage.setItem('sidcord_fav_emojis', JSON.stringify(next)); } catch { /* yoksay */ }
+      try { localStorage.setItem('concord_fav_emojis', JSON.stringify(next)); } catch { /* yoksay */ }
       return next;
     });
   }
@@ -137,7 +137,7 @@ export function EmojiPicker({ onPick, onClose }: Props) {
       const next = [final, ...recent.filter((x) => x !== final)].slice(0, 16);
       setRecent(next);
       try {
-        localStorage.setItem('sidcord_recent_emojis', JSON.stringify(next));
+        localStorage.setItem('concord_recent_emojis', JSON.stringify(next));
       } catch {
         /* yoksay */
       }
@@ -199,7 +199,7 @@ export function EmojiPicker({ onPick, onClose }: Props) {
             {TONE_SWATCH.map((sw, i) => (
               <button
                 key={i}
-                onClick={() => { setTone(i); try { localStorage.setItem('sidcord_skin_tone', String(i)); } catch { /* yoksay */ } }}
+                onClick={() => { setTone(i); try { localStorage.setItem('concord_skin_tone', String(i)); } catch { /* yoksay */ } }}
                 title={i === 0 ? 'Varsayılan ten' : 'Ten rengi ' + i}
                 className={'w-4 h-4 text-xs leading-none rounded-sm ' + (tone === i ? 'ring-1 ring-brand-500' : 'opacity-60 hover:opacity-100')}
               >

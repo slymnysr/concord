@@ -1,4 +1,4 @@
-// Sidcord mobil ses istemcisi — mediasoup-client + react-native-webrtc.
+// Concord mobil ses istemcisi — mediasoup-client + react-native-webrtc.
 // Ses-odaklı (mic produce + consume, mute/deafen). Web voice.ts'in mobil/ses alt kümesi.
 // NOT: react-native-webrtc native modül gerektirir → Expo Go'da DEĞİL, EAS dev client / native build'de çalışır.
 import { Device } from 'mediasoup-client';

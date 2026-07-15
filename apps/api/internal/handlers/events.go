@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
+	"github.com/concord/api/internal/repo"
 )
 
 // DispatchDueEventReminders — 15 dk içinde başlayacak etkinliklerin abonelerine bir kez hatırlatma gönderir.
@@ -71,7 +71,7 @@ func (h *Handler) DispatchDueEventReminders(ctx context.Context) {
 					"event_name":   e.name,
 					"ts":           time.Now().UnixMilli(),
 				})
-				_, _ = h.Redis.Publish(ctx, "sidcord:user:"+strconv.FormatInt(uid, 10), payload).Result()
+				_, _ = h.Redis.Publish(ctx, "concord:user:"+strconv.FormatInt(uid, 10), payload).Result()
 			}
 		}
 		_, _ = h.Pool.Exec(ctx, `UPDATE guild_events SET reminder_sent = TRUE WHERE id = $1`, e.id)

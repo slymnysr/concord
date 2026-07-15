@@ -15,7 +15,7 @@ export function SearchScreen({ guildId, channelId, nav, onBack }: { guildId?: st
   const [has, setHas] = useState<string[]>([]);
   const toggleHas = (h: string) => setHas((p) => (p.includes(h) ? p.filter((x) => x !== h) : [...p, h]));
   const [history, setHistory] = useState<string[]>([]);
-  useEffect(() => { AsyncStorage.getItem('sidcord_search_history').then((v) => { if (v) try { setHistory(JSON.parse(v)); } catch {} }).catch(() => {}); }, []);
+  useEffect(() => { AsyncStorage.getItem('concord_search_history').then((v) => { if (v) try { setHistory(JSON.parse(v)); } catch {} }).catch(() => {}); }, []);
 
   async function search(query?: string) {
     const term = (query ?? q).trim();
@@ -25,7 +25,7 @@ export function SearchScreen({ guildId, channelId, nav, onBack }: { guildId?: st
     catch { setResults([]); setSearched(true); }
     const next = [term, ...history.filter((x) => x !== term)].slice(0, 8);
     setHistory(next);
-    AsyncStorage.setItem('sidcord_search_history', JSON.stringify(next)).catch(() => {});
+    AsyncStorage.setItem('concord_search_history', JSON.stringify(next)).catch(() => {});
   }
 
   return (

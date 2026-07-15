@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
 )
 
 // === Bot platformu (Discord "Applications" paritesi) ===
@@ -95,7 +95,7 @@ func (h *Handler) CreateApplication(w http.ResponseWriter, r *http.Request) {
 		slug = "bot"
 	}
 	botUsername := fmt.Sprintf("%s_bot_%d", slug, botID%100000)
-	botEmail := fmt.Sprintf("bot-%d@bots.sidcord.local", botID)
+	botEmail := fmt.Sprintf("bot-%d@bots.concord.local", botID)
 
 	tx, err := h.Pool.Begin(r.Context())
 	if err != nil {
@@ -229,7 +229,7 @@ func (h *Handler) DeleteApplication(w http.ResponseWriter, r *http.Request) {
 	_, _ = h.Pool.Exec(r.Context(), `DELETE FROM guild_members WHERE user_id = $1`, botUserID)
 	_, _ = h.Pool.Exec(r.Context(), `
         UPDATE users SET deleted_at = NOW(), display_name = 'Silinmiş Bot',
-               username = 'deleted_bot_' || id, email = 'deleted-bot-' || id || '@bots.sidcord.local'
+               username = 'deleted_bot_' || id, email = 'deleted-bot-' || id || '@bots.concord.local'
         WHERE id = $1
     `, botUserID)
 	if _, err := h.Pool.Exec(r.Context(), `DELETE FROM applications WHERE id = $1`, appID); err != nil {

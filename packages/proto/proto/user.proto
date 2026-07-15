@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package sidcord.user.v1;
+package concord.user.v1;
 
-option go_package = "github.com/sidcord/proto/gen/go/user/v1;userv1";
+option go_package = "github.com/concord/proto/gen/go/user/v1;userv1";
 
 // İlk iskelet — Faz 1'de genişletilecek
 message User {

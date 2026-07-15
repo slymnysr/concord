@@ -37,7 +37,7 @@ func (i *Issuer) AccessToken(userID int64) (string, time.Time, error) {
 			Subject:   strconv.FormatInt(userID, 10),
 			ExpiresAt: jwt.NewNumericDate(exp),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "sidcord-api",
+			Issuer:    "concord-api",
 		},
 	}
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

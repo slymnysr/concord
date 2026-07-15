@@ -1,12 +1,12 @@
-// Sidcord API istemcisi — fetch tabanlı, auth header + token refresh
+// Concord API istemcisi — fetch tabanlı, auth header + token refresh
 export type Snowflake = string;
 
 import { httpUrl } from './serverConfig';
 
 const API_BASE = httpUrl('/api/v1');
-const TOKEN_KEY = 'sidcord_access';
-const REFRESH_KEY = 'sidcord_refresh';
-const SESSION_KEY = 'sidcord_session_id';
+const TOKEN_KEY = 'concord_access';
+const REFRESH_KEY = 'concord_refresh';
+const SESSION_KEY = 'concord_session_id';
 
 export interface APIUser {
   id: Snowflake;

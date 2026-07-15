@@ -22,7 +22,7 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
       const r = await api.dms.createGroup(selected);
       setGroupMode(false); setSelected([]);
       nav.push({ kind: 'chat', channel: { id: r.channel_id, name: r.name || 'Grup' } });
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Grup oluşturulamadı'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Grup oluşturulamadı'); }
   }
 
   const load = useCallback(() => { api.friends.list().then(setFriends).catch(() => {}); }, []);
@@ -40,11 +40,11 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
     try {
       const r = await api.dms.open(f.user_id);
       nav.push({ kind: 'chat', channel: { id: r.channel_id, name: f.display_name } });
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'DM açılamadı'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'DM açılamadı'); }
   }
 
   async function act(fn: () => Promise<any>) {
-    try { await fn(); load(); } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Olmadı'); }
+    try { await fn(); load(); } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Olmadı'); }
   }
 
   return (

@@ -391,7 +391,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
             </div>
           )}
 
-          <Section title="Sidcord Üyeliği" aria-label="Sidcord Üyeliği">
+          <Section title="Concord Üyeliği" aria-label="Concord Üyeliği">
             <p className="text-xs text-ink-secondary">
               {new Date(user.created_at).toLocaleDateString('tr-TR', {
                 day: 'numeric',

@@ -27,7 +27,7 @@ export function SavedMessagesModal({ onClose }: { onClose: () => void }) {
     }
     onClose();
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('sidcord:jump-to-message', { detail: { messageId: sm.message_id, channelId: sm.channel_id } }));
+      window.dispatchEvent(new CustomEvent('concord:jump-to-message', { detail: { messageId: sm.message_id, channelId: sm.channel_id } }));
     }, 700);
   }
 

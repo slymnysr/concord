@@ -13,8 +13,8 @@ export function DiscoverScreen({ nav, onBack }: { nav: Nav; onBack: () => void }
   useEffect(() => { load(); }, []);
 
   async function join(id: string) {
-    try { await api.discover.join(id); Alert.alert('Sidcord', 'Katıldın!'); nav.reset({ kind: 'home' }); }
-    catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Katılınamadı'); }
+    try { await api.discover.join(id); Alert.alert('Concord', 'Katıldın!'); nav.reset({ kind: 'home' }); }
+    catch (e: any) { Alert.alert('Concord', e?.message ?? 'Katılınamadı'); }
   }
 
   return (

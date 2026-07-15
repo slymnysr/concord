@@ -84,10 +84,10 @@ export function AuthPage() {
             src="/brand/logo.svg"
             width={56}
             height={56}
-            alt="Sidcord"
+            alt="Concord"
             className="inline-block mb-3"
           />
-          <h1 className="text-3xl font-bold tracking-tight">Sidcord</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Concord</h1>
           <p className="text-ink-secondary text-sm mt-1">
             {mode === 'login'
               ? 'Hesabına giriş yap'
@@ -289,7 +289,7 @@ export function AuthPage() {
             type="button"
             onClick={() => {
               const v = prompt(
-                'Sidcord sunucu adresi (boş bırak = bu site):\nÖrn: https://sidcord.example.com',
+                'Concord sunucu adresi (boş bırak = bu site):\nÖrn: https://concord.example.com',
                 SERVER_BASE,
               );
               if (v === null) return;

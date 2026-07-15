@@ -58,7 +58,7 @@ export function CreateGuildModal() {
   function normalizeCode(input: string): string {
     const m = input
       .trim()
-      .match(/(?:(?:sidcord\.com|localhost(?::\d+)?|127\.0\.0\.1(?::\d+)?)\/(?:invite|davet)\/)?([a-z0-9]{4,16})/i);
+      .match(/(?:(?:concord\.com|localhost(?::\d+)?|127\.0\.0\.1(?::\d+)?)\/(?:invite|davet)\/)?([a-z0-9]{4,16})/i);
     return m?.[1] ?? '';
   }
 
@@ -315,7 +315,7 @@ export function CreateGuildModal() {
         value={inviteInput}
         onChange={(e) => setInviteInput(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && joinServer()}
-        placeholder="sidcord.com/davet/abcd1234"
+        placeholder="concord.com/davet/abcd1234"
         className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2.5 text-ink-primary placeholder:text-ink-tertiary font-mono"
       />
       {error && <p className="text-accent-500 text-sm mt-2">{error}</p>}

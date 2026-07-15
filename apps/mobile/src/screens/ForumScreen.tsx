@@ -27,7 +27,7 @@ export function ForumScreen({ channel, nav, onBack }: { channel: OpenChannel; na
     try {
       const t = await api.threads.create(channel.id, { name: name.trim() });
       openThread(t as Thread);
-    } catch (e: any) { Alert.alert('Sidcord', e?.message ?? 'Oluşturulamadı'); }
+    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Oluşturulamadı'); }
   }
 
   return (

@@ -12,7 +12,7 @@ interface NavSnapshot {
 }
 function loadNav(): NavSnapshot {
   try {
-    const raw = localStorage.getItem('sidcord_nav');
+    const raw = localStorage.getItem('concord_nav');
     if (raw) {
       const n = JSON.parse(raw);
       return {
@@ -577,7 +577,7 @@ interface UiState {
 
 function loadIgnored(): string[] {
   try {
-    const raw = localStorage.getItem('sidcord_ignored');
+    const raw = localStorage.getItem('concord_ignored');
     if (raw) return JSON.parse(raw);
   } catch {
     /* yoksay */
@@ -651,7 +651,7 @@ const uiSlice = createSlice({
         ? state.ignoredUsers.filter((x) => x !== id)
         : [...state.ignoredUsers, id];
       try {
-        localStorage.setItem('sidcord_ignored', JSON.stringify(state.ignoredUsers));
+        localStorage.setItem('concord_ignored', JSON.stringify(state.ignoredUsers));
       } catch {
         /* yoksay */
       }
@@ -771,7 +771,7 @@ store.subscribe(() => {
   if (json !== lastNavJSON) {
     lastNavJSON = json;
     try {
-      localStorage.setItem('sidcord_nav', json);
+      localStorage.setItem('concord_nav', json);
     } catch {
       /* yoksay */
     }

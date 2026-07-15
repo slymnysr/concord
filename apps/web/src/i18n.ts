@@ -4,7 +4,7 @@
 
 export type Locale = 'tr' | 'en';
 
-const STORAGE_KEY = 'sidcord_locale';
+const STORAGE_KEY = 'concord_locale';
 
 export function getLocale(): Locale {
   const v = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
@@ -43,7 +43,7 @@ const tr: Dict = {
   'appearance.title': 'Görünüm',
   'appearance.theme': 'Tema',
   'appearance.theme.dark': 'Koyu',
-  'appearance.theme.darkSub': 'Varsayılan Sidcord',
+  'appearance.theme.darkSub': 'Varsayılan Concord',
   'appearance.theme.light': 'Aydınlık',
   'appearance.theme.lightSub': 'Beyaz arayüz',
   'appearance.theme.amoled': 'AMOLED',
@@ -79,7 +79,7 @@ const en: Dict = {
   'appearance.title': 'Appearance',
   'appearance.theme': 'Theme',
   'appearance.theme.dark': 'Dark',
-  'appearance.theme.darkSub': 'Default Sidcord',
+  'appearance.theme.darkSub': 'Default Concord',
   'appearance.theme.light': 'Light',
   'appearance.theme.lightSub': 'White interface',
   'appearance.theme.amoled': 'AMOLED',

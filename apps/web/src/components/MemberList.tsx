@@ -23,7 +23,7 @@ export function MemberList() {
 
   const onlineSet = useMemo(() => new Set(onlineIds), [onlineIds]);
   const [query, setQuery] = useState('');
-  const [hideOffline, setHideOffline] = useState(() => localStorage.getItem('sidcord_hide_offline') === '1');
+  const [hideOffline, setHideOffline] = useState(() => localStorage.getItem('concord_hide_offline') === '1');
 
   if (!guildId) return null;
 
@@ -120,7 +120,7 @@ export function MemberList() {
       {offlineMembers.length > 0 && (
         <>
           <button
-            onClick={() => { const n = !hideOffline; setHideOffline(n); localStorage.setItem('sidcord_hide_offline', n ? '1' : '0'); }}
+            onClick={() => { const n = !hideOffline; setHideOffline(n); localStorage.setItem('concord_hide_offline', n ? '1' : '0'); }}
             className="w-full px-3 mt-2 mb-1 text-[11px] font-bold text-ink-tertiary uppercase tracking-[0.08em] hover:text-ink-secondary flex items-center justify-between"
           >
             <span>Çevrimdışı — {offlineMembers.length}</span>
@@ -435,7 +435,7 @@ function MemberContextMenu({
             icon={<AtSign size={14} />}
             label="Bahset"
             onClick={() => {
-              const ev = new CustomEvent('sidcord:insert-text', {
+              const ev = new CustomEvent('concord:insert-text', {
                 detail: { text: `<@${m.user_id}> ` },
               });
               window.dispatchEvent(ev);

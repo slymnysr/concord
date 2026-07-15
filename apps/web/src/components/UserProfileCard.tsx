@@ -75,7 +75,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + localStorage.getItem('sidcord_access'),
+          Authorization: 'Bearer ' + localStorage.getItem('concord_access'),
         },
         body: JSON.stringify({ user_id: user.id }),
       });
@@ -91,7 +91,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
     try {
       await fetch(httpUrl(`/api/v1/friends/${user.id}/accept`), {
         method: 'PUT',
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('sidcord_access') },
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('concord_access') },
       });
       setUser({ ...user, friendship_state: 'accepted' });
     } finally {
@@ -240,7 +240,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
 
                 <div className="mt-3 pt-3 border-t border-line">
                   <h3 className="text-[10px] font-bold uppercase text-ink-tertiary tracking-wider mb-1">
-                    Sidcord Üye
+                    Concord Üye
                   </h3>
                   <p className="text-xs text-ink-secondary">
                     {new Date(user.created_at).toLocaleDateString('tr-TR', {
@@ -353,7 +353,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
                     {user.friendship_state !== 'self' && (
                       <button
                         onClick={() => {
-                          window.dispatchEvent(new CustomEvent('sidcord:mention-user', { detail: { id: user.id } }));
+                          window.dispatchEvent(new CustomEvent('concord:mention-user', { detail: { id: user.id } }));
                           onClose();
                         }}
                         title="Mesaj kutusunda bu kişiden bahset" aria-label="Mesaj kutusunda bu kişiden bahset"

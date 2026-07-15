@@ -1,4 +1,4 @@
-# Sidcord — Kurulum Durumu (Faz 0 Doğrulama)
+# Concord — Kurulum Durumu (Faz 0 Doğrulama)
 
 Tarih: 2026-05-24
 
@@ -15,12 +15,12 @@ Tarih: 2026-05-24
 | Web (Vite dev) | ✓ ÇALIŞIYOR | `curl localhost:3000/` → HTTP 200 |
 
 **Çalışan servisler:**
-- API: PID `/tmp/sidcord-api.pid` — port 8080
-- Web: PID `/tmp/sidcord-web.pid` — port 3000
+- API: PID `/tmp/concord-api.pid` — port 8080
+- Web: PID `/tmp/concord-web.pid` — port 3000
 
 Durdurmak için:
 ```bash
-kill $(cat /tmp/sidcord-api.pid) $(cat /tmp/sidcord-web.pid)
+kill $(cat /tmp/concord-api.pid) $(cat /tmp/concord-web.pid)
 ```
 
 ## Engellenen (manuel müdahale gerekiyor)
@@ -34,7 +34,7 @@ kill $(cat /tmp/sidcord-api.pid) $(cat /tmp/sidcord-web.pid)
 **Sonrası:**
 ```bash
 docker --version  # çalışmalı
-cd /home/slmnys/sidcord && pnpm db:up
+cd /home/slmnys/concord && pnpm db:up
 ```
 
 ### 2. Elixir + Erlang/OTP
@@ -71,7 +71,7 @@ Erlang derleme **15-25 dakika** sürer.
 
 **Sonrası:**
 ```bash
-cd /home/slmnys/sidcord/apps/gateway
+cd /home/slmnys/concord/apps/gateway
 mix local.hex --force
 mix local.rebar --force
 mix deps.get
@@ -83,6 +83,6 @@ mix phx.server  # port 4000
 Yukarıdaki 2 manuel adım tamamlandığında:
 1. `pnpm db:up` (DB'ler ayağa kalkar)
 2. `mix phx.server` (gateway)
-3. `tarayıcı → localhost:3000` (Sidcord landing + app shell görünmeli)
+3. `tarayıcı → localhost:3000` (Concord landing + app shell görünmeli)
 
 Bunlar bitince Faz 1'e geçilecek (Snowflake ID, auth, postgres şeması, ilk mesaj akışı).

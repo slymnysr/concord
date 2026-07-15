@@ -14,7 +14,7 @@ lint:
 	gofmt -l . | grep . && exit 1 || true
 
 docker:
-	docker build -t sidcord/api:dev .
+	docker build -t concord/api:dev .
 
 deps:
 	go mod download

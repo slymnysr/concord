@@ -1,4 +1,4 @@
-# Sidcord Mobil — Çalıştırma & Build
+# Concord Mobil — Çalıştırma & Build
 
 ## 1) Hızlı test (Expo Go) — ses HARİÇ her şey
 Sesli sohbet dışındaki tüm özellikler Expo Go'da çalışır.
@@ -35,7 +35,7 @@ Build bitince çıkan linkten **APK'yı telefona kur**. Sonra:
 ```bash
 pnpm start --dev-client --tunnel
 ```
-ile dev sunucusunu başlat; kurduğun **Sidcord dev client** uygulamasıyla bağlan.
+ile dev sunucusunu başlat; kurduğun **Concord dev client** uygulamasıyla bağlan.
 Artık sesli kanala (🔊) dokununca mikrofon izni istenir ve sesli sohbet çalışır.
 
 ### Yerel build (Expo bulutu yerine kendi makinende)
@@ -46,7 +46,7 @@ pnpm exec expo run:android
 ```
 
 ## 3) Yapılandırma notları
-- `app.json`: paket kimliği `com.sidcord.app`, mikrofon/kamera izinleri ve
+- `app.json`: paket kimliği `com.concord.app`, mikrofon/kamera izinleri ve
   `@config-plugins/react-native-webrtc` plugin'i tanımlı.
 - `eas.json`: `development` (dev client, APK), `preview` (APK), `production` profilleri.
 - Sunucu adresi uygulamada login ekranından girilir; portsuz host girilirse API `:8080`,

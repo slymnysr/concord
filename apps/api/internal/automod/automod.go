@@ -1,4 +1,4 @@
-// Sidcord AutoMod — mesaj öncesi içerik kontrol katmanı.
+// Concord AutoMod — mesaj öncesi içerik kontrol katmanı.
 // Türkiye pazarı için kritik: BTK düzenlemeleri (5651 + içerik kaldırma).
 package automod
 
@@ -212,7 +212,7 @@ func check(tt TriggerType, data json.RawMessage, content string) string {
 			}
 		}
 	case TriggerInviteBlacklist:
-		// İçinde sidcord davet kodu (8 char) veya başka chat platformu daveti varsa
+		// İçinde concord davet kodu (8 char) veya başka chat platformu daveti varsa
 		if matchInvitePattern(content) {
 			return "invite-link"
 		}
@@ -261,7 +261,7 @@ func check(tt TriggerType, data json.RawMessage, content string) string {
 	return ""
 }
 
-var inviteRegex = regexp.MustCompile(`(?:sidcord\.com/invite/|discord\.gg/|discord\.com/invite/|t\.me/|telegram\.me/)`)
+var inviteRegex = regexp.MustCompile(`(?:concord\.com/invite/|discord\.gg/|discord\.com/invite/|t\.me/|telegram\.me/)`)
 
 func matchInvitePattern(content string) bool {
 	return inviteRegex.MatchString(strings.ToLower(content))

@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Sidcord mesaj markdown — Discord-stiline yakın hafif parser
+// Concord mesaj markdown — Discord-stiline yakın hafif parser
 // Destekler: **bold**, *italic*, __underline__, ~~strike~~, `inline code`,
 // ```code block```, > blockquote, ||spoiler||, URLs, @mentions
 
@@ -406,7 +406,7 @@ function ChannelMentionChip({ channelId }: { channelId: string }) {
 }
 
 function RoleMentionChip({ roleId }: { roleId: string }) {
-  const store = (window as any).__sidcord_store;
+  const store = (window as any).__concord_store;
   const state = store?.getState?.();
   let role: any = null;
   for (const gid in state?.guildRoles?.byGuild ?? {}) {
@@ -464,13 +464,13 @@ function TimestampChip({ unix, style }: { unix: number; style: string }) {
 
 function useUserCache(userId: string) {
   // Lazy: store'dan oku, yoksa fetch et
-  const store = (window as any).__sidcord_store;
+  const store = (window as any).__concord_store;
   const cached = store?.getState?.()?.users?.byId?.[userId];
   return cached ?? null;
 }
 
 function useChannelCache(channelId: string) {
-  const store = (window as any).__sidcord_store;
+  const store = (window as any).__concord_store;
   const state = store?.getState?.();
   if (!state) return null;
   for (const guildId in state.channels?.byGuild ?? {}) {
@@ -481,9 +481,9 @@ function useChannelCache(channelId: string) {
 }
 
 function CustomEmojiChip({ name, jumbo }: { name: string; jumbo?: boolean }) {
-  const store = (window as any).__sidcord_store;
+  const store = (window as any).__concord_store;
   const gid = store?.getState?.()?.guilds?.selectedId;
-  const emojis = (window as any).__sidcord_emojis?.[gid] as { name: string; url: string }[] | undefined;
+  const emojis = (window as any).__concord_emojis?.[gid] as { name: string; url: string }[] | undefined;
   const found = emojis?.find((e) => e.name === name);
   if (found) {
     return <img src={found.url} alt={`:${name}:`} title={`:${name}:`} className={(jumbo ? 'w-12 h-12 ' : 'w-5 h-5 ') + 'inline-block object-contain align-text-bottom'} />;

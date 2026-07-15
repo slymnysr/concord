@@ -99,7 +99,7 @@ export default function App() {
         },
         onNotification: (ev: any) => {
           // Bildirim gelen-kutusu (NotificationsBell) bu olayı dinler
-          window.dispatchEvent(new CustomEvent('sidcord:notification', { detail: ev }));
+          window.dispatchEvent(new CustomEvent('concord:notification', { detail: ev }));
           // Hatırlatıcı / mention bildirimi → ses + masaüstü bildirimi
           const n = ev?.notification;
           if (n?.type === 'reminder') {
@@ -155,7 +155,7 @@ export default function App() {
       if (ev.message_id) dispatch(fetchReactions(ev.message_id));
     });
     const offPoll = onGuildEvent(guildId, 'POLL_UPDATE', (ev: any) => {
-      if (ev.message_id) window.dispatchEvent(new CustomEvent('sidcord:poll-update', { detail: { messageId: String(ev.message_id) } }));
+      if (ev.message_id) window.dispatchEvent(new CustomEvent('concord:poll-update', { detail: { messageId: String(ev.message_id) } }));
     });
     // Kanal oluşturma/güncelleme/silme → kanal listesini gerçek-zamanlı tazele
     const offChCreate = onGuildEvent(guildId, 'CHANNEL_CREATE', () => dispatch(fetchChannels(guildId)));
@@ -163,7 +163,7 @@ export default function App() {
     const offChDelete = onGuildEvent(guildId, 'CHANNEL_DELETE', () => dispatch(fetchChannels(guildId)));
     // Sunucu susturma/sağırlaştırma olayı → voice durumu UI'da güncellensin (gerekirse presence tazele)
     const offVoiceState = onGuildEvent(guildId, 'GUILD_VOICE_STATE_UPDATE', (ev: any) => {
-      if (ev.user_id) window.dispatchEvent(new CustomEvent('sidcord:guild-voice-state', { detail: ev }));
+      if (ev.user_id) window.dispatchEvent(new CustomEvent('concord:guild-voice-state', { detail: ev }));
     });
     const offReactRem = onGuildEvent(guildId, 'REACTION_REMOVE', (ev: any) => {
       if (ev.message_id) dispatch(fetchReactions(ev.message_id));
@@ -219,7 +219,7 @@ export default function App() {
     api.emojis
       .list(guildId)
       .then((list) => {
-        (window as any).__sidcord_emojis = { ...((window as any).__sidcord_emojis ?? {}), [guildId]: list };
+        (window as any).__concord_emojis = { ...((window as any).__concord_emojis ?? {}), [guildId]: list };
       })
       .catch(() => {});
   }, [guildId]);
@@ -231,7 +231,7 @@ export default function App() {
     async function tick() {
       try {
         const r = await api.notifications.count();
-        if (!stop) document.title = r.unread > 0 ? `(${r.unread}) Sidcord` : 'Sidcord';
+        if (!stop) document.title = r.unread > 0 ? `(${r.unread}) Concord` : 'Concord';
       } catch {}
     }
     tick();
@@ -239,7 +239,7 @@ export default function App() {
     return () => {
       stop = true;
       clearInterval(t);
-      document.title = 'Sidcord';
+      document.title = 'Concord';
     };
   }, [user]);
 
@@ -368,7 +368,7 @@ export default function App() {
           src="/brand/logo.svg"
           width={80}
           height={80}
-          alt="Sidcord"
+          alt="Concord"
           className="animate-pulse"
         />
       </div>

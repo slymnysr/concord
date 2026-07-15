@@ -1,4 +1,4 @@
-// Sidcord mobil tema — web ile aynı marka paleti (koyu)
+// Concord mobil tema — web ile aynı marka paleti (koyu)
 export const colors = {
   bg: '#0E1117',
   surface1: '#161B22',

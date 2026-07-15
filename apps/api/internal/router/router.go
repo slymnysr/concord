@@ -6,9 +6,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/sidcord/api/internal/auth"
-	"github.com/sidcord/api/internal/handlers"
-	mw "github.com/sidcord/api/internal/middleware"
+	"github.com/concord/api/internal/auth"
+	"github.com/concord/api/internal/handlers"
+	mw "github.com/concord/api/internal/middleware"
 )
 
 func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
@@ -19,7 +19,7 @@ func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.Compress(5))
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "https://*.sidcord.com"},
+		AllowedOrigins:   []string{"http://localhost:3000", "https://*.concord.com"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,

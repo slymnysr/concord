@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sidcord/api/internal/auth"
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/auth"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/repo"
 	"go.uber.org/zap"
 )
 

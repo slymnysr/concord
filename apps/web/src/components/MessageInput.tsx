@@ -114,8 +114,8 @@ export function MessageInput() {
       setValue((v) => (v ? v.replace(/\s*$/, ' ') : '') + `<@${id}> `);
       ref.current?.focus();
     }
-    window.addEventListener('sidcord:mention-user', onMention as EventListener);
-    return () => window.removeEventListener('sidcord:mention-user', onMention as EventListener);
+    window.addEventListener('concord:mention-user', onMention as EventListener);
+    return () => window.removeEventListener('concord:mention-user', onMention as EventListener);
   }, []);
 
   async function sendSticker(url: string, name: string) {
@@ -255,7 +255,7 @@ export function MessageInput() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + localStorage.getItem('sidcord_access'),
+          Authorization: 'Bearer ' + localStorage.getItem('concord_access'),
         },
         body: JSON.stringify({
           content: v || ' ',
@@ -552,7 +552,7 @@ export function MessageInput() {
               // ↑ boş kutuda → son kendi mesajını düzenle (Discord paritesi)
               if (e.key === 'ArrowUp' && !value && !mention && lastOwnMsgId) {
                 e.preventDefault();
-                window.dispatchEvent(new CustomEvent('sidcord:edit-message', { detail: { id: lastOwnMsgId } }));
+                window.dispatchEvent(new CustomEvent('concord:edit-message', { detail: { id: lastOwnMsgId } }));
               }
             }}
             placeholder={

@@ -1,4 +1,4 @@
-# @sidcord/proto
+# @concord/proto
 
 Servisler arası gRPC iletişimi için protobuf tanımları.
 

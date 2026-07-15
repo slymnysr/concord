@@ -29,11 +29,11 @@ export function ReconnectBanner() {
     };
     window.addEventListener('online', onUp);
     window.addEventListener('offline', onDown);
-    window.addEventListener('sidcord:gw', onGw as EventListener);
+    window.addEventListener('concord:gw', onGw as EventListener);
     return () => {
       window.removeEventListener('online', onUp);
       window.removeEventListener('offline', onDown);
-      window.removeEventListener('sidcord:gw', onGw as EventListener);
+      window.removeEventListener('concord:gw', onGw as EventListener);
       clearTimeout(okTimer);
     };
   }, []);

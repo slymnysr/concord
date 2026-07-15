@@ -1,4 +1,4 @@
-# Sidcord Mobil — Özellik Listesi & Test Kılavuzu
+# Concord Mobil — Özellik Listesi & Test Kılavuzu
 
 Discord paritesi + paritenin ötesinde yenilikler. Her şey `tsc` temiz + `expo export` ile derleniyor;
 **gerçek cihaz/backend testi yapılmadı** — bu liste test kontrol listesidir.

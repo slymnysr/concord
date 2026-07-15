@@ -93,8 +93,8 @@ export function MessageList() {
         const el = document.getElementById('msg-' + targetId);
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          el.classList.add('sidcord-jump-flash');
-          setTimeout(() => el.classList.remove('sidcord-jump-flash'), 2000);
+          el.classList.add('concord-jump-flash');
+          setTimeout(() => el.classList.remove('concord-jump-flash'), 2000);
           return;
         }
         // Yüklü değil → eski mesajları getir ve tekrar dene
@@ -107,8 +107,8 @@ export function MessageList() {
         }
       }
     }
-    window.addEventListener('sidcord:jump-to-message', onJump as EventListener);
-    return () => window.removeEventListener('sidcord:jump-to-message', onJump as EventListener);
+    window.addEventListener('concord:jump-to-message', onJump as EventListener);
+    return () => window.removeEventListener('concord:jump-to-message', onJump as EventListener);
   }, [channelId, dispatch]);
 
   const prevChannelRef = useRef(channelId);
@@ -292,7 +292,7 @@ export function MessageList() {
     {channelReadState?.last_message_id && list.some((m) => m.id > channelReadState.last_message_id!) && (
       <button
         onClick={() => {
-          document.getElementById('sidcord-unread-divider')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          document.getElementById('concord-unread-divider')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }}
         className="absolute top-2 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full bg-accent-500 hover:brightness-110 text-white text-xs font-semibold shadow-lg flex items-center gap-1.5"
       >
@@ -316,7 +316,7 @@ function ForumBackBar({ channelId }: { channelId: string }) {
   const dispatch = useAppDispatch();
   let ret: { forumId: string; threadId: string } | null = null;
   try {
-    ret = JSON.parse(sessionStorage.getItem('sidcord_forum_return') || 'null');
+    ret = JSON.parse(sessionStorage.getItem('concord_forum_return') || 'null');
   } catch {
     ret = null;
   }
@@ -325,7 +325,7 @@ function ForumBackBar({ channelId }: { channelId: string }) {
     <button
       onClick={() => {
         dispatch(selectChannel(ret!.forumId));
-        try { sessionStorage.removeItem('sidcord_forum_return'); } catch { /* yoksay */ }
+        try { sessionStorage.removeItem('concord_forum_return'); } catch { /* yoksay */ }
       }}
       className="shrink-0 flex items-center gap-1.5 px-4 py-2 border-b border-line bg-surface-1 text-sm text-ink-secondary hover:text-ink-primary"
     >
@@ -366,7 +366,7 @@ function UnreadDivider({ list }: { list: any[] }) {
   if (firstUnreadIdx <= 0) return null;
   const m = list[firstUnreadIdx];
   return (
-    <div id="sidcord-unread-divider" className="flex items-center gap-2 my-3" data-message-id={m.id}>
+    <div id="concord-unread-divider" className="flex items-center gap-2 my-3" data-message-id={m.id}>
       <div className="flex-1 h-px bg-accent-500/60" />
       <span className="text-[10px] font-bold text-accent-500 uppercase tracking-wider">
         Yeni mesajlar
@@ -505,8 +505,8 @@ function MessageItem({
         setEditing(true);
       }
     }
-    window.addEventListener('sidcord:edit-message', onEdit);
-    return () => window.removeEventListener('sidcord:edit-message', onEdit);
+    window.addEventListener('concord:edit-message', onEdit);
+    return () => window.removeEventListener('concord:edit-message', onEdit);
   }, [isMine, messageId, content]);
 
   function toggle(emoji: string) {
@@ -572,7 +572,7 @@ function MessageItem({
         starter_message_id: messageId,
       });
       // Yeni thread'e gir
-      const guildId = (window as any).__sidcord_guildId;
+      const guildId = (window as any).__concord_guildId;
       void guildId;
       dispatch({ type: 'channels/selectChannel', payload: t.id });
     } catch (e) {
@@ -630,7 +630,7 @@ function MessageItem({
         <button
           type="button"
           onClick={() => {
-            window.dispatchEvent(new CustomEvent('sidcord:jump-to-message', { detail: { messageId: repliedTo.id, channelId } }));
+            window.dispatchEvent(new CustomEvent('concord:jump-to-message', { detail: { messageId: repliedTo.id, channelId } }));
           }}
           className="flex items-center gap-1.5 text-xs text-ink-tertiary mb-1 pl-12 max-w-full hover:text-ink-secondary w-full text-left"
         >
@@ -920,7 +920,7 @@ function MessageItem({
               }}
             />
             <MsgCtxItem label="👤 Profili Görüntüle" onClick={() => { dispatch(openProfileCard({ userId: authorId, anchorRect: null })); setCtx(null); }} />
-            {!isMine && <MsgCtxItem label="@ Bahset" onClick={() => { window.dispatchEvent(new CustomEvent('sidcord:mention-user', { detail: { id: authorId } })); setCtx(null); }} />}
+            {!isMine && <MsgCtxItem label="@ Bahset" onClick={() => { window.dispatchEvent(new CustomEvent('concord:mention-user', { detail: { id: authorId } })); setCtx(null); }} />}
             <MsgCtxItem label="⏰ Beni Hatırlat" onClick={() => setRemindMode(true)} />
             {channelId && (
               <MsgCtxItem
@@ -1024,7 +1024,7 @@ function ReactionChip({ messageId, reaction, onToggle }: { messageId: string; re
       {burst > 0 && [...Array(6)].map((_, i) => (
         <span
           key={`${burst}-${i}`}
-          className="sidcord-burst-particle"
+          className="concord-burst-particle"
           style={{ ['--bx' as any]: `${(i - 2.5) * 12}px`, animationDelay: `${i * 30}ms` }}
         >
           {reaction.emoji}
@@ -1376,8 +1376,8 @@ function PollView({ messageId }: { messageId: string }) {
     function onUpdate(e: Event) {
       if ((e as CustomEvent).detail?.messageId === messageId) setVer((v) => v + 1);
     }
-    window.addEventListener('sidcord:poll-update', onUpdate);
-    return () => window.removeEventListener('sidcord:poll-update', onUpdate);
+    window.addEventListener('concord:poll-update', onUpdate);
+    return () => window.removeEventListener('concord:poll-update', onUpdate);
   }, [messageId]);
 
   if (!poll) return null;
@@ -1450,8 +1450,8 @@ function PollView({ messageId }: { messageId: string }) {
   );
 }
 
-// Mesaj içeriğinde sidcord davet bağlantısı varsa Discord tarzı "Sunucuya Katıl" kartı göster.
-const INVITE_RE = /(?:sidcord\.com|localhost(?::\d+)?|127\.0\.0\.1(?::\d+)?)\/(?:invite|davet)\/([a-z0-9]{4,16})/i;
+// Mesaj içeriğinde concord davet bağlantısı varsa Discord tarzı "Sunucuya Katıl" kartı göster.
+const INVITE_RE = /(?:concord\.com|localhost(?::\d+)?|127\.0\.0\.1(?::\d+)?)\/(?:invite|davet)\/([a-z0-9]{4,16})/i;
 
 function MsgCtxItem({ label, danger, onClick }: { label: string; danger?: boolean; onClick: () => void }) {
   return (

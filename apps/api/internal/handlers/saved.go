@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/sidcord/api/internal/middleware"
+	"github.com/concord/api/internal/middleware"
 )
 
 // PUT /messages/{messageID}/save

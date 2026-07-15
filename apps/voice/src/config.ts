@@ -1,9 +1,9 @@
-// Sidcord voice config — mediasoup ayarları + JWT secret + portlar
+// Concord voice config — mediasoup ayarları + JWT secret + portlar
 import type { types as msTypes } from 'mediasoup';
 
 export const config = {
   port: parseInt(process.env.VOICE_PORT ?? '4443', 10),
-  jwtSecret: process.env.SIDCORD_JWT_SECRET ?? 'dev_jwt_secret_change_in_prod_at_least_32_chars',
+  jwtSecret: process.env.CONCORD_JWT_SECRET ?? 'dev_jwt_secret_change_in_prod_at_least_32_chars',
 
   // mediasoup worker
   worker: {

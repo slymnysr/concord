@@ -141,7 +141,7 @@ export function ForumView({ channelId }: { channelId: string }) {
                 >
                   <button
                     onClick={() => {
-                      try { sessionStorage.setItem('sidcord_forum_return', JSON.stringify({ forumId: channelId, threadId: p.id })); } catch { /* yoksay */ }
+                      try { sessionStorage.setItem('concord_forum_return', JSON.stringify({ forumId: channelId, threadId: p.id })); } catch { /* yoksay */ }
                       dispatch(selectChannel(p.id));
                     }}
                     className="flex-1 min-w-0 text-left flex items-start gap-3"
@@ -201,7 +201,7 @@ export function ForumView({ channelId }: { channelId: string }) {
           onCreated={(threadId) => {
             setCreating(false);
             load();
-            try { sessionStorage.setItem('sidcord_forum_return', JSON.stringify({ forumId: channelId, threadId })); } catch { /* yoksay */ }
+            try { sessionStorage.setItem('concord_forum_return', JSON.stringify({ forumId: channelId, threadId })); } catch { /* yoksay */ }
             dispatch(selectChannel(threadId));
           }}
         />

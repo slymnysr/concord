@@ -1,13 +1,13 @@
 defmodule Gateway.RedisBridge do
   @moduledoc """
-  Redis PubSub köprüsü — `sidcord:guild:*` pattern'ini dinler, gelen olayları
+  Redis PubSub köprüsü — `concord:guild:*` pattern'ini dinler, gelen olayları
   Phoenix kanalına yayar (`guild:<id>` topic'i).
   Go API mesaj attığında bu köprü gerçek zamanlı dağıtımı sağlar.
   """
   use GenServer
   require Logger
 
-  @pattern "sidcord:guild:*"
+  @pattern "concord:guild:*"
 
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -18,9 +18,9 @@ defmodule Gateway.RedisBridge do
     host = System.get_env("REDIS_HOST") || "localhost"
     port = String.to_integer(System.get_env("REDIS_PORT") || "6379")
 
-    case Redix.PubSub.start_link(host: host, port: port, name: :sidcord_pubsub) do
+    case Redix.PubSub.start_link(host: host, port: port, name: :concord_pubsub) do
       {:ok, pid} ->
-        {:ok, ref} = Redix.PubSub.psubscribe(:sidcord_pubsub, @pattern, self())
+        {:ok, ref} = Redix.PubSub.psubscribe(:concord_pubsub, @pattern, self())
         Logger.info("RedisBridge subscribed to #{@pattern}")
         {:ok, %{conn: pid, ref: ref}}
 
@@ -54,7 +54,7 @@ defmodule Gateway.RedisBridge do
     {:noreply, state}
   end
 
-  defp decode_and_forward("sidcord:guild:" <> guild_id, payload) do
+  defp decode_and_forward("concord:guild:" <> guild_id, payload) do
     case Jason.decode(payload) do
       {:ok, %{"type" => event_type} = event} ->
         topic = "guild:#{guild_id}"

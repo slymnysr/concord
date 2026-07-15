@@ -1,5 +1,5 @@
 {
-  "name": "@sidcord/proto",
+  "name": "@concord/proto",
   "version": "0.0.1",
   "private": true,
   "description": "Paylaşımlı protobuf tanımları (gRPC servisler arası iletişim)",

@@ -1,4 +1,4 @@
-// Sidcord obje deposu — geliştirme: MinIO, prod: Cloudflare R2 (S3 uyumlu)
+// Concord obje deposu — geliştirme: MinIO, prod: Cloudflare R2 (S3 uyumlu)
 package storage
 
 import (
@@ -20,9 +20,9 @@ type Storage struct {
 
 func New(ctx context.Context) (*Storage, error) {
 	endpoint := getenv("MINIO_ENDPOINT", "localhost:9000")
-	accessKey := getenv("MINIO_ACCESS_KEY", "sidcord")
-	secretKey := getenv("MINIO_SECRET_KEY", "sidcord_dev_minio")
-	bucket := getenv("MINIO_BUCKET", "sidcord-uploads")
+	accessKey := getenv("MINIO_ACCESS_KEY", "concord")
+	secretKey := getenv("MINIO_SECRET_KEY", "concord_dev_minio")
+	bucket := getenv("MINIO_BUCKET", "concord-uploads")
 	useSSL := getenv("MINIO_SSL", "false") == "true"
 	publicBase := getenv("MINIO_PUBLIC_BASE", "http://localhost:9000")
 

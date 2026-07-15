@@ -28,7 +28,7 @@ export function AddFriendModal() {
     // basit: doğrudan fetch et
     try {
       const res = await fetch(httpUrl('/api/v1/friends'), {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('sidcord_access') },
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('concord_access') },
       });
       setList(await res.json());
     } catch {}
@@ -49,7 +49,7 @@ export function AddFriendModal() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + localStorage.getItem('sidcord_access'),
+          Authorization: 'Bearer ' + localStorage.getItem('concord_access'),
         },
         body: JSON.stringify({ username: username.trim() }),
       });
@@ -71,7 +71,7 @@ export function AddFriendModal() {
   async function accept(userId: string) {
     await fetch(httpUrl(`/api/v1/friends/${userId}/accept`), {
       method: 'PUT',
-      headers: { Authorization: 'Bearer ' + localStorage.getItem('sidcord_access') },
+      headers: { Authorization: 'Bearer ' + localStorage.getItem('concord_access') },
     });
     refresh();
   }
@@ -80,7 +80,7 @@ export function AddFriendModal() {
     if (!confirm('Arkadaşlığı sonlandırmak istiyor musun?')) return;
     await fetch(httpUrl(`/api/v1/friends/${userId}`), {
       method: 'DELETE',
-      headers: { Authorization: 'Bearer ' + localStorage.getItem('sidcord_access') },
+      headers: { Authorization: 'Bearer ' + localStorage.getItem('concord_access') },
     });
     refresh();
   }
@@ -90,7 +90,7 @@ export function AddFriendModal() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + localStorage.getItem('sidcord_access'),
+        Authorization: 'Bearer ' + localStorage.getItem('concord_access'),
       },
       body: JSON.stringify({ user_id: userId }),
     });

@@ -1,5 +1,5 @@
 {
-  "name": "@sidcord/ui",
+  "name": "@concord/ui",
   "version": "0.0.1",
   "private": true,
   "description": "Paylaşımlı UI bileşenleri (web/desktop/mobile)",

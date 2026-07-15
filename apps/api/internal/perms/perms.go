@@ -1,4 +1,4 @@
-// Sidcord permission bitmask sistemi (Discord modeline yakın)
+// Concord permission bitmask sistemi (Discord modeline yakın)
 package perms
 
 // Permission bitleri — 64-bit bitmask

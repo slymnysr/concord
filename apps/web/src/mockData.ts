@@ -92,7 +92,7 @@ const hour = 60 * min;
 
 export const messages: Record<string, Message[]> = {
   c_yt_genel: [
-    { id: 'm1', channelId: 'c_yt_genel', authorId: 'u_1', content: 'Selam millet, bugün yeni proje başlattım. Discord clone yapıyoruz, Sidcord adı.', ts: now - 4 * hour },
+    { id: 'm1', channelId: 'c_yt_genel', authorId: 'u_1', content: 'Selam millet, bugün yeni proje başlattım. Discord clone yapıyoruz, Concord adı.', ts: now - 4 * hour },
     { id: 'm2', channelId: 'c_yt_genel', authorId: 'u_2', content: 'Vay be, hayırlı olsun. Hangi stack ile?', ts: now - 4 * hour + 3 * min },
     { id: 'm3', channelId: 'c_yt_genel', authorId: 'u_1', content: 'Elixir gateway, Go API, React web. Voice için mediasoup.', ts: now - 4 * hour + 5 * min },
     { id: 'm4', channelId: 'c_yt_genel', authorId: 'u_3', content: 'Elixir muhteşem bir seçim BTW, Discord da Elixir kullanıyor.', ts: now - 4 * hour + 8 * min },
@@ -101,7 +101,7 @@ export const messages: Record<string, Message[]> = {
     { id: 'm7', channelId: 'c_yt_genel', authorId: 'u_1', content: 'Evet, prod ortamı Türk Telekom DC üzerinde olacak. Veriler yurt içinde.', ts: now - 2 * hour + 4 * min },
     { id: 'm8', channelId: 'c_yt_genel', authorId: 'u_7', content: 'Open source olacak mı?', ts: now - 1 * hour - 30 * min },
     { id: 'm9', channelId: 'c_yt_genel', authorId: 'u_1', content: 'Lisans henüz seçilmedi, muhtemelen AGPL veya kaynak açık + ticari lisans modeli.', ts: now - 1 * hour - 25 * min },
-    { id: 'm10', channelId: 'c_yt_genel', authorId: 'u_bot', content: '🎉 Sidcord projesine hoş geldiniz! Komutlar için `/yardım` yazın.', ts: now - 1 * hour },
+    { id: 'm10', channelId: 'c_yt_genel', authorId: 'u_bot', content: '🎉 Concord projesine hoş geldiniz! Komutlar için `/yardım` yazın.', ts: now - 1 * hour },
     { id: 'm11', channelId: 'c_yt_genel', authorId: 'u_8', content: 'Mediasoup ile WebRTC tarafında kaç eşzamanlı kullanıcı hedefliyorsunuz?', ts: now - 45 * min },
     { id: 'm12', channelId: 'c_yt_genel', authorId: 'u_1', content: 'Tek SFU node başına ~500 stream. Cluster ile lineer ölçeklenir.', ts: now - 42 * min },
     { id: 'm13', channelId: 'c_yt_genel', authorId: 'u_3', content: 'Mobil tarafta React Native mı, native mi?', ts: now - 30 * min },
@@ -109,7 +109,7 @@ export const messages: Record<string, Message[]> = {
     { id: 'm15', channelId: 'c_yt_genel', authorId: 'u_7', content: 'GitHub linki var mı paylaşabileceğin?', ts: now - 10 * min },
   ],
   c_yt_duyurular: [
-    { id: 'd1', channelId: 'c_yt_duyurular', authorId: 'u_bot', content: '📢 **Sidcord v0.0.1** — Faz 0 iskeleti tamamlandı. Gateway, API, Web çalışıyor.', ts: now - 6 * hour },
+    { id: 'd1', channelId: 'c_yt_duyurular', authorId: 'u_bot', content: '📢 **Concord v0.0.1** — Faz 0 iskeleti tamamlandı. Gateway, API, Web çalışıyor.', ts: now - 6 * hour },
     { id: 'd2', channelId: 'c_yt_duyurular', authorId: 'u_1', content: 'Bu hafta Faz 1 başlıyor: auth + sunucu/kanal/rol + ilk gerçek mesaj akışı.', ts: now - 2 * hour },
   ],
   c_yt_sorular: [

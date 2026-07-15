@@ -9,7 +9,7 @@ async function main() {
   await initWorker();
   startSignaling();
   startHTTP();
-  log.info('sidcord-voice ready');
+  log.info('concord-voice ready');
 }
 
 main().catch((err) => {

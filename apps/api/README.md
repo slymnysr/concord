@@ -1,4 +1,4 @@
-# Sidcord API
+# Concord API
 
 Go ile yazılmış REST API servisi. Kullanıcı, sunucu, kanal, mesaj CRUD'u burada.
 
