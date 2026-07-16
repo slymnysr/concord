@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Hash, Volume2, AtSign, Slash } from 'lucide-react';
 import { useAppSelector } from '../store';
 import { api } from '../api';
+import { t } from '../i18n';
 
 interface Props {
   type: '@' | '#' | ':' | '/';
@@ -42,7 +43,7 @@ export function MentionPicker({ type, query, onPick, onClose }: Props) {
       return matches.map((e) => ({
         key: e.id,
         label: ':' + e.name + ':',
-        sub: 'özel emoji',
+        sub: t('mention.customEmoji'),
         color: '#5865F2',
         replacement: `<:${e.name}:${e.id}>`,
         imageUrl: e.url,
@@ -68,7 +69,7 @@ export function MentionPicker({ type, query, onPick, onClose }: Props) {
     return cs.map((c) => ({
       key: c.id,
       label: c.name,
-      sub: c.type === 'voice' ? 'sesli' : c.type,
+      sub: c.type === 'voice' ? t('mention.voice') : c.type,
       color: c.type === 'voice' ? '#7C7CDD' : '#5865F2',
       replacement: `<#${c.id}>`,
     }));
@@ -98,8 +99,14 @@ export function MentionPicker({ type, query, onPick, onClose }: Props) {
         ) : (
           <span>:</span>
         )}
-        {type === '@' ? 'Üyeler' : type === '#' ? 'Kanallar' : type === ':' ? 'Emojiler' : 'Komutlar'}
-        <span className="text-ink-muted">— {items.length} sonuç</span>
+        {type === '@'
+          ? t('mention.members')
+          : type === '#'
+            ? t('mention.channels')
+            : type === ':'
+              ? t('mention.emojis')
+              : t('mention.commands')}
+        <span className="text-ink-muted">— {t('common.resultCount', { n: items.length })}</span>
       </div>
       <ul>
         {items.map((it) => (
@@ -125,7 +132,7 @@ export function MentionPicker({ type, query, onPick, onClose }: Props) {
                 <Slash size={14} className="text-ink-tertiary shrink-0" />
               ) : (
                 <span className="w-6 h-6 flex items-center justify-center shrink-0">
-                  {it.sub === 'sesli' ? (
+                  {it.sub === t('mention.voice') ? (
                     <Volume2 size={14} className="text-ink-tertiary" />
                   ) : (
                     <Hash size={14} className="text-ink-tertiary" />

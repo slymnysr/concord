@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Hand, Check } from 'lucide-react';
 import { useAppSelector } from '../store';
 import { api, type APIGuildWelcome } from '../api';
+import { t } from '../i18n';
 
 // OnboardingGate — seçili sunucu için karşılama ekranı etkinse ve kuralların
 // kabulü zorunluysa, üye kabul edene kadar tam ekran karşılama gösterir.
@@ -71,7 +72,7 @@ export function OnboardingGate() {
         <div className="px-6 py-5 max-h-[50vh] overflow-y-auto space-y-5">
           {welcome.welcome_channels.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-xs font-bold uppercase text-ink-tertiary">Başlamak için</h3>
+              <h3 className="text-xs font-bold uppercase text-ink-tertiary">{t('onboard.getStarted')}</h3>
               {welcome.welcome_channels.map((wc, i) => (
                 <div key={i} className="bg-surface-2 border border-line rounded-xl px-4 py-3">
                   <div className="text-sm font-semibold text-ink-primary">
@@ -88,7 +89,7 @@ export function OnboardingGate() {
 
           {welcome.rules_text && (
             <div className="space-y-2">
-              <h3 className="text-xs font-bold uppercase text-ink-tertiary">Sunucu Kuralları</h3>
+              <h3 className="text-xs font-bold uppercase text-ink-tertiary">{t('onboard.rules')}</h3>
               <div className="bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm text-ink-secondary whitespace-pre-wrap">
                 {welcome.rules_text}
               </div>
@@ -129,10 +130,12 @@ export function OnboardingGate() {
           >
             <Check size={16} />
             {accepting
-              ? 'Kaydediliyor...'
+              ? t('common.saving')
               : welcome.require_accept
-                ? (prompts.length > 0 ? 'Kuralları kabul et ve devam et' : 'Kuralları okudum, kabul ediyorum')
-                : 'Seçimimi kaydet ve devam et'}
+                ? prompts.length > 0
+                  ? t('onboard.acceptRulesContinue')
+                  : t('onboard.acceptRules')
+                : t('onboard.saveSelection')}
           </button>
         </div>
       </div>

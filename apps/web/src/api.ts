@@ -112,6 +112,7 @@ export interface APIMessage {
   mention_everyone?: boolean;
   system?: boolean;
   published_at?: string;
+  reactions?: APIReaction[];
 }
 
 export interface APIMember {

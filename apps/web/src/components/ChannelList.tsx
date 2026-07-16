@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { PERM } from '../perms';
 import clsx from 'clsx';
 import { voice } from '../voice';
+import { t } from '../i18n';
 import { setPresenceStatus } from '../gateway';
 import {
   Hash,
@@ -204,12 +205,12 @@ export function ChannelList() {
       <div className="flex-1 overflow-y-auto py-3 px-2.5 space-y-3">
         {!guildId && (
           <p className="text-sm text-ink-tertiary px-2 py-6 text-center">
-            Sol kenardan bir sunucu seç veya oluştur.
+            {t('guild.pickOrCreate')}
           </p>
         )}
         {guildId && all.length === 0 && (
           <div className="px-2 py-6 text-center">
-            <p className="text-sm text-ink-tertiary mb-3">Henüz kanal yok.</p>
+            <p className="text-sm text-ink-tertiary mb-3">{t('channel.empty')}</p>
             {isOwner && (
               <button
                 onClick={() => dispatch(openCreateChannel('text'))}
@@ -235,12 +236,12 @@ export function ChannelList() {
                       className="flex items-center gap-0.5 flex-1 min-w-0 text-left hover:text-ink-secondary"
                     >
                       <ChevronDown size={12} className={'transition-transform ' + (collapsedText ? '-rotate-90' : '')} />
-                      <span className="truncate">Metin Kanalları</span>
+                      <span className="truncate">{t('channel.textChannels')}</span>
                     </button>
                     {isOwner && (
                       <button
                         onClick={() => dispatch(openCreateChannel('text'))}
-                        title="Metin kanalı oluştur" aria-label="Metin kanalı oluştur"
+                        title={t('channel.createText')} aria-label={t('channel.createText')}
                         className="opacity-0 group-hover/sec:opacity-100 text-base leading-none hover:text-ink-primary transition-opacity px-1"
                       >
                         +
@@ -268,12 +269,12 @@ export function ChannelList() {
                       className="flex items-center gap-0.5 flex-1 min-w-0 text-left hover:text-ink-secondary"
                     >
                       <ChevronDown size={12} className={'transition-transform ' + (collapsedVoice ? '-rotate-90' : '')} />
-                      <span className="truncate">Ses Kanalları</span>
+                      <span className="truncate">{t('channel.voiceChannels')}</span>
                     </button>
                     {isOwner && (
                       <button
                         onClick={() => dispatch(openCreateChannel('voice'))}
-                        title="Ses kanalı oluştur" aria-label="Ses kanalı oluştur"
+                        title={t('channel.createVoice')} aria-label={t('channel.createVoice')}
                         className="opacity-0 group-hover/sec:opacity-100 text-base leading-none hover:text-ink-primary transition-opacity px-1"
                       >
                         +
@@ -355,7 +356,7 @@ function CategorySection({
         <button
           type="button"
           onClick={() => dispatch(openModal('create_channel'))}
-          title="Bu kategoriye kanal ekle" aria-label="Bu kategoriye kanal ekle"
+          title={t('channel.addToCategory')} aria-label={t('channel.addToCategory')}
           className="opacity-0 group-hover:opacity-100 text-base leading-none hover:text-ink-primary"
         >
           +
@@ -411,7 +412,7 @@ function VoiceConnectedRow({ userId, user }: { userId: string; user: any }) {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [userId, isSelf, resolvedName, dispatch]);
-  const displayName = isSelf ? (me?.display_name ?? 'Sen') : (resolvedName || fetchedName || 'Yükleniyor…');
+  const displayName = isSelf ? (me?.display_name ?? t('common.you')) : (resolvedName || fetchedName || t('common.loading'));
   const [speaking, setSpeaking] = useState(false);
   const [muted, setMuted] = useState(() => voice.getUserVolume(userId) === 0);
   const [volume, setVolume] = useState(() => Math.round(voice.getUserVolume(userId) * 100));
@@ -478,9 +479,9 @@ function VoiceConnectedRow({ userId, user }: { userId: string; user: any }) {
       <span className={'truncate flex-1 ' + (muted ? 'opacity-50 line-through' : speaking ? 'text-status-online font-semibold' : '')}>
         {displayName}{isSelf && <span className="text-ink-tertiary"> (sen)</span>}
       </span>
-      {sv.deafen && <span title="Sunucuda sağırlaştırıldı" aria-label="Sunucuda sağırlaştırıldı" className="shrink-0">🔇🎧</span>}
-      {sv.mute && <span title="Sunucuda susturuldu" aria-label="Sunucuda susturuldu" className="shrink-0 text-accent-500">🔴</span>}
-      {muted && !sv.mute && <span title="Senin için susturuldu" aria-label="Senin için susturuldu" className="shrink-0">🔇</span>}
+      {sv.deafen && <span title={t('voice.serverDeafened')} aria-label={t('voice.serverDeafened')} className="shrink-0">🔇🎧</span>}
+      {sv.mute && <span title={t('voice.serverMuted')} aria-label={t('voice.serverMuted')} className="shrink-0 text-accent-500">🔴</span>}
+      {muted && !sv.mute && <span title={t('voice.mutedForYou')} aria-label={t('voice.mutedForYou')} className="shrink-0">🔇</span>}
 
       {menu && (
         <div className="fixed inset-0 z-50" onClick={() => setMenu(null)} onContextMenu={(e) => { e.preventDefault(); setMenu(null); }}>
@@ -497,7 +498,7 @@ function VoiceConnectedRow({ userId, user }: { userId: string; user: any }) {
             {!isSelf && (
               <div className="px-3 py-2">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-ink-tertiary">Ses seviyesi</span>
+                  <span className="text-xs text-ink-tertiary">{t('voice.volume')}</span>
                   <span className="text-xs font-mono text-ink-secondary">{volume}%</span>
                 </div>
                 <input
@@ -508,7 +509,7 @@ function VoiceConnectedRow({ userId, user }: { userId: string; user: any }) {
                   value={volume}
                   onChange={(e) => changeVolume(parseInt(e.target.value, 10))}
                   className="w-full accent-brand-500"
-                  aria-label="Kullanıcı ses seviyesi"
+                  aria-label={t('voice.userVolume')}
                 />
               </div>
             )}
@@ -522,7 +523,7 @@ function VoiceConnectedRow({ userId, user }: { userId: string; user: any }) {
                 {sv.deafen ? '🎧 Sağırlaştırmayı kaldır' : '🎧 Sunucuda Sağırlaştır'}
               </button>
             )}
-            {isSelf && <div className="px-3 py-1.5 text-ink-tertiary text-xs">Kendine işlem yapılamaz</div>}
+            {isSelf && <div className="px-3 py-1.5 text-ink-tertiary text-xs">{t('common.cannotActOnSelf')}</div>}
           </div>
         </div>
       )}
@@ -593,7 +594,7 @@ function ChannelButton({
         <span className={clsx('text-sm truncate', unread ? 'font-semibold' : 'font-medium')}>
           {channel.name}
         </span>
-        {channel.nsfw && <span className="text-[9px] text-accent-500 shrink-0" title="Yaş sınırlı" aria-label="Yaş sınırlı">🔞</span>}
+        {channel.nsfw && <span className="text-[9px] text-accent-500 shrink-0" title={t('channel.nsfw')} aria-label={t('channel.nsfw')}>🔞</span>}
         {(channel.type === 'voice' || channel.type === 'stage') && (connectedCount > 0 || (channel.user_limit ?? 0) > 0) && (
           <span
             className={
@@ -619,7 +620,7 @@ function ChannelButton({
       <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
         <button
           onClick={openInvite}
-          title="Kanala Davet Et" aria-label="Kanala Davet Et"
+          title={t('channel.invite')} aria-label={t('channel.invite')}
           className="w-5 h-5 flex items-center justify-center text-ink-tertiary hover:text-ink-primary"
         >
           <UserPlus size={15} />
@@ -630,7 +631,7 @@ function ChannelButton({
               e.stopPropagation();
               dispatch(openChannelSettings(channel.id));
             }}
-            title="Kanalı Düzenle" aria-label="Kanalı Düzenle"
+            title={t('channel.edit')} aria-label={t('channel.edit')}
             className="w-5 h-5 flex items-center justify-center text-ink-tertiary hover:text-ink-primary"
           >
             <Settings size={15} />
@@ -696,7 +697,7 @@ function ChannelContextMenu({
     const url = `${location.origin}/channels/${channel.guild_id}/${channel.id}`;
     try {
       await navigator.clipboard.writeText(url);
-      dispatch(addToast({ kind: 'success', message: 'Kanal linki kopyalandı' }));
+      dispatch(addToast({ kind: 'success', message: t('channel.linkCopied') }));
     } catch {}
     onClose();
   }
@@ -708,7 +709,7 @@ function ChannelContextMenu({
         mute_until_sec: seconds, // 0 = süresiz (açana kadar)
       });
       setMuted(true);
-      dispatch(addToast({ kind: 'success', message: seconds > 0 ? 'Kanal geçici olarak susturuldu' : 'Kanal susturuldu' }));
+      dispatch(addToast({ kind: 'success', message: seconds > 0 ? t('channel.mutedTemp') : t('channel.muted') }));
     } catch {}
     onClose();
   }
@@ -723,7 +724,7 @@ function ChannelContextMenu({
     try {
       await api.channels.muteSettings(channel.id, { notif_level: level });
       setNotifLevel(level);
-      dispatch(addToast({ kind: 'success', message: 'Bildirim ayarı güncellendi' }));
+      dispatch(addToast({ kind: 'success', message: t('channel.notifUpdated') }));
     } catch {}
     onClose();
   }
@@ -805,7 +806,7 @@ function ChannelContextMenu({
                   { label: '3 saat', s: 3 * 60 * 60 },
                   { label: '8 saat', s: 8 * 60 * 60 },
                   { label: '24 saat', s: 24 * 60 * 60 },
-                  { label: 'Tekrar açana kadar', s: 0 },
+                  { label: t('mute.untilReopen'), s: 0 },
                 ].map((d) => (
                   <button
                     key={d.label}
@@ -827,9 +828,9 @@ function ChannelContextMenu({
         {notifOpen && (
           <div className="ml-6 mr-1 mb-1 rounded-lg bg-surface-2 border border-line overflow-hidden">
             {[
-              { level: 'all' as const, label: 'Tüm Mesajlar' },
-              { level: 'mentions' as const, label: 'Sadece @bahsetmeler' },
-              { level: 'nothing' as const, label: 'Hiçbiri' },
+              { level: 'all' as const, label: t('notif.allMessages') },
+              { level: 'mentions' as const, label: t('notif.mentionsOnly') },
+              { level: 'nothing' as const, label: t('notif.none') },
             ].map((o) => (
               <button
                 key={o.level}
@@ -863,7 +864,7 @@ function ChannelContextMenu({
           label="Kanal ID'sini Kopyala"
           onClick={() => {
             navigator.clipboard?.writeText(channel.id).catch(() => {});
-            dispatch(addToast({ kind: 'success', message: 'Kanal ID kopyalandı' }));
+            dispatch(addToast({ kind: 'success', message: t('channel.idCopied') }));
             onClose();
           }}
         />
@@ -943,7 +944,7 @@ function GuildHeader() {
     setMuted(true);
     localStorage.setItem('concord_guildmute_' + guild.id, '1');
     await api.guilds.notifSettings(guild.id, 'nothing', seconds).catch(() => {});
-    dispatch(addToast({ kind: 'success', message: seconds > 0 ? 'Sunucu geçici olarak susturuldu' : 'Sunucu susturuldu' }));
+    dispatch(addToast({ kind: 'success', message: seconds > 0 ? t('guild.mutedTemp') : t('guild.muted') }));
     setGuildMuteOpen(false);
     setOpen(false);
   }
@@ -962,7 +963,7 @@ function GuildHeader() {
       await dispatch(fetchGuilds());
       dispatch(switchToDM());
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Ayrılınamadı' }));
+      dispatch(addToast({ kind: 'error', message: e?.message || t('guild.leaveFailed') }));
     }
     setOpen(false);
   }
@@ -970,7 +971,7 @@ function GuildHeader() {
   if (!guild) {
     return (
       <div className="h-14 px-4 flex items-center border-b border-line">
-        <h2 className="text-ink-tertiary font-semibold text-[15px]">Sunucu seç</h2>
+        <h2 className="text-ink-tertiary font-semibold text-[15px]">{t('guild.select')}</h2>
       </div>
     );
   }
@@ -1053,7 +1054,7 @@ function GuildHeader() {
                     { label: '3 saat', s: 3 * 60 * 60 },
                     { label: '8 saat', s: 8 * 60 * 60 },
                     { label: '24 saat', s: 24 * 60 * 60 },
-                    { label: 'Tekrar açana kadar', s: 0 },
+                    { label: t('mute.untilReopen'), s: 0 },
                   ].map((d) => (
                     <button
                       key={d.label}
@@ -1130,10 +1131,10 @@ function UserPanel() {
     offline: 'bg-status-offline',
   };
   const statusLabel: Record<string, string> = {
-    online: 'Çevrimiçi',
-    idle: 'Uzakta',
-    dnd: 'Rahatsız Etmeyin',
-    offline: 'Görünmez',
+    online: t('status.online'),
+    idle: t('status.idle'),
+    dnd: t('status.dnd'),
+    offline: t('status.invisible'),
   };
 
   async function changeStatus(s: 'online' | 'idle' | 'dnd' | 'offline') {
@@ -1193,7 +1194,7 @@ function UserPanel() {
             onClick={() => { setMenuOpen(false); dispatch(openModal('user_settings')); }}
             className="w-full text-left px-3 py-1.5 rounded text-ink-secondary hover:bg-surface-2 hover:text-ink-primary text-sm"
           >
-            {me.custom_status_text || me.custom_status_emoji ? 'Özel durumu düzenle' : 'Özel durum belirle'}
+            {me.custom_status_text || me.custom_status_emoji ? t('status.editCustom') : t('status.setCustom')}
           </button>
         </div>
       )}
@@ -1286,16 +1287,16 @@ function ChannelInvitePopover({
       const dm = await api.dms.open(userId);
       await api.channels.sendMessage(dm.channel_id, link);
       setSent((s) => ({ ...s, [userId]: true }));
-      dispatch(addToast({ kind: 'success', message: 'Davet gönderildi' }));
+      dispatch(addToast({ kind: 'success', message: t('invite.sent') }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Gönderilemedi' }));
+      dispatch(addToast({ kind: 'error', message: e?.message || t('common.sendFailed') }));
     }
   }
 
   function copy() {
     if (!link) return;
     navigator.clipboard?.writeText(link).then(
-      () => dispatch(addToast({ kind: 'success', message: 'Bağlantı kopyalandı' })),
+      () => dispatch(addToast({ kind: 'success', message: t('common.linkCopied') })),
       () => {},
     );
   }
@@ -1332,7 +1333,7 @@ function ChannelInvitePopover({
                     : 'bg-brand-500 hover:bg-brand-400 text-white disabled:opacity-50')
                 }
               >
-                {sent[f.user_id] ? 'Gönderildi' : 'Davet Et'}
+                {sent[f.user_id] ? t('common.sent') : 'Davet Et'}
               </button>
             </div>
           ))
@@ -1344,7 +1345,7 @@ function ChannelInvitePopover({
           <input
             readOnly
             value={link}
-            placeholder="oluşturuluyor..."
+            placeholder={t('invite.creating')}
             className="flex-1 bg-surface-2 border border-line rounded-md px-2 py-1.5 text-xs text-ink-primary font-mono"
           />
           <button

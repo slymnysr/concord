@@ -315,6 +315,21 @@ const reactionsSlice = createSlice({
     })
      .addCase(toggleReactionThunk.fulfilled, (s, a) => {
        s.byMessage[a.payload.messageId] = a.payload.list;
+     })
+     // N+1 fix: mesaj listesi reactions'ı gömülü döndürür (API-KONTRAT). Mesajlar
+     // yüklenince tekil GET .../reactions atmak yerine store'u buradan tohumla.
+     .addCase(fetchMessages.fulfilled, (s, a) => {
+       for (const m of a.payload.list) {
+         if (m.reactions) s.byMessage[m.id] = m.reactions;
+       }
+     })
+     .addCase(messagesSlice.actions.prependMessages, (s, a) => {
+       for (const m of a.payload.list) {
+         if (m.reactions) s.byMessage[m.id] = m.reactions;
+       }
+     })
+     .addCase(messagesSlice.actions.pushMessage, (s, a) => {
+       if (a.payload.reactions) s.byMessage[a.payload.id] = a.payload.reactions;
      });
   },
 });

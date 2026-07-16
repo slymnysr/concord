@@ -1,5 +1,6 @@
 import { BadgeCheck } from 'lucide-react';
 import type { APIConnection } from '../api';
+import { t } from '../i18n';
 
 // Platform görselleri — marka ikonu kullanmıyoruz (görsel kopya yasak), emoji + etiket yeterli
 export const CONN_META: Record<string, { icon: string; label: string }> = {
@@ -11,8 +12,8 @@ export const CONN_META: Record<string, { icon: string; label: string }> = {
   x: { icon: '✖️', label: 'X' },
   reddit: { icon: '👽', label: 'Reddit' },
   instagram: { icon: '📷', label: 'Instagram' },
-  website: { icon: '🌐', label: 'Web Sitesi' },
-  custom: { icon: '🔗', label: 'Diğer' },
+  website: { icon: '🌐', label: t('conn.website') },
+  custom: { icon: '🔗', label: t('conn.other') },
 };
 
 export function connMeta(type: string) {
@@ -25,7 +26,7 @@ export function ConnectionChips({ connections }: { connections?: APIConnection[]
   return (
     <div>
       <div className="text-[11px] font-bold uppercase tracking-wider text-ink-tertiary mb-1.5">
-        Bağlantılar
+        {t('conn.sectionTitle')}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {connections.map((c) => {
@@ -34,11 +35,11 @@ export function ConnectionChips({ connections }: { connections?: APIConnection[]
             <span
               key={c.id}
               className="inline-flex items-center gap-1 bg-surface-2 border border-line rounded-lg px-2 py-1 text-xs text-ink-secondary"
-              title={`${meta.label}: ${c.name}${c.verified ? ' (doğrulanmış)' : ''}`}
+              title={`${meta.label}: ${c.name}${c.verified ? ` (${t('conn.verified')})` : ''}`}
             >
               <span aria-hidden>{meta.icon}</span>
               <span className="font-medium text-ink-primary">{c.name}</span>
-              {c.verified && <BadgeCheck size={12} className="text-brand-400" aria-label="Doğrulanmış" />}
+              {c.verified && <BadgeCheck size={12} className="text-brand-400" aria-label={t('conn.verifiedLabel')} />}
             </span>
           );
         })}

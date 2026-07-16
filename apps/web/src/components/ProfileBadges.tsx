@@ -1,4 +1,5 @@
 import type { APIPublicUser } from '../api';
+import { t } from '../i18n';
 
 // Erken üye eşiği — bu tarihten önce katılanlar "Erken Üye" rozeti alır
 const EARLY_BEFORE = new Date('2026-07-01').getTime();
@@ -11,11 +12,11 @@ interface Badge {
 
 export function ProfileBadges({ user }: { user: APIPublicUser }) {
   const badges: Badge[] = [];
-  if (user.bot) badges.push({ emoji: '🤖', label: 'Bot', cls: 'bg-brand-500/15 text-brand-500' });
-  if (user.email_verified) badges.push({ emoji: '✓', label: 'E-posta doğrulandı', cls: 'bg-emerald-500/15 text-emerald-400' });
-  if (user.totp_enabled) badges.push({ emoji: '🛡️', label: 'İki adımlı doğrulama açık', cls: 'bg-blue-500/15 text-blue-400' });
+  if (user.bot) badges.push({ emoji: '🤖', label: t('badge.bot'), cls: 'bg-brand-500/15 text-brand-500' });
+  if (user.email_verified) badges.push({ emoji: '✓', label: t('badge.emailVerified'), cls: 'bg-emerald-500/15 text-emerald-400' });
+  if (user.totp_enabled) badges.push({ emoji: '🛡️', label: t('badge.twoFactorOn'), cls: 'bg-blue-500/15 text-blue-400' });
   if (user.created_at && new Date(user.created_at).getTime() < EARLY_BEFORE) {
-    badges.push({ emoji: '🎖️', label: 'Erken Üye', cls: 'bg-amber-500/15 text-amber-400' });
+    badges.push({ emoji: '🎖️', label: t('badge.earlyMember'), cls: 'bg-amber-500/15 text-amber-400' });
   }
   if (badges.length === 0) return null;
   return (

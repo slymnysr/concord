@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Users,
 } from 'lucide-react';
+import { t } from '../i18n';
 import { api, type APIPublicUser } from '../api';
 import { ConnectionChips } from './connectionMeta';
 import { useAppDispatch, useAppSelector, addToast, toggleIgnore, switchToDM } from '../store';
@@ -23,10 +24,10 @@ const statusColor: Record<string, string> = {
   offline: 'bg-status-offline',
 };
 const statusLabel: Record<string, string> = {
-  online: 'Çevrimiçi',
-  idle: 'Uzakta',
-  dnd: 'Rahatsız Etmeyin',
-  offline: 'Çevrimdışı',
+  online: t('status.online'),
+  idle: t('status.idle'),
+  dnd: t('status.dnd'),
+  offline: t('status.offline'),
 };
 
 // DM görünümünde sağ taraftaki kullanıcı profil paneli.
@@ -67,7 +68,7 @@ export function DMUserPanel({ channelId }: { channelId: string }) {
   if (!partnerId) {
     return (
       <aside className="w-72 bg-surface-1 border-l border-line flex items-center justify-center">
-        <p className="text-sm text-ink-tertiary">Yükleniyor...</p>
+        <p className="text-sm text-ink-tertiary">{t('common.loading')}</p>
       </aside>
     );
   }
@@ -113,7 +114,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
   if (!user) {
     return (
       <aside className="w-72 bg-surface-1 border-l border-line flex items-center justify-center">
-        <p className="text-sm text-ink-tertiary">Yükleniyor...</p>
+        <p className="text-sm text-ink-tertiary">{t('common.loading')}</p>
       </aside>
     );
   }
@@ -126,19 +127,19 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
         if (confirm(`${user.display_name} arkadaşlıktan çıkarılsın mı?`)) {
           await api.friends.remove(user.id);
           setUser({ ...user, friendship_state: undefined });
-          dispatch(addToast({ kind: 'info', message: 'Arkadaşlıktan çıkarıldı' }));
+          dispatch(addToast({ kind: 'info', message: t('friend.removed') }));
         }
       } else if (user.friendship_state === 'pending_received') {
         await api.friends.accept(user.id);
         setUser({ ...user, friendship_state: 'accepted' });
-        dispatch(addToast({ kind: 'success', message: 'Arkadaşlık kabul edildi' }));
+        dispatch(addToast({ kind: 'success', message: t('friend.accepted') }));
       } else if (!user.friendship_state) {
         await api.friends.send({ user_id: user.id });
         setUser({ ...user, friendship_state: 'pending_sent' });
-        dispatch(addToast({ kind: 'success', message: 'Arkadaşlık isteği gönderildi' }));
+        dispatch(addToast({ kind: 'success', message: t('friend.requestSent') }));
       }
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'İşlem başarısız' }));
+      dispatch(addToast({ kind: 'error', message: e?.message || t('common.actionFailed') }));
     } finally {
       setBusy(false);
     }
@@ -150,9 +151,9 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
     try {
       await api.block(user.id);
       setUser({ ...user, friendship_state: 'blocked' });
-      dispatch(addToast({ kind: 'info', message: 'Kullanıcı engellendi' }));
+      dispatch(addToast({ kind: 'info', message: t('user.blocked') }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Engellenemedi' }));
+      dispatch(addToast({ kind: 'error', message: e?.message || t('user.blockFailed') }));
     }
     setMenuOpen(false);
   }
@@ -176,8 +177,8 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
         addToast({
           kind: 'error',
           message: e?.message?.includes('forbidden')
-            ? 'Bu sunucuya davet etme iznin yok'
-            : 'Davet oluşturulamadı',
+            ? t('invite.noPermission')
+            : t('invite.createFailed'),
         }),
       );
     }
@@ -206,12 +207,12 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
             disabled={busy || fs === 'pending_sent' || fs === 'blocked'}
             title={
               fs === 'accepted'
-                ? 'Arkadaşsın'
+                ? t('friend.areFriends')
                 : fs === 'pending_sent'
-                  ? 'İstek gönderildi'
+                  ? t('friend.requestPending')
                   : fs === 'pending_received'
-                    ? 'İsteği kabul et'
-                    : 'Arkadaş ekle'
+                    ? t('friend.acceptRequest')
+                    : t('friend.add')
             }
             className={
               'w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors ' +
@@ -232,7 +233,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
             <button
               ref={triggerRef}
               onClick={openMenu}
-              title="Daha fazla" aria-label="Daha fazla"
+              title={t('common.more')} aria-label={t('common.more')}
               className="w-8 h-8 rounded-full flex items-center justify-center bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm"
             >
               <MoreHorizontal size={16} />
@@ -265,7 +266,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
                   {inviteOpen && (
                     <div className="absolute right-full top-0 mr-1 w-52 max-h-60 overflow-y-auto bg-surface-2 border border-line rounded-xl shadow-2xl py-1.5">
                       {myGuilds.length === 0 ? (
-                        <p className="px-3 py-2 text-xs text-ink-tertiary">Sunucun yok.</p>
+                        <p className="px-3 py-2 text-xs text-ink-tertiary">{t('guild.noneOwned')}</p>
                       ) : (
                         <>
                           {visibleGuilds.map((g) => (
@@ -296,12 +297,12 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
                 <button
                   onClick={() => {
                     dispatch(toggleIgnore(user.id));
-                    dispatch(addToast({ kind: 'info', message: isIgnored ? 'Yoksayma kaldırıldı' : 'Kullanıcı yoksayıldı' }));
+                    dispatch(addToast({ kind: 'info', message: isIgnored ? t('user.unignored') : t('user.ignored') }));
                     setMenuOpen(false);
                   }}
                   className="w-full px-3 py-2 flex items-center gap-2 text-ink-primary hover:bg-surface-3"
                 >
-                  <EyeOff size={15} /> {isIgnored ? 'Yoksaymayı Kaldır' : 'Yoksay'}
+                  <EyeOff size={15} /> {isIgnored ? t('user.unignore') : t('user.ignore')}
                 </button>
                 <button
                   onClick={block}
@@ -312,12 +313,12 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
                 <button
                   onClick={async () => {
                     setMenuOpen(false);
-                    const reason = prompt('Bildirim sebebi (opsiyonel):') ?? undefined;
+                    const reason = prompt(t('report.reasonPrompt')) ?? undefined;
                     try {
                       await api.users.report(user.id, reason);
-                      dispatch(addToast({ kind: 'success', message: 'Bildirin alındı, inceleyeceğiz' }));
+                      dispatch(addToast({ kind: 'success', message: t('report.received') }));
                     } catch (e: any) {
-                      dispatch(addToast({ kind: 'error', message: e?.message || 'Bildirilemedi' }));
+                      dispatch(addToast({ kind: 'error', message: e?.message || t('report.failed') }));
                     }
                   }}
                   className="w-full px-3 py-2 flex items-center gap-2 text-accent-400 hover:bg-accent-500/10"
@@ -376,11 +377,11 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
           )}
 
           {fs === 'blocked' && (
-            <div className="mt-2 text-xs text-accent-400 font-medium">Bu kullanıcı engellendi</div>
+            <div className="mt-2 text-xs text-accent-400 font-medium">{t('user.isBlocked')}</div>
           )}
 
           {user.bio && (
-            <Section title="Hakkımda" aria-label="Hakkımda">
+            <Section title={t('profile.about')} aria-label="Hakkımda">
               <p className="text-sm text-ink-primary leading-snug whitespace-pre-wrap">{user.bio}</p>
             </Section>
           )}
@@ -582,7 +583,7 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
           Üyeler — {members.length}
         </h3>
         {loading ? (
-          <p className="px-2 py-3 text-sm text-ink-tertiary">Yükleniyor...</p>
+          <p className="px-2 py-3 text-sm text-ink-tertiary">{t('common.loading')}</p>
         ) : (
           members.map((u) => (
             <div key={u.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-surface-2">

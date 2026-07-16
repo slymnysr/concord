@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Image as ImageIcon, X } from 'lucide-react';
 import { useAppDispatch, useAppSelector, fetchMessages } from '../store';
 import type { APIAttachment } from '../api';
+import { t } from '../i18n';
 
 type MediaItem = { att: APIAttachment; author?: string; created_at: string };
 
@@ -34,8 +35,10 @@ export function MediaView({ channelId }: { channelId: string }) {
         <ImageIcon size={18} className="text-brand-500 shrink-0" />
         <div className="min-w-0">
           <h2 className="font-bold text-ink-primary truncate">
-            {channel?.name ?? 'Medya'}
-            <span className="ml-2 text-xs font-normal text-ink-tertiary">{items.length} medya</span>
+            {channel?.name ?? t('media.title')}
+            <span className="ml-2 text-xs font-normal text-ink-tertiary">
+              {t('media.count', { n: items.length })}
+            </span>
           </h2>
           {channel?.topic && <p className="text-xs text-ink-tertiary truncate">{channel.topic}</p>}
         </div>
@@ -45,8 +48,8 @@ export function MediaView({ channelId }: { channelId: string }) {
         {items.length === 0 ? (
           <div className="text-center py-16 text-ink-tertiary">
             <ImageIcon size={40} className="mx-auto mb-3 opacity-40" />
-            <p className="text-sm">Henüz medya yok.</p>
-            <p className="text-xs mt-1">Aşağıdan görsel veya video paylaş.</p>
+            <p className="text-sm">{t('media.empty')}</p>
+            <p className="text-xs mt-1">{t('media.emptyHint')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">

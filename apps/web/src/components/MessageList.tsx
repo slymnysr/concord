@@ -2,11 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Hash, Smile, Pencil, Trash2, Check, X, Pin, MessagesSquare, Reply, Share2, ChevronDown, BarChart3 } from 'lucide-react';
 import { EmojiPicker } from './EmojiPicker';
 import { ForwardModal } from './ForwardModal';
-import { getLocale } from '../i18n';
+import { getLocale, t } from '../i18n';
 import {
   useAppDispatch,
   useAppSelector,
-  fetchReactions,
   toggleReactionThunk,
   updateMessage,
   removeMessage,
@@ -171,7 +170,7 @@ export function MessageList() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-3">
         <div className="w-14 h-14 rounded-2xl bg-accent-500/15 text-accent-500 flex items-center justify-center text-2xl">🔞</div>
-        <h2 className="text-xl font-bold text-ink-primary">Yaş Sınırlı Kanal</h2>
+        <h2 className="text-xl font-bold text-ink-primary">{t('msg.nsfwChannel')}</h2>
         <p className="text-sm text-ink-secondary max-w-sm">
           Bu kanal hassas içerik barındırabilir. Devam etmek için 18 yaşından büyük olduğunu onayla.
         </p>
@@ -188,7 +187,7 @@ export function MessageList() {
   // İlk yükleme + cache boş → Discord tarzı iskelet; cache varsa anında eski liste görünür
   if (initialLoading) {
     return (
-      <div className="flex-1 overflow-hidden px-6 py-4" aria-label="Mesajlar yükleniyor" aria-busy="true">
+      <div className="flex-1 overflow-hidden px-6 py-4" aria-label={t('msg.loadingMessages')} aria-busy="true">
         {[72, 40, 88, 56, 64, 32, 80, 48].map((w, i) => (
           <div key={i} className="flex gap-3 mb-6 animate-pulse" style={{ animationDelay: `${i * 80}ms` }}>
             <div className="w-10 h-10 rounded-full bg-surface-2 shrink-0" />
@@ -212,7 +211,7 @@ export function MessageList() {
       className="flex-1 overflow-y-auto px-6 py-4"
     >
       {olderLoading && (
-        <div className="text-center text-xs text-ink-tertiary py-2 animate-pulse">Eski mesajlar yükleniyor…</div>
+        <div className="text-center text-xs text-ink-tertiary py-2 animate-pulse">{t('msg.loadingOlder')}</div>
       )}
       {channel.type !== 'voice' && (
         <div className="mb-6 pb-6 border-b border-line">
@@ -228,7 +227,7 @@ export function MessageList() {
 
       {list.length === 0 && (
         <div className="text-center text-ink-tertiary py-16">
-          <p className="text-sm">Sessizlik... İlk mesajı sen yaz.</p>
+          <p className="text-sm">{t('msg.empty')}</p>
         </div>
       )}
 
@@ -339,8 +338,8 @@ function DateDivider({ date }: { date: Date }) {
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
   let label: string;
-  if (date.toDateString() === today.toDateString()) label = 'Bugün';
-  else if (date.toDateString() === yesterday.toDateString()) label = 'Dün';
+  if (date.toDateString() === today.toDateString()) label = t('date.today');
+  else if (date.toDateString() === yesterday.toDateString()) label = t('date.yesterday');
   else
     label = date.toLocaleDateString('tr-TR', {
       day: 'numeric',
@@ -487,14 +486,12 @@ function MessageItem({
 
   function copyToClipboard(text: string) {
     navigator.clipboard?.writeText(text).catch(() => {});
-    dispatch(addToast({ kind: 'success', message: 'Kopyalandı' }));
+    dispatch(addToast({ kind: 'success', message: t('common.copied') }));
     setCtx(null);
   }
 
-  useEffect(() => {
-    if (reactions.length === 0) dispatch(fetchReactions(messageId));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messageId]);
+  // Reactions N+1 fix: mesaj başına GET .../reactions ATMIYORUZ; mesaj listesi
+  // reactions'ı gömülü döndürüyor, store fetchMessages/prepend/push ile tohumlanıyor (API-KONTRAT).
 
   // ↑ ile "son mesajı düzenle" olayını dinle
   useEffect(() => {
@@ -531,7 +528,7 @@ function MessageItem({
 
   async function doDelete() {
     if (!channelId) return;
-    if (!confirm('Mesajı silmek istiyor musun?')) return;
+    if (!confirm(t('msg.deleteConfirm'))) return;
     try {
       await api.messages.delete(messageId);
       dispatch(removeMessage({ channel_id: channelId, id: messageId }));
@@ -557,13 +554,13 @@ function MessageItem({
       setTranslated(out || '(çeviri yok)');
     } catch {
       setTranslated(null);
-      dispatch(addToast({ kind: 'error', message: 'Çeviri başarısız' }));
+      dispatch(addToast({ kind: 'error', message: t('msg.translateFailed') }));
     }
   }
 
   async function startThread() {
     if (!channelId) return;
-    const name = prompt('Thread adı?');
+    const name = prompt(t('thread.namePrompt'));
     if (!name?.trim()) return;
     try {
       const t = await api.threads.create(channelId, {
@@ -584,9 +581,9 @@ function MessageItem({
     const when = new Date(Date.now() + mins * 60 * 1000).toISOString();
     try {
       await api.reminders.create(messageId, when);
-      dispatch(addToast({ kind: 'success', message: 'Hatırlatıcı kuruldu ⏰' }));
+      dispatch(addToast({ kind: 'success', message: t('remind.set') }));
     } catch {
-      dispatch(addToast({ kind: 'error', message: 'Hatırlatıcı kurulamadı' }));
+      dispatch(addToast({ kind: 'error', message: t('remind.failed') }));
     }
     setRemindMode(false);
     setCtx(null);
@@ -727,7 +724,7 @@ function MessageItem({
             />
             <button
               onClick={saveEdit}
-              title="Kaydet" aria-label="Kaydet"
+              title={t('common.save')} aria-label={t('common.save')}
               className="w-7 h-7 rounded-md bg-brand-500 hover:bg-brand-400 text-white flex items-center justify-center"
             >
               <Check size={14} />
@@ -737,7 +734,7 @@ function MessageItem({
                 setEditing(false);
                 setEditValue(content);
               }}
-              title="İptal" aria-label="İptal"
+              title={t('common.cancel')} aria-label={t('common.cancel')}
               className="w-7 h-7 rounded-md bg-surface-3 hover:bg-accent-500 hover:text-white text-ink-secondary flex items-center justify-center"
             >
               <X size={14} />
@@ -757,7 +754,7 @@ function MessageItem({
             {publishedAt && (
               <span
                 className="ml-1.5 text-[9px] font-semibold uppercase tracking-wide bg-surface-3 text-ink-tertiary rounded px-1 py-px align-middle"
-                title={'Yayınlandı: ' + new Date(publishedAt).toLocaleString('tr-TR')}
+                title={t('msg.publishedAt') + new Date(publishedAt).toLocaleString('tr-TR')}
               >
                 📣 Yayınlandı
               </span>
@@ -796,7 +793,7 @@ function MessageItem({
             ))}
             <button
               onClick={() => setPickerOpen((v) => !v)}
-              title="Tepki ekle" aria-label="Tepki ekle"
+              title={t('msg.addReaction')} aria-label={t('msg.addReaction')}
               className="px-2 py-0.5 rounded-full text-xs border border-line bg-surface-2 text-ink-tertiary hover:bg-surface-3 hover:text-ink-primary flex items-center"
             >
               <Smile size={13} />
@@ -809,35 +806,35 @@ function MessageItem({
         <button
           onClick={() => setPickerOpen((v) => !v)}
           className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-ink-primary rounded"
-          title="Tepki ekle" aria-label="Tepki ekle"
+          title={t('msg.addReaction')} aria-label={t('msg.addReaction')}
         >
           <Smile size={14} />
         </button>
         <button
           onClick={() => dispatch(setReplyTo(messageId))}
           className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
-          title="Yanıtla" aria-label="Yanıtla"
+          title={t('msg.reply')} aria-label={t('msg.reply')}
         >
           <Reply size={14} />
         </button>
         <button
           onClick={togglePin}
           className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
-          title="Sabitle / Sabitlemeyi Kaldır" aria-label="Sabitle / Sabitlemeyi Kaldır"
+          title={t('msg.pinToggle')} aria-label={t('msg.pinToggle')}
         >
           <Pin size={14} />
         </button>
         <button
           onClick={startThread}
           className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
-          title="Thread Başlat" aria-label="Thread Başlat"
+          title={t('msg.startThread')} aria-label={t('msg.startThread')}
         >
           <MessagesSquare size={14} />
         </button>
         <button
           onClick={forwardMessage}
           className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
-          title="İlet" aria-label="İlet"
+          title={t('msg.forward')} aria-label={t('msg.forward')}
         >
           <Share2 size={14} />
         </button>
@@ -845,7 +842,7 @@ function MessageItem({
           <button
             onClick={() => setEditing(true)}
             className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
-            title="Düzenle" aria-label="Düzenle"
+            title={t('common.edit')} aria-label={t('common.edit')}
           >
             <Pencil size={14} />
           </button>
@@ -854,7 +851,7 @@ function MessageItem({
           <button
             onClick={doDelete}
             className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-accent-500 rounded"
-            title="Sil" aria-label="Sil"
+            title={t('common.delete')} aria-label={t('common.delete')}
           >
             <Trash2 size={14} />
           </button>
@@ -873,58 +870,58 @@ function MessageItem({
           >
             {remindMode ? (
               <>
-                <div className="px-3 py-1.5 text-[11px] font-semibold uppercase text-ink-tertiary tracking-wider">Ne zaman hatırlatayım?</div>
-                <MsgCtxItem label="⏰ 20 dakika sonra" onClick={() => remind(20)} />
-                <MsgCtxItem label="⏰ 1 saat sonra" onClick={() => remind(60)} />
-                <MsgCtxItem label="⏰ 3 saat sonra" onClick={() => remind(180)} />
-                <MsgCtxItem label="⏰ Yarın" onClick={() => remind(60 * 24)} />
+                <div className="px-3 py-1.5 text-[11px] font-semibold uppercase text-ink-tertiary tracking-wider">{t('remind.when')}</div>
+                <MsgCtxItem label={t('remind.20min')} onClick={() => remind(20)} />
+                <MsgCtxItem label={t('remind.1hour')} onClick={() => remind(60)} />
+                <MsgCtxItem label={t('remind.3hours')} onClick={() => remind(180)} />
+                <MsgCtxItem label={t('remind.tomorrow')} onClick={() => remind(60 * 24)} />
                 <div className="my-1 h-px bg-line" />
-                <MsgCtxItem label="← Geri" onClick={() => setRemindMode(false)} />
+                <MsgCtxItem label={t('common.back')} onClick={() => setRemindMode(false)} />
               </>
             ) : (
             <>
-            <MsgCtxItem label="Yanıtla" onClick={() => { dispatch(setReplyTo(messageId)); setCtx(null); }} />
-            <MsgCtxItem label="Tepki Ekle" onClick={() => { setCtx(null); setPickerOpen(true); }} />
-            <MsgCtxItem label="Sabitle / Kaldır" onClick={() => { togglePin(); setCtx(null); }} />
-            <MsgCtxItem label="Thread Başlat" onClick={() => { startThread(); setCtx(null); }} />
-            <MsgCtxItem label="İlet" onClick={() => { forwardMessage(); setCtx(null); }} />
+            <MsgCtxItem label={t('msg.reply')} onClick={() => { dispatch(setReplyTo(messageId)); setCtx(null); }} />
+            <MsgCtxItem label={t('msg.addReaction')} onClick={() => { setCtx(null); setPickerOpen(true); }} />
+            <MsgCtxItem label={t('msg.pinToggleShort')} onClick={() => { togglePin(); setCtx(null); }} />
+            <MsgCtxItem label={t('msg.startThread')} onClick={() => { startThread(); setCtx(null); }} />
+            <MsgCtxItem label={t('msg.forward')} onClick={() => { forwardMessage(); setCtx(null); }} />
             {isAnnouncement && !publishedAt && (
               <MsgCtxItem
-                label="📣 Yayınla"
+                label={t('msg.publish')}
                 onClick={() => {
                   if (channelId) {
                     api.follows.crosspost(channelId, messageId)
                       .then((r) => dispatch(addToast({ kind: 'success', message: `Yayınlandı — ${r.delivered_to} takipçi kanala iletildi` })))
-                      .catch((e: any) => dispatch(addToast({ kind: 'error', message: e?.message || 'Yayınlanamadı' })));
+                      .catch((e: any) => dispatch(addToast({ kind: 'error', message: e?.message || t('msg.publishFailed') })));
                   }
                   setCtx(null);
                 }}
               />
             )}
-            {isMine && <MsgCtxItem label="Düzenle" onClick={() => { setEditing(true); setCtx(null); }} />}
+            {isMine && <MsgCtxItem label={t('common.edit')} onClick={() => { setEditing(true); setCtx(null); }} />}
             <div className="my-1 h-px bg-line" />
-            {content && <MsgCtxItem label="Metni Kopyala" onClick={() => copyToClipboard(content)} />}
-            {content && <MsgCtxItem label="🌐 Çevir" onClick={translateMessage} />}
+            {content && <MsgCtxItem label={t('msg.copyText')} onClick={() => copyToClipboard(content)} />}
+            {content && <MsgCtxItem label={t('msg.translate')} onClick={translateMessage} />}
             <MsgCtxItem
-              label="Bağlantıyı Kopyala"
+              label={t('msg.copyLink')}
               onClick={() => copyToClipboard(`${location.origin}/channels/${channelId}/${messageId}`)}
             />
-            <MsgCtxItem label="Mesaj ID'sini Kopyala" onClick={() => copyToClipboard(messageId)} />
+            <MsgCtxItem label={t('msg.copyId')} onClick={() => copyToClipboard(messageId)} />
             <MsgCtxItem
-              label="🔖 Kaydet"
+              label={t('msg.saveAction')}
               onClick={() => {
                 api.savedMessages.save(messageId)
-                  .then(() => dispatch(addToast({ kind: 'success', message: 'Mesaj kaydedildi' })))
-                  .catch(() => dispatch(addToast({ kind: 'error', message: 'Kaydedilemedi' })));
+                  .then(() => dispatch(addToast({ kind: 'success', message: t('msg.saved') })))
+                  .catch(() => dispatch(addToast({ kind: 'error', message: t('msg.saveFailed') })));
                 setCtx(null);
               }}
             />
-            <MsgCtxItem label="👤 Profili Görüntüle" onClick={() => { dispatch(openProfileCard({ userId: authorId, anchorRect: null })); setCtx(null); }} />
-            {!isMine && <MsgCtxItem label="@ Bahset" onClick={() => { window.dispatchEvent(new CustomEvent('concord:mention-user', { detail: { id: authorId } })); setCtx(null); }} />}
-            <MsgCtxItem label="⏰ Beni Hatırlat" onClick={() => setRemindMode(true)} />
+            <MsgCtxItem label={t('msg.viewProfile')} onClick={() => { dispatch(openProfileCard({ userId: authorId, anchorRect: null })); setCtx(null); }} />
+            {!isMine && <MsgCtxItem label={t('msg.mention')} onClick={() => { window.dispatchEvent(new CustomEvent('concord:mention-user', { detail: { id: authorId } })); setCtx(null); }} />}
+            <MsgCtxItem label={t('msg.remindMe')} onClick={() => setRemindMode(true)} />
             {channelId && (
               <MsgCtxItem
-                label="Okunmadı İşaretle"
+                label={t('msg.markUnread')}
                 onClick={() => {
                   dispatch(markChannelUnread(channelId, messageId));
                   setCtx(null);
@@ -934,7 +931,7 @@ function MessageItem({
             {isMine && (
               <>
                 <div className="my-1 h-px bg-line" />
-                <MsgCtxItem label="Mesajı Sil" danger onClick={() => { doDelete(); setCtx(null); }} />
+                <MsgCtxItem label={t('msg.delete')} danger onClick={() => { doDelete(); setCtx(null); }} />
               </>
             )}
             </>
@@ -966,7 +963,7 @@ function MessageItem({
               setPickerOpen(false);
               setFullEmoji(true);
             }}
-            title="Tüm emojiler" aria-label="Tüm emojiler"
+            title={t('emoji.all')} aria-label={t('emoji.all')}
             className="w-8 h-8 hover:bg-surface-2 rounded flex items-center justify-center text-ink-tertiary hover:text-ink-primary"
           >
             <Smile size={16} />
@@ -1071,14 +1068,14 @@ function AttachmentView({ a }: { a: APIAttachment }) {
               href={a.url}
               download={a.filename}
               onClick={(e) => e.stopPropagation()}
-              title="İndir" aria-label="İndir"
+              title={t('common.download')} aria-label={t('common.download')}
               className="w-7 h-7 rounded bg-black/60 hover:bg-black/80 text-white flex items-center justify-center text-xs"
             >
               ⬇
             </a>
             <button
               onClick={() => navigator.clipboard?.writeText(a.url)}
-              title="Bağlantıyı kopyala" aria-label="Bağlantıyı kopyala"
+              title={t('common.copyLinkShort')} aria-label={t('common.copyLinkShort')}
               className="w-7 h-7 rounded bg-black/60 hover:bg-black/80 text-white flex items-center justify-center"
             >
               <Share2 size={12} />
@@ -1201,11 +1198,11 @@ function EditedLabel({ messageId, editedAt }: { messageId: string; editedAt: str
       </button>
       {open && (
         <div className="absolute z-50 bottom-full left-0 mb-1 w-72 max-h-72 overflow-y-auto bg-surface-1 border border-line rounded-xl shadow-2xl p-2">
-          <div className="text-[10px] uppercase font-bold text-ink-tertiary px-1 pb-1">Düzenleme Geçmişi</div>
+          <div className="text-[10px] uppercase font-bold text-ink-tertiary px-1 pb-1">{t('msg.editHistory')}</div>
           {edits === null ? (
-            <p className="text-xs text-ink-tertiary p-2">Yükleniyor…</p>
+            <p className="text-xs text-ink-tertiary p-2">{t('common.loading')}</p>
           ) : edits.length === 0 ? (
-            <p className="text-xs text-ink-tertiary p-2">Eski sürüm kaydı yok.</p>
+            <p className="text-xs text-ink-tertiary p-2">{t('msg.noEditHistory')}</p>
           ) : (
             <ul className="space-y-1.5">
               {edits.map((e) => (
@@ -1336,7 +1333,7 @@ function EmbedsView({ messageId, content }: { messageId: string; content: string
 
 function pollTimeLeft(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
-  if (diff <= 0) return 'Anket bitti';
+  if (diff <= 0) return t('poll.ended');
   const mins = Math.round(diff / 60000);
   if (mins < 60) return `${mins} dk kaldı`;
   const hrs = Math.round(mins / 60);
@@ -1437,13 +1434,13 @@ function PollView({ messageId }: { messageId: string }) {
         <span className="flex items-center gap-2">
           {!poll.expired && me?.id === poll.created_by && (
             <button
-              onClick={async () => { if (confirm('Anketi şimdi kapatmak istiyor musun?')) { await api.polls.close(poll.id).catch(() => {}); setVer((v) => v + 1); } }}
+              onClick={async () => { if (confirm(t('poll.closeConfirm'))) { await api.polls.close(poll.id).catch(() => {}); setVer((v) => v + 1); } }}
               className="text-accent-400 hover:text-accent-500 font-medium"
             >
               Anketi kapat
             </button>
           )}
-          <span>{poll.expired ? 'Anket bitti' : poll.expires_at ? pollTimeLeft(poll.expires_at) : ''}</span>
+          <span>{poll.expired ? t('poll.ended') : poll.expires_at ? pollTimeLeft(poll.expires_at) : ''}</span>
         </span>
       </div>
     </div>
@@ -1509,7 +1506,7 @@ function InviteCard({ content }: { content: string }) {
       dispatch(selectGuild(guild.id));
       dispatch(addToast({ kind: 'success', message: `${guild.name} sunucusuna katıldın` }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Katılınamadı' }));
+      dispatch(addToast({ kind: 'error', message: e?.message || t('invite.joinFailed') }));
     } finally {
       setJoining(false);
     }
@@ -1541,7 +1538,7 @@ function InviteCard({ content }: { content: string }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-ink-primary truncate">
-            {preview ? g!.name : 'Yükleniyor...'}
+            {preview ? g!.name : t('common.loading')}
           </div>
           {preview && (
             <div className="flex items-center gap-2.5 text-xs text-ink-tertiary mt-0.5">
@@ -1572,7 +1569,7 @@ function InviteCard({ content }: { content: string }) {
             disabled={joining || !preview}
             className="px-4 py-2 rounded-lg bg-status-online hover:brightness-110 disabled:opacity-60 text-white text-sm font-semibold shrink-0 transition"
           >
-            {joining ? 'Katılınıyor...' : 'Sunucuya Katıl'}
+            {joining ? t('invite.joining') : t('invite.joinServer')}
           </button>
         )}
       </div>

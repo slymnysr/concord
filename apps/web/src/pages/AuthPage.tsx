@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAppDispatch, useAppSelector, loginThunk, registerThunk } from '../store';
 import { SERVER_BASE, setServerBase } from '../serverConfig';
 import { api } from '../api';
+import { t } from '../i18n';
 
 type Mode = 'login' | 'register' | 'forgot' | 'reset';
 
@@ -51,25 +52,25 @@ export function AuthPage() {
       setFlowBusy(true);
       try {
         await api.forgotPassword(email);
-        setFlowMsg({ kind: 'ok', text: 'Bu adrese kayıtlı bir hesap varsa sıfırlama bağlantısı gönderildi — gelen kutunu kontrol et.' });
+        setFlowMsg({ kind: 'ok', text: t('auth.flow.forgotSent') });
       } catch {
-        setFlowMsg({ kind: 'err', text: 'İstek gönderilemedi, tekrar dene.' });
+        setFlowMsg({ kind: 'err', text: t('auth.flow.requestFailed') });
       } finally {
         setFlowBusy(false);
       }
     } else if (mode === 'reset') {
       if (newPassword !== newPassword2) {
-        setFlowMsg({ kind: 'err', text: 'Şifreler eşleşmiyor.' });
+        setFlowMsg({ kind: 'err', text: t('auth.flow.passwordMismatch') });
         return;
       }
       setFlowBusy(true);
       try {
         await api.resetPassword(resetToken, newPassword);
-        setFlowMsg({ kind: 'ok', text: 'Şifren güncellendi — yeni şifrenle giriş yapabilirsin.' });
+        setFlowMsg({ kind: 'ok', text: t('auth.flow.resetOk') });
         history.replaceState(null, '', location.pathname);
         setMode('login');
       } catch (err: any) {
-        setFlowMsg({ kind: 'err', text: err?.message || 'Bağlantı geçersiz veya süresi dolmuş.' });
+        setFlowMsg({ kind: 'err', text: err?.message || t('auth.flow.linkInvalid') });
       } finally {
         setFlowBusy(false);
       }
@@ -90,33 +91,33 @@ export function AuthPage() {
           <h1 className="text-3xl font-bold tracking-tight">Concord</h1>
           <p className="text-ink-secondary text-sm mt-1">
             {mode === 'login'
-              ? 'Hesabına giriş yap'
+              ? t('auth.subtitle.login')
               : mode === 'register'
-                ? 'Yeni hesap oluştur'
+                ? t('auth.subtitle.register')
                 : mode === 'forgot'
-                  ? 'E-postana sıfırlama bağlantısı gönderelim'
-                  : 'Hesabın için yeni bir şifre belirle'}
+                  ? t('auth.subtitle.forgot')
+                  : t('auth.subtitle.reset')}
           </p>
         </div>
 
         <form onSubmit={submit} className="bg-surface-1 rounded-2xl border border-line p-6 space-y-4">
           {mode === 'register' && (
             <>
-              <Field label="Kullanıcı adı" hint="3-32 karakter, sadece a-z 0-9 . _">
+              <Field label={t('auth.username')} hint={t('auth.username.hint')}>
                 <input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="ornek_kullanici"
+                  placeholder={t('auth.username.placeholder')}
                   required
                   autoComplete="username"
                   className={inputCls}
                 />
               </Field>
-              <Field label="Görünen ad" hint="opsiyonel — boşsa kullanıcı adı kullanılır">
+              <Field label={t('auth.displayName')} hint={t('auth.displayName.hint')}>
                 <input
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Adın Soyadın"
+                  placeholder={t('auth.displayName.placeholder')}
                   autoComplete="name"
                   className={inputCls}
                 />
@@ -125,12 +126,12 @@ export function AuthPage() {
           )}
 
           {mode !== 'reset' && (
-            <Field label="E-posta">
+            <Field label={t('auth.email')}>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="sen@ornek.com"
+                placeholder={t('auth.email.placeholder')}
                 required
                 autoComplete="email"
                 className={inputCls}
@@ -139,7 +140,7 @@ export function AuthPage() {
           )}
 
           {(mode === 'login' || mode === 'register') && (
-            <Field label="Parola" hint={mode === 'register' ? 'En az 8 karakter' : ''}>
+            <Field label={t('auth.password')} hint={mode === 'register' ? t('auth.password.hint.min8') : ''}>
               <input
                 type="password"
                 value={password}
@@ -159,14 +160,14 @@ export function AuthPage() {
                 onClick={() => { setMode('forgot'); setFlowMsg(null); }}
                 className="text-xs text-ink-tertiary hover:text-brand-400"
               >
-                Şifremi unuttum
+                {t('auth.forgotLink')}
               </button>
             </div>
           )}
 
           {mode === 'reset' && (
             <>
-              <Field label="Yeni parola" hint="En az 8 karakter">
+              <Field label={t('auth.newPassword')} hint={t('auth.password.hint.min8')}>
                 <input
                   type="password"
                   value={newPassword}
@@ -177,7 +178,7 @@ export function AuthPage() {
                   className={inputCls}
                 />
               </Field>
-              <Field label="Yeni parola (tekrar)">
+              <Field label={t('auth.newPassword2')}>
                 <input
                   type="password"
                   value={newPassword2}
@@ -205,7 +206,7 @@ export function AuthPage() {
           )}
 
           {mode === 'login' && needs2fa && (
-            <Field label="İki Adımlı Doğrulama Kodu" hint="Authenticator uygulamandaki 6 haneli kod">
+            <Field label={t('auth.totp')} hint={t('auth.totp.hint')}>
               <input
                 value={totpCode}
                 onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -224,7 +225,7 @@ export function AuthPage() {
           )}
           {error === 'invalid_2fa' && (
             <div className="text-sm text-accent-500 bg-accent-500/10 border border-accent-500/30 rounded-lg px-3 py-2">
-              Doğrulama kodu hatalı, tekrar dene.
+              {t('auth.error.invalid2fa')}
             </div>
           )}
 
@@ -234,16 +235,16 @@ export function AuthPage() {
             className="w-full py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 disabled:text-ink-tertiary text-white font-semibold transition-colors"
           >
             {loading || flowBusy
-              ? 'Bekleyin...'
+              ? t('common.wait')
               : needs2fa
-                ? 'Doğrula ve Giriş Yap'
+                ? t('auth.submit.verify')
                 : mode === 'login'
-                  ? 'Giriş Yap'
+                  ? t('auth.submit.login')
                   : mode === 'register'
-                    ? 'Hesap Oluştur'
+                    ? t('auth.submit.register')
                     : mode === 'forgot'
-                      ? 'Sıfırlama Bağlantısı Gönder'
-                      : 'Şifreyi Güncelle'}
+                      ? t('auth.submit.forgot')
+                      : t('auth.submit.reset')}
           </button>
 
           <div className="text-center text-sm text-ink-secondary pt-2">
@@ -253,53 +254,48 @@ export function AuthPage() {
                 onClick={() => { setMode('login'); setFlowMsg(null); }}
                 className="text-brand-500 hover:text-brand-400 font-medium"
               >
-                ← Girişe dön
+                {t('auth.backToLogin')}
               </button>
             ) : mode === 'login' ? (
               <>
-                Hesabın yok mu?{' '}
+                {t('auth.noAccount')}{' '}
                 <button
                   type="button"
                   onClick={() => setMode('register')}
                   className="text-brand-500 hover:text-brand-400 font-medium"
                 >
-                  Kayıt ol
+                  {t('auth.registerLink')}
                 </button>
               </>
             ) : (
               <>
-                Zaten hesabın var mı?{' '}
+                {t('auth.haveAccount')}{' '}
                 <button
                   type="button"
                   onClick={() => setMode('login')}
                   className="text-brand-500 hover:text-brand-400 font-medium"
                 >
-                  Giriş yap
+                  {t('auth.loginLink')}
                 </button>
               </>
             )}
           </div>
         </form>
 
-        <p className="text-center text-xs text-ink-tertiary mt-6">
-          Türkiye'nin yerli sohbet platformu · v0.1
-        </p>
+        <p className="text-center text-xs text-ink-tertiary mt-6">{t('auth.tagline')}</p>
         <p className="text-center mt-2">
           <button
             type="button"
             onClick={() => {
-              const v = prompt(
-                'Concord sunucu adresi (boş bırak = bu site):\nÖrn: https://concord.example.com',
-                SERVER_BASE,
-              );
+              const v = prompt(t('auth.serverPrompt'), SERVER_BASE);
               if (v === null) return;
               setServerBase(v);
               location.reload();
             }}
             className="text-[11px] text-ink-tertiary hover:text-ink-secondary underline decoration-dotted"
-            title="Masaüstü uygulamasında bağlanılacak sunucuyu değiştir"
+            title={t('auth.serverTitle')}
           >
-            ⚙ Sunucu: {SERVER_BASE || 'bu site'}
+            ⚙ {t('auth.serverLabel')}: {SERVER_BASE || t('auth.serverThisSite')}
           </button>
         </p>
       </div>

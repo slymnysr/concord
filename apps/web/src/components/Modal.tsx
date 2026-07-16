@@ -1,6 +1,7 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { X } from 'lucide-react';
 import { useAppDispatch, useAppSelector, closeModal } from '../store';
+import { t } from '../i18n';
 import { CreateGuildModal } from './CreateGuildModal';
 import { JoinGuildModal } from './JoinGuildModal';
 import { InviteLinkModal } from './InviteLinkModal';
@@ -20,7 +21,10 @@ const AddFriendModal = lazy(() => import('./AddFriendModal').then((m) => ({ defa
 function ModalFallback() {
   return (
     <div className="p-10 flex items-center justify-center">
-      <div className="w-6 h-6 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" aria-label="Yükleniyor" />
+      <div
+        className="w-6 h-6 rounded-full border-2 border-brand-500 border-t-transparent animate-spin"
+        aria-label={t('common.loading')}
+      />
     </div>
   );
 }
@@ -73,7 +77,8 @@ export function Modal() {
         <button
           onClick={() => dispatch(closeModal())}
           className="absolute top-3 right-3 w-8 h-8 rounded-lg hover:bg-surface-2 text-ink-secondary hover:text-ink-primary flex items-center justify-center"
-          title="Kapat" aria-label="Kapat"
+          title={t('common.close')}
+          aria-label={t('common.close')}
         >
           <X size={18} />
         </button>

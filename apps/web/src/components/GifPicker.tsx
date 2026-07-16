@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Search } from 'lucide-react';
 import { api } from '../api';
 import { useAppDispatch } from '../store';
+import { t } from '../i18n';
 
 // Giphy public API. Kendi anahtarınızı localStorage 'concord_giphy_key' ile override edebilirsiniz.
 const GIPHY_KEY = (typeof localStorage !== 'undefined' && localStorage.getItem('concord_giphy_key')) || 'dc6zaTOxFJmzC';
@@ -45,10 +46,10 @@ export function GifPicker({ channelId, onClose }: Props) {
         ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(query)}&limit=24&rating=pg-13`
         : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=24&rating=pg-13`;
       const res = await fetch(base);
-      if (!res.ok) throw new Error('GIF servisi yanıt vermedi (' + res.status + ')');
+      if (!res.ok) throw new Error(t('gif.serviceError', { status: res.status }));
       setGifs(parse(await res.json()));
     } catch (e: any) {
-      setErr(e?.message ?? 'GIF yüklenemedi');
+      setErr(e?.message ?? t('gif.loadFailed'));
       setGifs([]);
     } finally {
       setLoading(false);
@@ -82,18 +83,18 @@ export function GifPicker({ channelId, onClose }: Props) {
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="GIF ara (Giphy)..."
+            placeholder={t('gif.searchPlaceholder')}
             className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-md pl-8 pr-2 py-1.5 text-sm text-ink-primary placeholder:text-ink-tertiary"
           />
         </div>
       </div>
       <div className="overflow-y-auto flex-1 p-2">
         {loading ? (
-          <p className="text-sm text-ink-tertiary text-center py-8">Yükleniyor…</p>
+          <p className="text-sm text-ink-tertiary text-center py-8">{t('common.loading')}</p>
         ) : err ? (
-          <p className="text-sm text-accent-500 text-center py-8 px-3">{err}<br /><span className="text-xs text-ink-tertiary">Kendi Giphy anahtarın için: localStorage <code>concord_giphy_key</code></span></p>
+          <p className="text-sm text-accent-500 text-center py-8 px-3">{err}<br /><span className="text-xs text-ink-tertiary">{t('gif.keyHint')} <code>concord_giphy_key</code></span></p>
         ) : gifs.length === 0 ? (
-          <p className="text-sm text-ink-tertiary text-center py-8">Sonuç yok.</p>
+          <p className="text-sm text-ink-tertiary text-center py-8">{t('common.noResults')}</p>
         ) : (
           <div className="columns-2 gap-1.5">
             {gifs.map((g) => (
@@ -104,7 +105,7 @@ export function GifPicker({ channelId, onClose }: Props) {
           </div>
         )}
       </div>
-      <div className="px-2 py-1 border-t border-line text-[10px] text-ink-tertiary text-right">Giphy ile güçlendirildi</div>
+      <div className="px-2 py-1 border-t border-line text-[10px] text-ink-tertiary text-right">{t('gif.poweredBy')}</div>
     </div>
   );
 }

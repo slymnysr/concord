@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Wifi, WifiOff } from 'lucide-react';
+import { t } from '../i18n';
 
 // Hem tarayıcı ağ durumunu (navigator.onLine) hem de gateway WebSocket
 // bağlantısını izler. Gateway koparsa ağ açık olsa bile uyarı gösterir.
@@ -46,7 +47,7 @@ export function ReconnectBanner() {
     return (
       <div className="fixed top-0 inset-x-0 z-[200] bg-emerald-500 text-white px-4 py-2 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg">
         <Wifi size={14} />
-        Yeniden bağlanıldı
+        {t('net.reconnected')}
       </div>
     );
   }
@@ -54,7 +55,7 @@ export function ReconnectBanner() {
   return (
     <div className="fixed top-0 inset-x-0 z-[200] bg-accent-500 text-white px-4 py-2 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg">
       <WifiOff size={14} className="animate-pulse" />
-      {!online ? 'İnternet bağlantısı kesildi — bekleniyor…' : 'Sunucu bağlantısı koptu — yeniden bağlanılıyor…'}
+      {!online ? t('net.offline') : t('net.serverLost')}
     </div>
   );
 }
