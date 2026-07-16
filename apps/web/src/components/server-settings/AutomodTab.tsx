@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Trash2, Plus, ShieldAlert } from 'lucide-react';
 import { api, type APIAutomodRule } from '../../api';
+import { t } from '../../i18n';
 
 const AUTOMOD_TRIGGERS: {
   value: string;
@@ -11,48 +12,48 @@ const AUTOMOD_TRIGGERS: {
 }[] = [
   {
     value: 'keyword',
-    label: 'Anahtar kelime filtresi',
-    desc: 'Belirli kelimeleri içeren mesajları yakalar',
+    label: t('automod.keyword'),
+    desc: t('automod.keywordDesc'),
     dataKey: 'keywords',
     placeholder: 'küfür, spam, reklam (virgülle ayır)',
   },
   {
     value: 'regex',
-    label: 'Regex kalıbı',
-    desc: 'Düzenli ifade ile eşleşen mesajları yakalar',
+    label: t('automod.regex'),
+    desc: t('automod.regexDesc'),
     dataKey: 'patterns',
     placeholder: '\\b(spam|scam)\\b',
   },
   {
     value: 'link_blacklist',
-    label: 'Bağlantı kara listesi',
-    desc: 'Yasaklı alan adlarına bağlantıları engeller',
+    label: t('automod.linkBlacklist'),
+    desc: t('automod.linkBlacklistDesc'),
     dataKey: 'domains',
     placeholder: 'kotusite.com, virus.net',
   },
   {
     value: 'invite_blacklist',
-    label: 'Davet engelleme',
-    desc: 'Diğer sunucu davet bağlantılarını engeller',
+    label: t('automod.inviteBlock'),
+    desc: t('automod.inviteBlockDesc'),
   },
   {
     value: 'mention_spam',
-    label: 'Bahsetme spam’i',
-    desc: 'Çok fazla bahsetme içeren mesajları engeller',
+    label: t('automod.mentionSpam'),
+    desc: t('automod.mentionSpamDesc'),
     dataKey: 'max_mentions',
-    placeholder: 'Maks. bahsetme sayısı (ör. 5)',
+    placeholder: t('automod.maxMentions'),
   },
   {
     value: 'message_spam',
-    label: 'Mesaj spam’i',
-    desc: 'Kısa sürede çok / tekrarlı mesajları engeller',
+    label: t('automod.msgSpam'),
+    desc: t('automod.msgSpamDesc'),
     dataKey: 'max_messages',
-    placeholder: 'Maks. mesaj/7sn (boş = 5)',
+    placeholder: t('automod.maxMsgs'),
   },
   {
     value: 'caps',
-    label: 'Aşırı büyük harf',
-    desc: 'Çoğunlukla büyük harf olan mesajları yakalar',
+    label: t('automod.caps'),
+    desc: t('automod.capsDesc'),
     dataKey: 'threshold',
     placeholder: '70 (% oran)',
   },
@@ -130,14 +131,14 @@ export function AutomodTab({ guildId }: { guildId: string }) {
       setCreating(false);
       load();
     } catch (e: any) {
-      alert('Kural oluşturulamadı: ' + (e?.message ?? ''));
+      alert(t('automod.createFailed') + (e?.message ?? ''));
     } finally {
       setBusy(false);
     }
   }
 
   async function remove(id: string) {
-    if (!confirm('Bu otomatik moderasyon kuralı silinsin mi?')) return;
+    if (!confirm(t('automod.deleteConfirm'))) return;
     await api.guilds.deleteAutomodRule(guildId, id).catch(() => {});
     load();
   }
@@ -151,7 +152,7 @@ export function AutomodTab({ guildId }: { guildId: string }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-xl font-bold text-ink-primary">Otomatik Moderasyon</h2>
+        <h2 className="text-xl font-bold text-ink-primary">{t('automod.title')}</h2>
         {!creating && (
           <button
             onClick={() => setCreating(true)}
@@ -170,7 +171,7 @@ export function AutomodTab({ guildId }: { guildId: string }) {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Kural adı (ör. Küfür Engeli)"
+            placeholder={t('automod.rulePlaceholder')}
             className="w-full bg-surface-1 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2 text-sm text-ink-primary"
           />
           <div>
@@ -196,7 +197,7 @@ export function AutomodTab({ guildId }: { guildId: string }) {
           {trig.dataKey && (
             <div>
               <label className="text-xs font-semibold uppercase text-ink-tertiary">
-                {trig.dataKey === 'threshold' ? 'Eşik Değeri' : 'Filtre Listesi'}
+                {trig.dataKey === 'threshold' ? t('automod.threshold') : t('automod.filterList')}
               </label>
               {trig.dataKey === 'threshold' ? (
                 <input
@@ -217,7 +218,7 @@ export function AutomodTab({ guildId }: { guildId: string }) {
             </div>
           )}
           <div>
-            <label className="text-xs font-semibold uppercase text-ink-tertiary">Eylemler</label>
+            <label className="text-xs font-semibold uppercase text-ink-tertiary">{t('automod.actions')}</label>
             <label className="flex items-center gap-2 mt-1.5 text-sm text-ink-secondary cursor-pointer">
               <input
                 type="checkbox"
@@ -256,7 +257,7 @@ export function AutomodTab({ guildId }: { guildId: string }) {
               disabled={busy || !name.trim()}
               className="bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold px-4 py-1.5 rounded-lg"
             >
-              {busy ? 'Oluşturuluyor…' : 'Oluştur'}
+              {busy ? t('common.creating') : t('common.create')}
             </button>
             <button
               onClick={() => setCreating(false)}
@@ -269,7 +270,7 @@ export function AutomodTab({ guildId }: { guildId: string }) {
       )}
 
       {loading ? (
-        <p className="text-sm text-ink-tertiary">Yükleniyor…</p>
+        <p className="text-sm text-ink-tertiary">{t('common.loading')}</p>
       ) : rules.length === 0 ? (
         <div className="text-center py-10 text-ink-tertiary">
           <ShieldAlert size={36} className="mx-auto mb-2 opacity-40" />
