@@ -20,10 +20,11 @@ const expoBatchSize = 100
 type ExpoSender struct {
 	cfg    Config
 	client *http.Client
+	url    string // testte test sunucusuna yönlendirilir
 }
 
 func NewExpoSender(cfg Config) *ExpoSender {
-	return &ExpoSender{cfg: cfg, client: &http.Client{Timeout: 15 * time.Second}}
+	return &ExpoSender{cfg: cfg, client: &http.Client{Timeout: 15 * time.Second}, url: expoPushURL}
 }
 
 type expoMessage struct {
@@ -81,7 +82,7 @@ func (e *ExpoSender) sendBatch(ctx context.Context, subs []Subscription, m Messa
 	if err != nil {
 		return failAll(subs, err)
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, expoPushURL, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, e.url, bytes.NewReader(body))
 	if err != nil {
 		return failAll(subs, err)
 	}

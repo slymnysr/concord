@@ -15,7 +15,15 @@ export function connectGateway(): Socket | null {
 
   if (socket) return socket;
 
-  socket = new Socket(wsUrl('/socket'), { params: { token }, logger: () => {} });
+  // params FONKSİYON olmalı: Phoenix onu closure()'la sarar ve HER yeniden bağlanmada
+  // yeniden değerlendirir. Sabit `{ token }` verilirse soket kurulum anındaki token'a
+  // KİLİTLENİR; access token TTL'i 15 dk olduğu için ağ kopması/uyku sonrası yeniden
+  // bağlanma süresi dolmuş token'la yapılır → gateway 403 → Phoenix aynı ölü token'la
+  // sonsuza dek dener → realtime, sayfa yenilenene kadar SESSİZCE ölür.
+  socket = new Socket(wsUrl('/socket'), {
+    params: () => ({ token: tokenStore.access() }),
+    logger: () => {},
+  });
   // Bağlantı durumu olaylarını yayınla → ConnectionBanner dinler
   socket.onOpen(() => {
     window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'connected' }));

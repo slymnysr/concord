@@ -132,11 +132,44 @@ döndürdüğü için keşifte kullanılamaz), `RELEASE_NODE=gateway@$(POD_IP)`,
 Ölü env'ler temizlendi: `PORT` ve `REDIS_URL` hiçbir yerde okunmuyordu (var olmayan ayar
 düğmesi izlenimi veriyorlardı; Redis ayarı configMap'ten REDIS_HOST/PORT ile geliyor).
 
-## FAZ E — Mobil (`apps/mobile/`)
+## FAZ E — Mobil (`apps/mobile/`) ⚠️ KOD TAMAM — EAS/cihaz SİZDE
 
 **Sahiplenir:** `apps/mobile/**`
-**Yapılacaklar:** cihaz testi bug'ları, **EAS build** (native ses/kamera/push), offline sağlamlık, **FCM push** entegrasyonu. _Yapma: "Expo Go'da çalışıyor" deyip native'i atlama._
-**Sözleşme (dışarıdan):** backend API kontratı sabit. **Test:** EAS dev client'ta FEATURES.md listesi.
+
+**Yapılan — FCM push artık GERÇEKTEN çalışıyor.** Öncesinde tamamen dekoratifti (kurulu ama
+kullanılmayan altyapı — ScyllaDB'de yaşanan hatanın aynısı):
+
+- **Kayıt HER SEFERİNDE 400 alıyordu:** tablo yalnızca Web Push'a göre tasarlanmıştı
+  (endpoint+p256dh+auth üçü de NOT NULL); mobil Expo TOKEN'ı gönderiyor, p256dh/auth diye bir
+  şeyi yok. İstemcideki `.catch(() => {})` hatayı yutuyordu → **hiçbir cihaz kayıtlı değildi.**
+- **Gönderen kod HİÇ YOKTU:** abonelik kaydediliyor, bildirim asla gitmiyordu.
+
+Şimdi: `migrations/0055` platform ayrımı ('web' | 'expo'), `internal/push` (Expo Push Service
+→ FCM/APNs + VAPID Web Push), `handlers/push_dispatch.go` (mention/DM bildirimlerine bağlı,
+arka planda — push ağ çağrısı mesaj gönderimini yavaşlatmamalı), ölü abonelik temizliği.
+
+**Uçtan uca kanıtlandı (gerçek Expo servisine karşı):** DM gönderildi (201) → API gerçek
+Expo'ya istek attı → Expo sahte token'ı `DeviceNotRegistered` ile reddetti → abonelik ölü
+işaretlendi. 5 birim testi (toplu bölme, ölü/geçici hata ayrımı, ticket eşleşmesi).
+
+**Ayrıca bulunan gerçek bug (web + mobil):** Phoenix Socket'e `params: { token }` SABİT nesne
+veriliyordu → soket kurulum anındaki token'a kilitleniyordu. Access TTL'i 15 dk; ağ kopması /
+uyku / arka plan sonrası Phoenix yeniden bağlanır ve SÜRESİ DOLMUŞ token gönderir → 403 →
+aynı ölü token'la sonsuza dek dener → **realtime sayfa yenilenene kadar sessizce ölür.**
+`params` fonksiyon yapıldı; `e2e/tests/gateway-reconnect.spec.ts` regresyonu kilitliyor
+(eski kod geri konarak testin dişli olduğu doğrulandı).
+
+**CI:** mobil job (tsc + `expo export --platform android` — bundle gerçekten derleniyor mu).
+
+### ⛔ SİZDE KALAN (yapılamaz — hesap/cihaz gerekiyor)
+
+1. **`eas init` + EAS build** — Expo hesabı ister. `eas.json` eksiksiz, `app.json` plugin'leri
+   (`@config-plugins/react-native-webrtc`, `expo-notifications`) ve paket kimlikleri hazır.
+   Eksik tek şey `extra.eas.projectId` (eas init üretir). Push token alımı bunu gerektirir →
+   yoksa `push.ts` artık AÇIK uyarı basıyor (eskiden sessizce atlıyordu).
+2. **Android FCM kimlik bilgileri** — EAS build sırasında Expo panelinden yapılandırılır.
+3. **Cihaz testi** — FEATURES.md listesi dev client'ta elle doğrulanmalı (ses/kamera/push
+   native modüller: emülatör/Expo Go yeterli değil).
 
 ## FAZ F — Dağıtım & Gözlemlenebilirlik & Altyapı (`infra/` + Dockerfile'lar)
 

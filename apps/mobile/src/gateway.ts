@@ -27,7 +27,11 @@ export function connectGateway(): Socket | null {
   const token = getAccessToken();
   if (!token) return null;
   if (socket) return socket;
-  socket = new Socket(gatewayUrl(), { params: { token } });
+  // params FONKSİYON olmalı: Phoenix her yeniden bağlanmada yeniden değerlendirir.
+  // Sabit `{ token }` soketi kurulum anındaki token'a kilitler; access TTL'i 15 dk olduğu
+  // için uygulama arka planda bundan uzun kalıp yeniden bağlanınca süresi dolmuş token
+  // gönderilir → gateway 403 → realtime uygulama yeniden başlatılana kadar sessizce ölür.
+  socket = new Socket(gatewayUrl(), { params: () => ({ token: getAccessToken() }) });
   socket.onOpen(() => emitConn('connected'));
   socket.onError(() => emitConn('disconnected'));
   socket.onClose(() => emitConn('disconnected'));
