@@ -35,7 +35,7 @@ Bu 7 dizin ayrıktır → **7 AI aynı anda, sıfır çakışma.**
 
 ---
 
-## FAZ A — Backend Çekirdek & Özellikler (`apps/api/`)
+## FAZ A — Backend Çekirdek & Özellikler (`apps/api/`) ✅ TAMAM
 
 **Sahiplenir:** `apps/api/**` (router, handlers, repo, middleware, storage, config, migrations)
 **Yapılacaklar (denetimden):**
@@ -52,7 +52,7 @@ Bu 7 dizin ayrıktır → **7 AI aynı anda, sıfır çakışma.**
   bu dosyada `## API-KONTRAT` başlığı altında yayınla ki FAZ B ona kodlasın.
   **Bağımlılık:** FAZ F sağlar → Meilisearch/ClamAV adresleri (env). **Test:** handler + rate-limit(2-instance) + medya(kötü dosya reddi) + arama(yaz→ara).
 
-## FAZ B — Web (`apps/web/`)
+## FAZ B — Web (`apps/web/`) ✅ TAMAM
 
 **Sahiplenir:** `apps/web/**` (`api.ts`, `store.ts`, tüm `components/`)
 **Yapılacaklar:**
@@ -171,7 +171,7 @@ aynı ölü token'la sonsuza dek dener → **realtime sayfa yenilenene kadar ses
 3. **Cihaz testi** — FEATURES.md listesi dev client'ta elle doğrulanmalı (ses/kamera/push
    native modüller: emülatör/Expo Go yeterli değil).
 
-## FAZ F — Dağıtım & Gözlemlenebilirlik & Altyapı (`infra/` + Dockerfile'lar)
+## FAZ F — Dağıtım & Gözlemlenebilirlik & Altyapı (`infra/` + Dockerfile'lar) ✅ TAMAM (Scylla container'ı silinmeyi bekliyor — onay sizde)
 
 **Sahiplenir:** `infra/**`, `apps/{gateway,voice,web}/Dockerfile` (yeni), `docker-compose.yml`
 **Yapılacaklar:**
