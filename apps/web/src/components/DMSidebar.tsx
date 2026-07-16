@@ -69,12 +69,12 @@ export function DMSidebar() {
       // İsimsiz grup: katılımcı adlarından otomatik başlık üret
       const names = dm.participants
         .filter((p) => p !== me?.id)
-        .map((p) => partners[p]?.display_name ?? `Kullanıcı ${p.slice(-4)}`);
+        .map((p) => partners[p]?.display_name ?? t('user.unknownShort', { id: p.slice(-4) }));
       return names.length > 0 ? names.join(', ') : dm.name || t('dm.groupChat');
     }
     const other = dm.participants.find((p) => p !== me?.id);
     if (!other) return dm.name || 'DM';
-    return partners[other]?.display_name ?? `Kullanıcı ${other.slice(-4)}`;
+    return partners[other]?.display_name ?? t('user.unknownShort', { id: other.slice(-4) });
   }
 
   function dmColor(dm: APIDMChannel): string {
@@ -135,7 +135,7 @@ export function DMSidebar() {
         )}
         {showPending && (() => {
           const partner = partners[showPending.partnerId];
-          const title = partner?.display_name ?? `Kullanıcı ${showPending.partnerId.slice(-4)}`;
+          const title = partner?.display_name ?? t('user.unknownShort', { id: showPending.partnerId.slice(-4) });
           const color = partner?.avatar_color ?? '#6B7280';
           const active = showPending.channelId === selectedDMId;
           return (

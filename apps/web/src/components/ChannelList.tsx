@@ -603,7 +603,7 @@ function ChannelButton({
                 ? 'text-accent-500'
                 : 'text-brand-500')
             }
-            title={(channel.user_limit ?? 0) > 0 ? `Kullanıcı limiti: ${channel.user_limit}` : undefined}
+            title={(channel.user_limit ?? 0) > 0 ? t('channel.userLimit', { n: channel.user_limit }) : undefined}
           >
             {connectedCount}
             {(channel.user_limit ?? 0) > 0 && `/${channel.user_limit}`}
@@ -731,7 +731,7 @@ function ChannelContextMenu({
 
   async function doDelete() {
     if (!guildId) return;
-    if (!confirm(`#${channel.name} kanalını silmek istediğine emin misin?`)) {
+    if (!confirm(t('channel.deleteConfirm2', { name: channel.name }))) {
       onClose();
       return;
     }
@@ -957,7 +957,7 @@ function GuildHeader() {
   }
   async function leaveGuild() {
     if (!guild) return;
-    if (!confirm(`"${guild.name}" sunucusundan ayrılmak istiyor musun?`)) return;
+    if (!confirm(t('guild.leaveConfirm', { name: guild.name }))) return;
     try {
       await api.guilds.leave(guild.id);
       await dispatch(fetchGuilds());

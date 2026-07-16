@@ -199,5 +199,5 @@ function formatRelative(iso: string) {
   const hr = Math.floor(min / 60);
   if (hr < 24) return `${hr} sa`;
   const d = Math.floor(hr / 24);
-  return `${d} gün`;
+  return t('invite.dayCount', { n: d });
 }

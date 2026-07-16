@@ -137,7 +137,7 @@ export function VoiceTab() {
             onClick={() => setCapturing(true)}
             className="mt-2 px-3 py-2 rounded-lg bg-surface-3 hover:bg-surface-1 text-ink-primary text-sm font-semibold border border-line"
           >
-            {capturing ? t('voice.pressKey') : `Tuş: ${pttKey}`}
+            {capturing ? t('voice.pressKey') : t('voice.pttKey', { key: pttKey })}
           </button>
         )}
       </div>

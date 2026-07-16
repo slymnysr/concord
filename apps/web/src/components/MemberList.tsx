@@ -318,7 +318,7 @@ function MemberContextMenu({
 
   async function kick() {
     if (!guildId) return;
-    if (!confirm(`${m.display_name} kullanıcısını sunucudan atmak istiyor musun?`)) {
+    if (!confirm(t('member.kickConfirm', { name: m.display_name }))) {
       onClose();
       return;
     }
@@ -328,7 +328,7 @@ function MemberContextMenu({
 
   async function ban() {
     if (!guildId) return;
-    const reason = prompt(`${m.display_name} için ban sebebi (boş bırakılabilir):`);
+    const reason = prompt(t('member.banReason', { name: m.display_name }));
     if (reason === null) {
       onClose();
       return;

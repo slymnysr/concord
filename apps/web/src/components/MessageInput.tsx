@@ -226,7 +226,7 @@ export function MessageInput() {
         // Zorunlu argüman eksikse uyar, normal mesaj olarak gönderme
         const missing = opts.find((o) => o.required && !args[o.name]?.trim());
         if (missing) {
-          dispatch(addToast({ kind: 'error', message: `/${cmdName}: '${missing.name}' argümanı gerekli` }));
+          dispatch(addToast({ kind: 'error', message: t('cmd.argRequired', { cmd: cmdName, arg: missing.name }) }));
           return;
         }
         try {
@@ -558,10 +558,10 @@ export function MessageInput() {
             }}
             placeholder={
               cooldownLeft > 0
-                ? `Yavaş mod — ${cooldownLeft} sn bekle...`
+                ? t('msg.slowmodeWait', { n: cooldownLeft })
                 : replyTo
-                  ? `Yanıtla #${channel.name}...`
-                  : `#${channel.name} kanalına yaz...`
+                  ? t('msg.replyTo', { name: channel.name })
+                  : t('msg.writeTo', { name: channel.name })
             }
             rows={1}
             disabled={sending}
@@ -605,7 +605,7 @@ export function MessageInput() {
             type="button"
             onClick={() => setScheduleOpen(true)}
             className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0 relative"
-            title={schedCount > 0 ? `${schedCount} zamanlanmış mesaj` : 'Mesaj zamanla'}
+            title={schedCount > 0 ? t('sched.count', { n: schedCount }) : 'Mesaj zamanla'}
           >
             <Clock size={19} />
             {schedCount > 0 && (

@@ -61,7 +61,7 @@ export function AuditTab({ guildId }: { guildId: string }) {
       ) : (
         <ul className="space-y-1.5">
           {shownLogs.map((l) => {
-            const actor = users[l.actor_id]?.display_name ?? `Kullanıcı ${l.actor_id.slice(-4)}`;
+            const actor = users[l.actor_id]?.display_name ?? t('user.unknownShort', { id: l.actor_id.slice(-4) });
             return (
               <li
                 key={l.id}

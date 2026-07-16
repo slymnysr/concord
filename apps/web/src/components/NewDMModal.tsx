@@ -193,7 +193,7 @@ export function NewDMModal() {
           : selected.size === 0
             ? t('dm.pickPerson')
             : isGroup
-              ? `Grup Sohbeti Başlat (${selected.size})`
+              ? t('dm.startGroup', { n: selected.size })
               : t('dm.sendMessage')}
       </button>
     </div>

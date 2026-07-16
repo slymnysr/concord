@@ -68,7 +68,7 @@ export function ServerRail() {
               refreshFolders();
             }}
             onRemove={async () => {
-              if (!confirm(`"${f.name}" klasörünü sil?`)) return;
+              if (!confirm(t('rail.folderDeleteConfirm', { name: f.name }))) return;
               await api.folders.delete(f.id);
               refreshFolders();
             }}
@@ -238,7 +238,7 @@ function GuildContextMenu({
   if (left + w > window.innerWidth) left = window.innerWidth - w - 8;
   if (top + 200 > window.innerHeight) top = window.innerHeight - 200 - 8;
   async function leave() {
-    if (!confirm(`${guild.name} sunucusundan ayrılmak istiyor musun?`)) return;
+    if (!confirm(t('guild.leaveConfirm', { name: guild.name }))) return;
     try {
       await fetch(httpUrl(`/api/v1/guilds/${guild.id}/leave`), {
         method: 'POST',

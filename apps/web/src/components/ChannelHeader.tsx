@@ -271,9 +271,9 @@ function NotificationItem({ n }: { n: import('../api').APINotification }) {
     title = `${actor} senden bahsetti`;
     body = n.message_preview ? `${where} — ${n.message_preview}` : where;
   } else if (n.type === 'friend_request') {
-    title = `${actor} sana arkadaşlık isteği gönderdi`;
+    title = t('notif.friendRequest', { actor });
   } else if (n.type === 'reply') {
-    title = `${actor} mesajına yanıt verdi`;
+    title = t('notif.repliedToYou', { actor });
     body = n.message_preview ?? '';
   } else if (n.type === 'reminder') {
     title = '⏰ Hatırlatma';
@@ -327,11 +327,11 @@ function formatRel(d: Date): string {
   const diff = Date.now() - d.getTime();
   const m = Math.floor(diff / 60000);
   if (m < 1) return 'şimdi';
-  if (m < 60) return `${m} dk önce`;
+  if (m < 60) return t('time.minAgo', { n: m });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h} sa önce`;
+  if (h < 24) return t('time.hourAgo', { n: h });
   const days = Math.floor(h / 24);
-  if (days < 7) return `${days} gün önce`;
+  if (days < 7) return t('time.dayAgo', { n: days });
   return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
 }
 

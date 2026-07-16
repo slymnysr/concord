@@ -134,7 +134,7 @@ export function ForwardModal({ content, messageId, onClose }: Props) {
             disabled={selected.size === 0 || busy}
             className={'w-full py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 ' + (done ? 'bg-emerald-500/15 text-emerald-400' : 'bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white')}
           >
-            {done ? <><Check size={15} /> İletildi</> : busy ? t('common.sending') : `İlet${selected.size > 0 ? ` (${selected.size})` : ''}`}
+            {done ? <><Check size={15} /> {t('fwd.forwarded2')}</> : busy ? t('common.sending') : (selected.size > 0 ? t('fwd.forwardCount', { n: selected.size }) : t('fwd.forwardBtn'))}
           </button>
         </div>
       </div>

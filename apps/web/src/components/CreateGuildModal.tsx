@@ -111,7 +111,7 @@ export function CreateGuildModal() {
       const guild = await dispatch(acceptInviteThunk(code)).unwrap();
       dispatch(setMode('guild'));
       dispatch(selectGuild(guild.id));
-      dispatch(addToast({ kind: 'success', message: `${guild.name} sunucusuna katıldın` }));
+      dispatch(addToast({ kind: 'success', message: t('guild.joined', { name: guild.name }) }));
       dispatch(closeModal());
     } catch (e: any) {
       setError(e?.message || t('invite.joinFailed'));

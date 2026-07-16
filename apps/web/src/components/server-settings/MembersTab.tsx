@@ -20,12 +20,12 @@ export function MembersTab({ guildId }: { guildId: string }) {
   }, [guildId]);
 
   async function kick(m: APIMember) {
-    if (!confirm(`${m.display_name} kullanıcısını sunucudan atmak istiyor musun?`)) return;
+    if (!confirm(t('member.kickConfirm', { name: m.display_name }))) return;
     await api.guilds.kick(guildId, m.user_id);
     setMembers((ms) => ms.filter((x) => x.user_id !== m.user_id));
   }
   async function ban(m: APIMember) {
-    const reason = prompt(`${m.display_name} için ban sebebi (boş bırakılabilir):`);
+    const reason = prompt(t('member.banReason', { name: m.display_name }));
     if (reason === null) return;
     await api.guilds.ban(guildId, m.user_id, reason);
     setMembers((ms) => ms.filter((x) => x.user_id !== m.user_id));
@@ -40,7 +40,7 @@ export function MembersTab({ guildId }: { guildId: string }) {
   async function transferOwnership(m: APIMember) {
     if (
       !confirm(
-        `Sunucu sahipliği ${m.display_name} kullanıcısına devredilsin mi? Bu işlem geri alınamaz.`,
+        t('member.transferConfirm', { name: m.display_name }),
       )
     )
       return;

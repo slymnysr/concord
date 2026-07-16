@@ -597,7 +597,7 @@ function DeleteChannelButton({ channel }: { channel: APIChannel }) {
   const dispatch = useAppDispatch();
   const guildId = useAppSelector((s) => s.guilds.selectedId);
   async function del() {
-    if (!confirm(`#${channel.name} kanalı silinsin mi? Bu işlem geri alınamaz.`)) return;
+    if (!confirm(t('channel.deleteConfirm', { name: channel.name }))) return;
     try {
       await api.channels.delete(channel.id);
       if (guildId) await dispatch(fetchChannels(guildId));

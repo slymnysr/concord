@@ -133,7 +133,7 @@ export function AddFriendModal() {
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder={`örn. ${me?.username ?? 'kullanici'}`}
+              placeholder={t('friend.usernamePlaceholder', { name: me?.username ?? 'user' })}
               className="flex-1 bg-surface-2 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
             />
             <button
@@ -152,7 +152,7 @@ export function AddFriendModal() {
       {tab === 'list' && (
         <div className="space-y-4">
           {incoming.length > 0 && (
-            <FriendSection title={`Gelen İstekler (${incoming.length})`}>
+            <FriendSection title={t('friend.incomingCount', { n: incoming.length })}>
               {incoming.map((f) => (
                 <FriendRow key={f.user_id} f={f}>
                   <button
@@ -172,7 +172,7 @@ export function AddFriendModal() {
             </FriendSection>
           )}
           {outgoing.length > 0 && (
-            <FriendSection title={`Bekleyen İstekler (${outgoing.length})`}>
+            <FriendSection title={t('friend.outgoingCount', { n: outgoing.length })}>
               {outgoing.map((f) => (
                 <FriendRow key={f.user_id} f={f}>
                   <button
@@ -186,7 +186,7 @@ export function AddFriendModal() {
             </FriendSection>
           )}
           {accepted.length > 0 && (
-            <FriendSection title={`Arkadaşlar (${accepted.length})`}>
+            <FriendSection title={t('friend.acceptedCount', { n: accepted.length })}>
               {accepted.map((f) => (
                 <FriendRow key={f.user_id} f={f}>
                   <button

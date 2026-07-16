@@ -26,7 +26,7 @@ export function BansTab({ guildId }: { guildId: string }) {
   }
   async function bulkUnban() {
     if (selected.size === 0) return;
-    if (!confirm(`${selected.size} kullanıcının banı kaldırılsın mı?`)) return;
+    if (!confirm(t('ban.unbanConfirm', { n: selected.size }))) return;
     await Promise.all([...selected].map((id) => api.guilds.unban(guildId, id).catch(() => {})));
     refresh();
   }

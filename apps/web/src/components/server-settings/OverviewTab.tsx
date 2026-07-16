@@ -34,7 +34,7 @@ export function OverviewTab({ guildId }: { guildId: string }) {
   }
   async function deleteGuild() {
     if (!guild) return;
-    if (!confirm(`"${guild.name}" sunucusu KALICI olarak silinsin mi? Bu işlem geri alınamaz.`))
+    if (!confirm(t('guild.deleteConfirm', { name: guild.name })))
       return;
     try {
       await api.guilds.deleteGuild(guild.id);

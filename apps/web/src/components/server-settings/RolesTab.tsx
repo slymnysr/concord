@@ -48,7 +48,7 @@ export function RolesTab({ guildId }: { guildId: string }) {
 
   async function remove() {
     if (!selected || selected.is_everyone) return;
-    if (!confirm(`"${selected.name}" rolünü silmek istiyor musun?`)) return;
+    if (!confirm(t('role.deleteConfirm', { name: selected.name }))) return;
     await api.guilds.deleteRole(guildId, selected.id);
     setSelectedId(null);
     refresh();

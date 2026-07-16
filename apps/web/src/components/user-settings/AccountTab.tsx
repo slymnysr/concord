@@ -25,7 +25,7 @@ export function AccountTab() {
       dispatch(
         addToast({
           kind: 'success',
-          message: `Onay bağlantısı ${r.pending_email} adresine gönderildi — onaylayınca adresin değişecek`,
+          message: t('account.confirmSent', { email: r.pending_email }),
         }),
       );
       setNewEmail('');

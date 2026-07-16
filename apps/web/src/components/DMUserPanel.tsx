@@ -124,7 +124,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
     setBusy(true);
     try {
       if (user.friendship_state === 'accepted') {
-        if (confirm(`${user.display_name} arkadaşlıktan çıkarılsın mı?`)) {
+        if (confirm(t('friend.removeConfirm', { name: user.display_name }))) {
           await api.friends.remove(user.id);
           setUser({ ...user, friendship_state: undefined });
           dispatch(addToast({ kind: 'info', message: t('friend.removed') }));
@@ -170,7 +170,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
         payload: msg,
         meta: { arg: { channelId, content: link } },
       });
-      dispatch(addToast({ kind: 'success', message: `${guildName} daveti gönderildi` }));
+      dispatch(addToast({ kind: 'success', message: t('invite.sentTo', { guild: guildName }) }));
     } catch (e: any) {
       // Davet izni yoksa backend hata döner → kullanıcıyı bilgilendir
       dispatch(
@@ -421,7 +421,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
           )}
 
           {user.mutual_friends && user.mutual_friends.length > 0 && (
-            <Section title={`Ortak Arkadaşlar — ${user.mutual_friends.length}`}>
+            <Section title={t('profile.mutualFriends', { n: user.mutual_friends.length })}>
               <div className="flex flex-wrap gap-1">
                 {user.mutual_friends.map((f) => (
                   <div
@@ -503,11 +503,11 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
   }
 
   async function removeMember(userId: string, name: string) {
-    if (!confirm(`${name} gruptan çıkarılsın mı?`)) return;
+    if (!confirm(t('dm.removeFromGroupConfirm', { name }))) return;
     try {
       await api.dms.removeRecipient(channelId, userId);
       setReloadKey((k) => k + 1);
-      dispatch(addToast({ kind: 'success', message: `${name} gruptan çıkarıldı` }));
+      dispatch(addToast({ kind: 'success', message: t('dm.removedFromGroup', { name }) }));
     } catch (e: any) {
       dispatch(addToast({ kind: 'error', message: e?.message || 'Çıkarılamadı' }));
     }

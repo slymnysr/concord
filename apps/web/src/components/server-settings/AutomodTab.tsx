@@ -279,7 +279,7 @@ export function AutomodTab({ guildId }: { guildId: string }) {
       ) : (
         <ul className="space-y-2">
           {rules.map((r) => {
-            const t = AUTOMOD_TRIGGERS.find((x) => x.value === r.trigger_type);
+            const trigDef = AUTOMOD_TRIGGERS.find((x) => x.value === r.trigger_type);
             return (
               <li
                 key={r.id}
@@ -293,16 +293,16 @@ export function AutomodTab({ guildId }: { guildId: string }) {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-ink-primary truncate">{r.name}</div>
                   <div className="text-xs text-ink-tertiary truncate">
-                    {t?.label ?? r.trigger_type}
+                    {trigDef?.label ?? r.trigger_type}
                     {(() => {
                       const td = r.trigger_data as any;
                       const list = td?.keywords ?? td?.domains ?? td?.patterns;
                       if (Array.isArray(list) && list.length)
                         return ` · ${list.slice(0, 4).join(', ')}${list.length > 4 ? '…' : ''}`;
-                      if (td?.threshold) return ` · eşik ${td.threshold}`;
+                      if (td?.threshold) return t('automod.thresholdSuffix', { n: td.threshold });
                       return '';
                     })()}
-                    {r.enabled ? '' : ' · devre dışı'}
+                    {r.enabled ? '' : t('automod.disabledSuffix')}
                   </div>
                 </div>
                 <button

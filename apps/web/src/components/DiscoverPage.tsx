@@ -66,7 +66,7 @@ export function DiscoverContent() {
     setJoiningId(g.id);
     try {
       await api.guilds.joinPublic(g.id);
-      dispatch(addToast({ kind: 'success', message: `${g.name} sunucusuna katıldın` }));
+      dispatch(addToast({ kind: 'success', message: t('guild.joined', { name: g.name }) }));
       dispatch(setMode('guild'));
       dispatch(selectGuild(g.id));
     } catch (e: any) {

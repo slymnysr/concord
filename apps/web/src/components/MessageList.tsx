@@ -891,7 +891,7 @@ function MessageItem({
                 onClick={() => {
                   if (channelId) {
                     api.follows.crosspost(channelId, messageId)
-                      .then((r) => dispatch(addToast({ kind: 'success', message: `Yayınlandı — ${r.delivered_to} takipçi kanala iletildi` })))
+                      .then((r) => dispatch(addToast({ kind: 'success', message: t('msg.publishedTo', { n: r.delivered_to }) })))
                       .catch((e: any) => dispatch(addToast({ kind: 'error', message: e?.message || t('msg.publishFailed') })));
                   }
                   setCtx(null);
@@ -1156,11 +1156,11 @@ function formatFull(ts: number) {
   // Çok yeni mesajlar için göreli zaman
   const diffSec = Math.round((now.getTime() - ts) / 1000);
   if (diffSec >= 0 && diffSec < 60) return 'az önce';
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)} dk önce`;
-  if (d.toDateString() === now.toDateString()) return `Bugün ${formatTime(ts)}`;
+  if (diffSec < 3600) return t('time.minAgoShort', { n: Math.floor(diffSec / 60) });
+  if (d.toDateString() === now.toDateString()) return t('date.todayAt', { time: formatTime(ts) });
   const yest = new Date(now);
   yest.setDate(yest.getDate() - 1);
-  if (d.toDateString() === yest.toDateString()) return `Dün ${formatTime(ts)}`;
+  if (d.toDateString() === yest.toDateString()) return t('date.yesterdayAt', { time: formatTime(ts) });
   return d.toLocaleString('tr-TR', {
     day: '2-digit',
     month: '2-digit',
@@ -1335,10 +1335,10 @@ function pollTimeLeft(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
   if (diff <= 0) return t('poll.ended');
   const mins = Math.round(diff / 60000);
-  if (mins < 60) return `${mins} dk kaldı`;
+  if (mins < 60) return t('poll.minsLeft', { n: mins });
   const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs} saat kaldı`;
-  return `${Math.round(hrs / 24)} gün kaldı`;
+  if (hrs < 24) return t('poll.hoursLeft', { n: hrs });
+  return t('poll.daysLeft', { n: Math.round(hrs / 24) });
 }
 
 // Anket kartı — mesaja bağlı anketi getirir, oy verme + sonuç çubukları
@@ -1504,7 +1504,7 @@ function InviteCard({ content }: { content: string }) {
       const guild = await dispatch(acceptInviteThunk(code)).unwrap();
       dispatch(setMode('guild'));
       dispatch(selectGuild(guild.id));
-      dispatch(addToast({ kind: 'success', message: `${guild.name} sunucusuna katıldın` }));
+      dispatch(addToast({ kind: 'success', message: t('guild.joined', { name: guild.name }) }));
     } catch (e: any) {
       dispatch(addToast({ kind: 'error', message: e?.message || t('invite.joinFailed') }));
     } finally {
