@@ -278,7 +278,7 @@ export function CreateGuildModal() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && createServer()}
-          placeholder="Örn. Yazılım Türkiye"
+          placeholder={t('guild.namePlaceholder2')}
           maxLength={64}
           className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2.5 text-ink-primary placeholder:text-ink-tertiary"
         />
@@ -310,7 +310,7 @@ export function CreateGuildModal() {
       <p className="text-sm text-ink-secondary mb-5">
         Aşağıya bir davet bağlantısı girerek mevcut bir sunucuya katıl.
       </p>
-      <label className="block text-sm font-semibold text-ink-primary mb-1.5">Davet bağlantısı</label>
+      <label className="block text-sm font-semibold text-ink-primary mb-1.5">{t('guild.inviteLink')}</label>
       <input
         autoFocus
         value={inviteInput}

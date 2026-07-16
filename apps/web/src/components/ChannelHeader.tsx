@@ -210,7 +210,7 @@ function NotificationsBell() {
       {open && (
         <div className="absolute right-0 top-11 w-80 max-h-[480px] flex flex-col bg-surface-1 border border-line rounded-xl shadow-2xl z-30">
           <div className="flex items-center justify-between px-4 py-3 border-b border-line shrink-0">
-            <h3 className="font-semibold text-ink-primary">Bildirimler</h3>
+            <h3 className="font-semibold text-ink-primary">{t('settings.notifications')}</h3>
             {count > 0 && (
               <button onClick={markAll} className="text-xs text-brand-500 hover:underline">
                 Hepsini okundu işaretle
@@ -362,7 +362,7 @@ function PinsButton({ channelId }: { channelId: string }) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        title="Sabitlenmiş mesajlar" aria-label="Sabitlenmiş mesajlar"
+        title={t('msg.pinnedMessages')} aria-label={t('msg.pinnedMessages')}
         className="w-9 h-9 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 hover:text-ink-primary transition-colors relative"
       >
         <Pin size={18} />
@@ -425,7 +425,7 @@ function PinsButton({ channelId }: { channelId: string }) {
                             await api.messages.unpin(m.id).catch(() => {});
                             setItems((xs) => xs.filter((x) => x.id !== m.id));
                           }}
-                          title="Sabitlemeyi kaldır" aria-label="Sabitlemeyi kaldır"
+                          title={t('msg.unpin')} aria-label={t('msg.unpin')}
                           className="text-ink-tertiary hover:text-accent-500 text-xs shrink-0"
                         >
                           ✕

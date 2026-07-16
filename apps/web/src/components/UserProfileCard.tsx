@@ -369,7 +369,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
                         setCopiedId(true);
                         setTimeout(() => setCopiedId(false), 1200);
                       }}
-                      title="Kullanıcı kimliğini kopyala" aria-label="Kullanıcı kimliğini kopyala"
+                      title={t('profile.copyUserId')} aria-label={t('profile.copyUserId')}
                       className="px-3 py-2 rounded-lg bg-surface-3 hover:bg-surface-1 text-ink-secondary text-xs font-semibold"
                     >
                       {copiedId ? '✓ Kopyalandı' : 'ID Kopyala'}

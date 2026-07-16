@@ -297,7 +297,7 @@ function PrivacySection() {
 
   return (
     <div className="mt-6">
-      <h3 className="text-base font-bold text-ink-primary mb-2">Gizlilik</h3>
+      <h3 className="text-base font-bold text-ink-primary mb-2">{t('settings.privacy')}</h3>
       <div className="bg-surface-2 rounded-xl border border-line p-4">
         <h4 className="text-sm font-semibold text-ink-primary mb-1">Bana kimler DM atabilir?</h4>
         <p className="text-xs text-ink-secondary mb-3">
@@ -316,8 +316,8 @@ function PrivacySection() {
                   : 'border-line bg-surface-1 hover:border-brand-500/40')
               }
             >
-              <div className="font-semibold text-ink-primary text-sm">Herkes</div>
-              <div className="text-xs text-ink-tertiary">Ortak sunucudaki herkes</div>
+              <div className="font-semibold text-ink-primary text-sm">{t('privacy.everyone')}</div>
+              <div className="text-xs text-ink-tertiary">{t('privacy.mutualGuild')}</div>
             </button>
             <button
               onClick={() => change('friends')}
@@ -329,7 +329,7 @@ function PrivacySection() {
               }
             >
               <div className="font-semibold text-ink-primary text-sm">Sadece Arkadaşlar</div>
-              <div className="text-xs text-ink-tertiary">Yalnızca arkadaşların</div>
+              <div className="text-xs text-ink-tertiary">{t('privacy.friendsOnly')}</div>
             </button>
           </div>
         )}

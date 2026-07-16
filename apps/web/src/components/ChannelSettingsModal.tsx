@@ -455,7 +455,7 @@ function InvitesTab({ channel }: { channel: APIChannel }) {
 
   return (
     <div className="max-w-xl">
-      <h2 className="text-xl font-bold text-ink-primary mb-1">Davetler</h2>
+      <h2 className="text-xl font-bold text-ink-primary mb-1">{t('invite.listTitle')}</h2>
       <p className="text-sm text-ink-secondary mb-5">#{channel.name} için bir davet bağlantısı oluştur.</p>
       {link ? (
         <div className="flex gap-2">
@@ -530,7 +530,7 @@ function IntegrationsTab({ channel }: { channel: APIChannel }) {
   return (
     <div className="max-w-xl">
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-xl font-bold text-ink-primary">Entegrasyonlar</h2>
+        <h2 className="text-xl font-bold text-ink-primary">{t('channel.integrations')}</h2>
         <button
           onClick={create}
           disabled={creating}

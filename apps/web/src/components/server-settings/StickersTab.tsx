@@ -69,7 +69,7 @@ export function StickersTab({ guildId }: { guildId: string }) {
           <input
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            placeholder="Etiketler (virgülle ayrılmış, örn: gülen, mutlu, kawaii)"
+            placeholder={t('sticker.tagsPlaceholder')}
             className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
           />
           <div className="flex gap-2">

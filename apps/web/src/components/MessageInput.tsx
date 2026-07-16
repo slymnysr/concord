@@ -589,7 +589,7 @@ export function MessageInput() {
             type="button"
             onClick={() => setPollOpen(true)}
             className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0"
-            title="Anket oluştur" aria-label="Anket oluştur"
+            title={t('msg.createPoll')} aria-label={t('msg.createPoll')}
           >
             <BarChart3 size={19} />
           </button>
@@ -597,7 +597,7 @@ export function MessageInput() {
             type="button"
             onClick={() => setEmbedOpen(true)}
             className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0"
-            title="Zengin embed oluştur" aria-label="Zengin embed oluştur"
+            title={t('msg.createEmbed')} aria-label={t('msg.createEmbed')}
           >
             <LayoutTemplate size={19} />
           </button>
@@ -702,7 +702,7 @@ export function MessageInput() {
               type="button"
               onClick={stopRecording}
               className="h-9 px-3 rounded-xl bg-accent-500 hover:bg-accent-600 text-white flex items-center gap-2 transition-colors shrink-0 animate-pulse"
-              title="Kaydı durdur ve gönder" aria-label="Kaydı durdur ve gönder"
+              title={t('msg.stopRecord')} aria-label={t('msg.stopRecord')}
             >
               <Square size={14} />
               <span className="text-xs font-mono">{Math.floor(recordingDur / 60)}:{String(recordingDur % 60).padStart(2, '0')}</span>
@@ -721,7 +721,7 @@ export function MessageInput() {
             onClick={submit}
             disabled={(!value.trim() && files.length === 0) || sending || cooldownLeft > 0 || files.some((f) => f.uploading)}
             className="w-9 h-9 rounded-xl bg-brand-500 disabled:bg-surface-3 disabled:text-ink-tertiary text-white flex items-center justify-center hover:bg-brand-400 disabled:hover:bg-surface-3 transition-colors shrink-0"
-            title="Gönder" aria-label="Gönder"
+            title={t('common.send')} aria-label={t('common.send')}
           >
             {cooldownLeft > 0 ? <span className="text-[11px] font-bold">{cooldownLeft}</span> : <Send size={16} strokeWidth={2.5} />}
           </button>
@@ -761,7 +761,7 @@ function FilePreview({ file, onRemove, onToggleSpoiler }: { file: PendingFile; o
         <button
           onClick={onRemove}
           className="w-5 h-5 rounded-full bg-accent-500 text-white flex items-center justify-center"
-          title="Kaldır" aria-label="Kaldır"
+          title={t('common.remove')} aria-label={t('common.remove')}
         >
           <X size={12} />
         </button>
@@ -769,7 +769,7 @@ function FilePreview({ file, onRemove, onToggleSpoiler }: { file: PendingFile; o
       {preview ? (
         <div className="relative">
           <img src={preview} alt={file.file.name} className={'w-32 h-32 object-cover rounded ' + (file.spoiler ? 'blur-md' : '')} />
-          {file.spoiler && <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold uppercase text-white tracking-wider">Spoiler</span>}
+          {file.spoiler && <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold uppercase text-white tracking-wider">{t('msg.spoiler')}</span>}
         </div>
       ) : (
         <div className="w-32 h-32 flex flex-col items-center justify-center text-ink-secondary">

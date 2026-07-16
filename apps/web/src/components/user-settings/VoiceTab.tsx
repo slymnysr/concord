@@ -205,12 +205,12 @@ export function VoiceTab() {
             </select>
           </div>
           <div className="flex-1">
-            <label className="block text-xs font-semibold text-ink-secondary mb-1">Kare hızı</label>
+            <label className="block text-xs font-semibold text-ink-secondary mb-1">{t('voice.frameRate')}</label>
             <select
               defaultValue={localStorage.getItem('concord_stream_fps') ?? '30'}
               onChange={(e) => localStorage.setItem('concord_stream_fps', e.target.value)}
               className="w-full bg-surface-1 border border-line rounded-lg px-2 py-1.5 text-sm text-ink-primary outline-none focus:border-brand-500/50"
-              aria-label="Yayın kare hızı"
+              aria-label={t('voice.streamFrameRate')}
             >
               <option value="15">15 FPS</option>
               <option value="30">30 FPS</option>

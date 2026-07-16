@@ -67,7 +67,7 @@ export function CommandsTab({ guildId }: { guildId: string }) {
         <textarea
           value={response}
           onChange={(e) => setResponse(e.target.value)}
-          placeholder="Komut çalışınca kanala yazılacak yanıt. {argüman} ve {user} yer tutucuları desteklenir."
+          placeholder={t('cmd.responsePlaceholder')}
           rows={3}
           className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none resize-none"
         />

@@ -1154,7 +1154,7 @@ function UserPanel() {
       <button
         onClick={() => setMenuOpen((v) => !v)}
         className="relative shrink-0"
-        title="Durum değiştir" aria-label="Durum değiştir"
+        title={t('status.change')} aria-label={t('status.change')}
       >
         <div
           className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
@@ -1202,7 +1202,7 @@ function UserPanel() {
         <div className="text-ink-primary text-sm font-semibold truncate">{me.display_name}</div>
         <div className="text-ink-tertiary text-xs truncate">
           {me.custom_status_text || me.custom_status_emoji ? (
-            <span title="Özel durum" aria-label="Özel durum">
+            <span title={t('status.custom')} aria-label={t('status.custom')}>
               {me.custom_status_emoji ? me.custom_status_emoji + ' ' : ''}
               {me.custom_status_text}
             </span>
@@ -1214,7 +1214,7 @@ function UserPanel() {
       <button
         type="button"
         onClick={() => dispatch(openModal('user_settings'))}
-        title="Kullanıcı Ayarları" aria-label="Kullanıcı Ayarları"
+        title={t('settings.user')} aria-label={t('settings.user')}
         className="w-8 h-8 rounded-md hover:bg-surface-3 text-ink-secondary hover:text-brand-500 flex items-center justify-center transition-colors"
       >
         <Settings size={16} />
@@ -1224,7 +1224,7 @@ function UserPanel() {
         onClick={() => {
           if (confirm('Çıkış yapmak istediğine emin misin?')) dispatch(logout());
         }}
-        title="Çıkış" aria-label="Çıkış"
+        title={t('common.logout')} aria-label={t('common.logout')}
         className="w-8 h-8 rounded-md hover:bg-surface-3 text-ink-secondary hover:text-accent-500 flex items-center justify-center transition-colors"
       >
         <LogOut size={16} />

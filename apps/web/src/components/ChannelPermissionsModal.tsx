@@ -362,7 +362,7 @@ function TargetPicker({
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Rol veya üye ara..."
+            placeholder={t('perm.searchPlaceholder')}
             className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg pl-9 pr-3 py-2 text-sm text-ink-primary placeholder:text-ink-tertiary"
           />
         </div>

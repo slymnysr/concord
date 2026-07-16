@@ -199,7 +199,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
             value={w.rules_text}
             onChange={(e) => patch({ rules_text: e.target.value })}
             rows={4}
-            placeholder="1. Saygılı ol&#10;2. Spam yapma..."
+            placeholder={t('welcome.rulesPlaceholder')}
             className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none resize-none"
           />
         </div>

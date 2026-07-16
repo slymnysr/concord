@@ -381,7 +381,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
           )}
 
           {user.bio && (
-            <Section title={t('profile.about')} aria-label="Hakkımda">
+            <Section title={t('profile.about')} aria-label={t('profile.about')}>
               <p className="text-sm text-ink-primary leading-snug whitespace-pre-wrap">{user.bio}</p>
             </Section>
           )}
@@ -392,7 +392,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
             </div>
           )}
 
-          <Section title="Concord Üyeliği" aria-label="Concord Üyeliği">
+          <Section title={t('profile.concordMembership')} aria-label={t('profile.concordMembership')}>
             <p className="text-xs text-ink-secondary">
               {new Date(user.created_at).toLocaleDateString('tr-TR', {
                 day: 'numeric',
@@ -471,7 +471,7 @@ function UserNote({ userId }: { userId: string }) {
         api.users.setNote(userId, note).then(() => setSaved(true)).catch(() => {});
       }}
       rows={2}
-      placeholder="Bu kullanıcı hakkında not ekle (sadece sen görürsün)"
+      placeholder={t('profile.notePlaceholder')}
       className="w-full bg-surface-1 border border-line rounded-lg px-2.5 py-2 text-sm text-ink-primary placeholder:text-ink-tertiary resize-none focus:outline-none focus:border-brand-500/50"
     />
   );
@@ -571,7 +571,7 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
           <button
             onClick={renameGroup}
             className="text-ink-tertiary hover:text-ink-primary"
-            title="Grubu yeniden adlandır" aria-label="Grubu yeniden adlandır"
+            title={t('dm.renameGroup')} aria-label={t('dm.renameGroup')}
           >
             ✏️
           </button>
@@ -614,7 +614,7 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
                 <button
                   onClick={() => removeMember(u.id, u.display_name)}
                   className="shrink-0 w-6 h-6 rounded hover:bg-accent-500/15 text-ink-tertiary hover:text-accent-500 flex items-center justify-center text-xs"
-                  title="Gruptan çıkar" aria-label={u.display_name + ' kullanıcısını gruptan çıkar'}
+                  title={t('dm.removeFromGroup')} aria-label={u.display_name + ' kullanıcısını gruptan çıkar'}
                 >
                   ✕
                 </button>
