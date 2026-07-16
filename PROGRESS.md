@@ -86,7 +86,7 @@ cd /home/slmnys/concord/apps/api && \
 
 cd /home/slmnys/concord/apps/gateway && \
   . /home/slmnys/.asdf/asdf.sh && \
-  CONCORD_JWT_SECRET='dev_jwt_secret_change_in_prod_at_least_32_chars' \
+  JWT_SECRET='dev_jwt_secret_change_in_prod_at_least_32_chars' \
   nohup mix phx.server > /tmp/concord-gateway.log 2>&1 &
 
 cd /home/slmnys/concord/apps/voice && \

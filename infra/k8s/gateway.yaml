@@ -1,10 +1,13 @@
 # Gateway (Phoenix) — WebSocket + presence
 #
-# ⚠️ replicas: 1 — ŞU AN ÖLÇEKLENEMEZ.
-# Phoenix.PubSub varsayılan `:pg` adaptörü yalnızca AYNI BEAM kümesi içinde çalışır;
-# libcluster ile node keşfi + distributed Presence yapılmadan 2. replica'daki kullanıcı
-# 1. replica'daki olayları ALMAZ (sessiz bölünme). Çok-replica için önce ROADMAP FAZ D.
-# Yanlış ölçekleme sessizce mesaj kaybı demek → bilerek 1'de sabit.
+# ÇOK-REPLICA AÇIK (FAZ D): libcluster ile node keşfi + dağıtık Phoenix.Presence yapıldı.
+# Node'lar Kubernetes.DNS ile headless service üzerinden birbirini bulur; Presence CRDT'si
+# dağıtık PubSub ile senkronlanır → A pod'undaki kullanıcı B pod'undakini görür.
+#
+# ÖLÇEKLEMEDEN ÖNCE ŞART OLAN 3 ŞEY (biri eksikse küme SESSİZCE bölünür):
+#   1. headless service (aşağıda) — ClusterIP servis TEK sanal IP döndürür, node keşfi çalışmaz
+#   2. RELEASE_COOKIE — çerezsiz node'lar el sıkışamaz (runtime.exs açılışta zorunlu kılar)
+#   3. RELEASE_NODE=gateway@<POD_IP> — Kubernetes.DNS stratejisi node'u bu formatta arar
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,7 +15,7 @@ metadata:
   namespace: concord
   labels: { app: gateway }
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels: { app: gateway }
   template:
@@ -24,22 +27,43 @@ spec:
           image: ghcr.io/slymnysr/concord-gateway:latest
           ports:
             - { name: http, containerPort: 4000 }
+            # Dağıtık Erlang: node'lar arası trafik (epmd + BEAM dist portu)
+            - { name: epmd, containerPort: 4369 }
+            - { name: dist, containerPort: 9100 }
           envFrom:
-            - configMapRef: { name: concord-config }
+            - configMapRef: { name: concord-config }  # REDIS_HOST/REDIS_PORT buradan
           env:
             - name: PHX_SERVER
               value: "true"
             - name: PHX_HOST
               value: "concord.example.com"
-            - name: PORT
+            # NOT: uygulama GATEWAY_PORT okur (config/runtime.exs). Eskiden burada PORT
+            # yazıyordu — hiçbir yer okumuyordu, yalnızca 4000 varsayılanı sayesinde
+            # çalışıyordu (var olmayan bir ayar düğmesi izlenimi veriyordu).
+            - name: GATEWAY_PORT
               value: "4000"
             # JWT doğrulaması API ile AYNI secret'ı kullanmalı, yoksa WS 403 verir.
+            # Değişken adı da AYNI olmalı: gateway eskiden CONCORD_JWT_SECRET okuyordu,
+            # burası JWT_SECRET veriyordu → gateway sessizce DEV secret'ına düşüyordu.
             - name: JWT_SECRET
               valueFrom: { secretKeyRef: { name: concord-secrets, key: JWT_SECRET } }
             - name: SECRET_KEY_BASE
               valueFrom: { secretKeyRef: { name: concord-secrets, key: SECRET_KEY_BASE } }
-            - name: REDIS_URL
-              value: "redis://redis:6379"
+            # --- Kümeleme ---
+            - name: CLUSTER_STRATEGY
+              value: "kubernetes"
+            - name: K8S_HEADLESS_SERVICE
+              value: "gateway-headless"
+            - name: K8S_APP_NAME
+              value: "gateway"
+            - name: POD_IP
+              valueFrom: { fieldRef: { fieldPath: status.podIP } }
+            - name: RELEASE_NODE
+              value: "gateway@$(POD_IP)"
+            - name: RELEASE_DISTRIBUTION
+              value: "name"
+            - name: RELEASE_COOKIE
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: RELEASE_COOKIE } }
           readinessProbe:
             httpGet: { path: /health, port: http }
             initialDelaySeconds: 5
@@ -52,6 +76,7 @@ spec:
             requests: { cpu: 100m, memory: 256Mi }
             limits: { cpu: "2", memory: 1Gi }
 ---
+# İstemcilerin bağlandığı normal servis (yük dağıtımı)
 apiVersion: v1
 kind: Service
 metadata:
@@ -61,3 +86,19 @@ spec:
   selector: { app: gateway }
   ports:
     - { name: http, port: 4000, targetPort: http }
+---
+# Küme keşfi için HEADLESS servis — clusterIP: None olduğu için DNS sorgusu pod'ların
+# A kayıtlarını döndürür (libcluster Kubernetes.DNS bunu okur). Yukarıdaki normal servis
+# tek sanal IP döndürdüğü için node keşfinde KULLANILAMAZ.
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-headless
+  namespace: concord
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true  # pod hazır olmadan da kümeye katılabilsin
+  selector: { app: gateway }
+  ports:
+    - { name: epmd, port: 4369 }
+    - { name: dist, port: 9100 }

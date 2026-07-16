@@ -6,6 +6,8 @@ defmodule Gateway.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      # Küme ÖNCE kurulmalı: PubSub/Presence node'lar bağlıysa dağıtık çalışır
+      {Cluster.Supervisor, [Gateway.Cluster.topologies(), [name: Gateway.ClusterSupervisor]]},
       {Phoenix.PubSub, name: Gateway.PubSub},
       GatewayWeb.Endpoint,
       {Gateway.Presence, [pool_size: 1]},

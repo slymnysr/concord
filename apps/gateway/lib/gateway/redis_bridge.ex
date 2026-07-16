@@ -3,6 +3,17 @@ defmodule Gateway.RedisBridge do
   Redis PubSub köprüsü — `concord:guild:*` pattern'ini dinler, gelen olayları
   Phoenix kanalına yayar (`guild:<id>` topic'i).
   Go API mesaj attığında bu köprü gerçek zamanlı dağıtımı sağlar.
+
+  ## Çok-node: neden `local_broadcast`?
+
+  Redis pubsub mesajı HER aboneye gider → kümedeki N node'un HEPSİ aynı olayı alır.
+  Eğer her node `broadcast!` çağırsaydı, Phoenix.PubSub olayı tekrar TÜM node'lara
+  dağıtırdı → her istemci mesajı **N kez** görürdü (ve küme içi trafik N²'ye çıkardı).
+
+  Doğru iş bölümü: **node'lar arası dağıtımı Redis yapar**, PubSub'ın işi yalnızca
+  o node'a bağlı YEREL soketlere ulaşmak. Bu yüzden `local_broadcast`.
+
+  (Presence bundan etkilenmez: kendi CRDT senkronunu dağıtık PubSub üzerinden yapar.)
   """
   use GenServer
   require Logger
@@ -58,8 +69,10 @@ defmodule Gateway.RedisBridge do
     case Jason.decode(payload) do
       {:ok, %{"type" => event_type} = event} ->
         topic = "guild:#{guild_id}"
-        Logger.info("RedisBridge forwarding #{event_type} → #{topic}")
-        GatewayWeb.Endpoint.broadcast!(topic, event_type, event)
+        Logger.debug("RedisBridge forwarding #{event_type} → #{topic}")
+        # local_broadcast: küme dağıtımını Redis yapıyor (bkz. modül dokümanı) — broadcast!
+        # kullanmak her istemciye N kopya gönderirdi.
+        GatewayWeb.Endpoint.local_broadcast(topic, event_type, event)
         :ok
 
       {:error, reason} ->

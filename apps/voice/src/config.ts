@@ -3,7 +3,10 @@ import type { types as msTypes } from 'mediasoup';
 
 export const config = {
   port: parseInt(process.env.VOICE_PORT ?? '4443', 10),
-  jwtSecret: process.env.CONCORD_JWT_SECRET ?? 'dev_jwt_secret_change_in_prod_at_least_32_chars',
+  // JWT_SECRET — API ve gateway ile AYNI değişken adı. Eskiden CONCORD_JWT_SECRET
+  // okunuyordu ama hiçbir yer onu set etmiyordu → voice üretimde dev secret'ına düşüyor,
+  // API'nin imzaladığı token'ları doğrulayamıyordu (ses bağlantısı 403). Bkz. gateway/token.ex.
+  jwtSecret: process.env.JWT_SECRET ?? 'dev_jwt_secret_change_in_prod_at_least_32_chars',
 
   // mediasoup worker
   worker: {

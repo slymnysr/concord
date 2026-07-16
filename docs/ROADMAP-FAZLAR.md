@@ -62,10 +62,34 @@ bu dosyada `## API-KONTRAT` başlığı altında yayınla ki FAZ B ona kodlasın
 **Yapılacaklar:** mediasoup **çok-makine** — `pipeToRouter` cascade + SFU seçici (yük dağıtımı). _Yapma: tek makinede bırakma._
 **Sözleşme (sabit):** `/presence` `{id,name}[]` şeması değişmez. **Test:** 2 worker/makine arası ses aktarımı.
 
-## FAZ D — Gateway Kümeleme (`apps/gateway/`)
+## FAZ D — Gateway Kümeleme (`apps/gateway/`) ✅ TAMAM
 **Sahiplenir:** `apps/gateway/**`
-**Yapılacaklar:** **libcluster** node keşfi + **distributed Phoenix.Presence** (çok-node). _Yapma: tek-node `:pg`'de bırakma._
-**Sözleşme (sabit):** Redis olay şeması değişmez. **Test:** 2 node, çapraz-node presence + yayın.
+**Durum:** libcluster + dağıtık Phoenix.Presence çalışıyor; 2 node'la KANITLANDI
+(gw1 ↔ gw2 kümelendi, gw1'de track edilen kullanıcı gw2'den okundu). 14 ExUnit testi
+(gateway'in daha önce HİÇ testi yoktu — CI'daki `mix test` "no tests" deyip yeşil yanıyordu).
+
+**Stratejiler** (`Gateway.Cluster`, `CLUSTER_STRATEGY`): `kubernetes` (headless service DNS),
+`epmd` (bilinen host listesi — docker-compose ve YEREL çok-node testi için), `gossip` (UDP
+keşif), `none`. Varsayılan artık sessizce gossip DEĞİL: hiçbir node bulamadan "kümelendim"
+sanılıyordu → k8s ortamıysa kubernetes, CLUSTER_HOSTS varsa epmd, yoksa kapalı.
+
+**FAZ D'nin bulduğu 3 gerçek bug:**
+1. **Çift yayın (kümeleme açılınca patlardı):** RedisBridge her node'da çalışıp aynı Redis
+   pattern'ine abone; `Endpoint.broadcast!` ise olayı PubSub ile TÜM node'lara dağıtıyordu →
+   her istemci mesajı N kez alırdı (küme içi trafik N²). Doğrusu `local_broadcast`:
+   node'lar arası dağıtımı zaten Redis yapıyor, PubSub'ın işi yerel soketler.
+2. **Gateway üretimde DEV JWT secret'ına düşüyordu:** `token.ex` `CONCORD_JWT_SECRET`
+   okuyordu ama projede hiçbir yer onu set etmiyor (hepsi `JWT_SECRET` veriyor) → API gerçek
+   secret'la imzalar, gateway dev secret'la doğrular (WS 403, realtime ölü) VE repo'da açık
+   olan dev secret'la üretilmiş SAHTE token'ları kabul ederdi. **Voice de aynı hatadaydı.**
+   Üçü `JWT_SECRET`'ta birleştirildi; `runtime.exs` üretimde dev-default'u reddediyor.
+3. **Dev'de port sabitti** (4000) → yerelde çok-node kümeyi denemek imkânsızdı; `GATEWAY_PORT`.
+
+**k8s:** `replicas: 2`, headless service (`gateway-headless`, ClusterIP servis tek sanal IP
+döndürdüğü için keşifte kullanılamaz), `RELEASE_NODE=gateway@$(POD_IP)`, `RELEASE_COOKIE`
+(secret'tan; çerezsiz node'lar el sıkışamaz → runtime.exs açılışta zorunlu kılar).
+Ölü env'ler temizlendi: `PORT` ve `REDIS_URL` hiçbir yerde okunmuyordu (var olmayan ayar
+düğmesi izlenimi veriyorlardı; Redis ayarı configMap'ten REDIS_HOST/PORT ile geliyor).
 
 ## FAZ E — Mobil (`apps/mobile/`)
 **Sahiplenir:** `apps/mobile/**`
