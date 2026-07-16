@@ -3,6 +3,7 @@ import { Radio, Hand, Mic, PhoneCall } from 'lucide-react';
 import { voice } from '../voice';
 import { useAppSelector } from '../store';
 import { PERM } from '../perms';
+import { t } from '../i18n';
 
 export function StageView() {
   const channelId = useAppSelector((s) => s.channels.selectedId);
@@ -38,8 +39,8 @@ export function StageView() {
   }, []);
 
   const nameOf = (uid: string) => {
-    if (uid === me?.id) return me?.display_name ?? 'Sen';
-    return usersById[uid]?.display_name ?? members.find((m) => m.user_id === uid)?.display_name ?? 'Bağlanıyor…';
+    if (uid === me?.id) return me?.display_name ?? t('common.you');
+    return usersById[uid]?.display_name ?? members.find((m) => m.user_id === uid)?.display_name ?? t('stage.connecting');
   };
   const colorOf = (uid: string) => usersById[uid]?.avatar_color ?? members.find((m) => m.user_id === uid)?.avatar_color ?? '#5865F2';
 
@@ -79,10 +80,10 @@ export function StageView() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-surface-1 to-brand-900/10 p-8 text-center">
         <Radio size={40} className="text-brand-500 mb-3" />
-        <h2 className="text-xl font-bold text-ink-primary">{channel?.name ?? 'Sahne'}</h2>
+        <h2 className="text-xl font-bold text-ink-primary">{channel?.name ?? t('stage.title')}</h2>
         {channel?.topic && <p className="text-sm text-ink-secondary mt-1 max-w-md">{channel.topic}</p>}
         <button onClick={join} disabled={busy} className="mt-5 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white font-semibold flex items-center gap-2">
-          <PhoneCall size={16} /> {busy ? 'Bağlanıyor…' : 'Sahneye Katıl'}
+          <PhoneCall size={16} /> {busy ? t('stage.connecting') : t('stage.join')}
         </button>
       </div>
     );
@@ -110,7 +111,7 @@ export function StageView() {
       <div className="px-6 py-5">
         <div className="text-xs font-bold uppercase text-ink-tertiary tracking-wider mb-3">Konuşmacılar — {speakers.length}</div>
         {speakers.length === 0 ? (
-          <p className="text-sm text-ink-tertiary">Henüz konuşmacı yok.</p>
+          <p className="text-sm text-ink-tertiary">{t('stage.noSpeakers')}</p>
         ) : (
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
             {speakers.map((uid) => (
@@ -121,7 +122,7 @@ export function StageView() {
                 </div>
                 <span className="text-xs text-ink-secondary truncate max-w-[72px] text-center">{nameOf(uid)}</span>
                 {canModerate && uid !== me?.id && (
-                  <button onClick={() => voice.setStageSpeaker(uid, false)} className="text-[10px] text-ink-tertiary hover:text-accent-500 opacity-0 group-hover/sp:opacity-100">Dinleyiciye al</button>
+                  <button onClick={() => voice.setStageSpeaker(uid, false)} className="text-[10px] text-ink-tertiary hover:text-accent-500 opacity-0 group-hover/sp:opacity-100">{t('stage.moveToAudience')}</button>
                 )}
               </div>
             ))}
@@ -155,18 +156,18 @@ export function StageView() {
         {iAmSpeaker ? (
           <>
             <span className="text-sm text-status-online font-semibold flex items-center gap-1.5"><Mic size={15} /> Konuşmacısın</span>
-            {!canModerate && <button onClick={() => voice.setStageSpeaker(me!.id, false)} className="text-sm px-3 py-1.5 rounded-lg bg-surface-3 hover:bg-surface-1 text-ink-secondary">Dinleyiciye geç</button>}
+            {!canModerate && <button onClick={() => voice.setStageSpeaker(me!.id, false)} className="text-sm px-3 py-1.5 rounded-lg bg-surface-3 hover:bg-surface-1 text-ink-secondary">{t('stage.becomeAudience')}</button>}
           </>
         ) : (
           <button
             onClick={() => voice.requestToSpeak(!myHand)}
             className={'px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 ' + (myHand ? 'bg-brand-500/20 text-brand-400' : 'bg-brand-500 hover:bg-brand-400 text-white')}
           >
-            <Hand size={15} /> {myHand ? 'İsteği geri çek' : 'Konuşma İste'}
+            <Hand size={15} /> {myHand ? t('stage.withdrawRequest') : t('stage.requestSpeak')}
           </button>
         )}
         {canModerate && !iAmSpeaker && (
-          <button onClick={() => voice.setStageSpeaker(me!.id, true)} className="px-4 py-2 rounded-lg bg-surface-3 hover:bg-surface-1 text-ink-primary text-sm font-semibold">Konuşmaya başla</button>
+          <button onClick={() => voice.setStageSpeaker(me!.id, true)} className="px-4 py-2 rounded-lg bg-surface-3 hover:bg-surface-1 text-ink-primary text-sm font-semibold">{t('stage.startSpeaking')}</button>
         )}
       </div>
     </div>

@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { Plus, Compass, Folder } from 'lucide-react';
 import { useAppDispatch, useAppSelector, openModal, switchToDM, switchToGuild, switchToDiscover } from '../store';
 import { api, type APIGuild } from '../api';
+import { t } from '../i18n';
 
 interface FolderView {
   id: string;
@@ -33,7 +34,7 @@ export function ServerRail() {
   return (
     <aside className="w-[76px] bg-bg flex flex-col items-center py-4 gap-3 border-r border-line">
       <button
-        title="Arkadaşlar / Direkt Mesajlar" aria-label="Arkadaşlar / Direkt Mesajlar"
+        title={t('rail.friendsDM')} aria-label={t('rail.friendsDM')}
         onClick={() => dispatch(switchToDM())}
         className={
           'w-12 h-12 rounded-xl bg-surface-1 border border-line hover:border-brand-500/40 hover:scale-105 flex items-center justify-center overflow-hidden transition-all ' +
@@ -112,12 +113,12 @@ export function ServerRail() {
         {guilds.length >= 3 && (
           <button
             onClick={async () => {
-              const name = prompt('Klasör adı?');
+              const name = prompt(t('rail.folderName'));
               if (!name?.trim()) return;
               await api.folders.create({ name: name.trim() });
               refreshFolders();
             }}
-            title="Yeni Klasör" aria-label="Yeni Klasör"
+            title={t('rail.newFolder')} aria-label={t('rail.newFolder')}
             className="w-12 h-12 rounded-xl bg-surface-1 border border-dashed border-line hover:border-brand-500/40 text-ink-tertiary hover:text-brand-500 flex items-center justify-center transition-colors"
           >
             <Folder size={18} />
@@ -129,7 +130,7 @@ export function ServerRail() {
         <button
           onClick={() => dispatch(openModal('create_guild'))}
           className="w-12 h-12 rounded-xl bg-surface-1 hover:bg-brand-500/15 hover:text-brand-500 text-ink-secondary transition-colors flex items-center justify-center border border-line"
-          title="Sunucu Ekle" aria-label="Sunucu Ekle"
+          title={t('rail.addServer')} aria-label={t('rail.addServer')}
         >
           <Plus size={20} strokeWidth={2.5} />
         </button>
@@ -139,7 +140,7 @@ export function ServerRail() {
             'w-12 h-12 rounded-xl bg-surface-1 hover:bg-brand-500/15 hover:text-brand-500 text-ink-secondary transition-colors flex items-center justify-center border border-line',
             mode === 'discover' && 'ring-2 ring-brand-500 ring-offset-2 ring-offset-bg border-brand-500 text-brand-500',
           )}
-          title="Sunucuları Keşfet" aria-label="Sunucuları Keşfet"
+          title={t('rail.discover')} aria-label={t('rail.discover')}
         >
           <Compass size={20} />
         </button>

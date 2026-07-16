@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Eye, EyeOff, Trash2, BadgeCheck } from 'lucide-react';
 import { api, type APIConnection } from '../../api';
 import { useAppDispatch, addToast } from '../../store';
+import { t } from '../../i18n';
 
 export function ConnectionsTab() {
   const dispatch = useAppDispatch();
@@ -42,9 +43,9 @@ export function ConnectionsTab() {
       .then(() => {
         setNewName('');
         load();
-        dispatch(addToast({ kind: 'success', message: 'Bağlantı eklendi' }));
+        dispatch(addToast({ kind: 'success', message: t('conn.added') }));
       })
-      .catch((e: any) => dispatch(addToast({ kind: 'error', message: e?.message || 'Eklenemedi' })))
+      .catch((e: any) => dispatch(addToast({ kind: 'error', message: e?.message || t('common.addFailed') })))
       .finally(() => setBusy(false));
   };
 
@@ -72,7 +73,7 @@ export function ConnectionsTab() {
 
   return (
     <div className="max-w-xl">
-      <h2 className="text-lg font-bold text-ink-primary mb-1">Bağlantılar</h2>
+      <h2 className="text-lg font-bold text-ink-primary mb-1">{t('conn.title')}</h2>
       <p className="text-sm text-ink-tertiary mb-4">
         Diğer platform hesaplarını profilinde göster. OAuth ile bağlananlar "doğrulanmış" rozeti
         alır.
@@ -92,7 +93,7 @@ export function ConnectionsTab() {
           value={newType}
           onChange={(e) => setNewType(e.target.value)}
           className="bg-surface-2 border border-line rounded-lg px-2 py-2 text-sm text-ink-primary outline-none focus:border-brand-500/50"
-          aria-label="Platform"
+          aria-label={t('conn.platform')}
         >
           {CONN_TYPES.map((tpe) => (
             <option key={tpe.value} value={tpe.value}>
@@ -104,7 +105,7 @@ export function ConnectionsTab() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
-          placeholder="Kullanıcı adı / bağlantı"
+          placeholder={t('conn.usernamePlaceholder')}
           className="flex-1 bg-surface-2 border border-line rounded-lg px-3 py-2 text-sm text-ink-primary outline-none focus:border-brand-500/50"
         />
         <button
@@ -117,7 +118,7 @@ export function ConnectionsTab() {
       </div>
 
       {loading ? (
-        <div className="text-sm text-ink-tertiary">Yükleniyor...</div>
+        <div className="text-sm text-ink-tertiary">{t('common.loading')}</div>
       ) : list.length === 0 ? (
         <div className="text-sm text-ink-tertiary border border-dashed border-line rounded-xl p-6 text-center">
           Henüz bağlantı eklemedin.
@@ -161,8 +162,8 @@ export function ConnectionsTab() {
                     .catch(() => {});
                 }}
                 className="w-8 h-8 rounded-lg hover:bg-surface-3 text-ink-tertiary hover:text-ink-primary flex items-center justify-center"
-                title={c.visible ? 'Profilde gizle' : 'Profilde göster'}
-                aria-label={c.visible ? 'Profilde gizle' : 'Profilde göster'}
+                title={c.visible ? t('conn.hideOnProfile') : t('conn.showOnProfile')}
+                aria-label={c.visible ? t('conn.hideOnProfile') : t('conn.showOnProfile')}
               >
                 {c.visible ? <Eye size={15} /> : <EyeOff size={15} />}
               </button>
@@ -174,8 +175,8 @@ export function ConnectionsTab() {
                     .catch(() => {});
                 }}
                 className="w-8 h-8 rounded-lg hover:bg-accent-500/15 text-ink-tertiary hover:text-accent-500 flex items-center justify-center"
-                title="Bağlantıyı kaldır"
-                aria-label="Bağlantıyı kaldır"
+                title={t('conn.remove')}
+                aria-label={t('conn.remove')}
               >
                 <Trash2 size={15} />
               </button>
