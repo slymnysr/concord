@@ -3,6 +3,7 @@ import { httpUrl } from '../../serverConfig';
 import { Check } from 'lucide-react';
 import { api } from '../../api';
 import { useAppDispatch, useAppSelector, fetchMe, addToast } from '../../store';
+import { t } from '../../i18n';
 
 export function ProfileTab() {
   const dispatch = useAppDispatch();
@@ -23,12 +24,12 @@ export function ProfileTab() {
         addToast({
           kind: 'success',
           message: r.already_verified
-            ? 'E-postan zaten doğrulanmış'
+            ? t('profile.emailVerified')
             : 'Doğrulama bağlantısı e-postana gönderildi — gelen kutunu kontrol et',
         }),
       );
     } catch {
-      dispatch(addToast({ kind: 'error', message: 'Doğrulama maili gönderilemedi' }));
+      dispatch(addToast({ kind: 'error', message: t('profile.verifyMailFailed') }));
     }
     await dispatch(fetchMe());
   }
@@ -114,7 +115,7 @@ export function ProfileTab() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-ink-primary mb-5">Profilim</h2>
+      <h2 className="text-2xl font-bold text-ink-primary mb-5">{t('profile.myProfile')}</h2>
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-4">
         {/* Profil banner'ı */}
         <label
@@ -203,11 +204,11 @@ export function ProfileTab() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-ink-primary mb-1.5">Zamirler</label>
+            <label className="block text-sm font-semibold text-ink-primary mb-1.5">{t('profile.pronouns')}</label>
             <input
               value={pronouns}
               onChange={(e) => setPronouns(e.target.value.slice(0, 40))}
-              placeholder="örn. o/ona"
+              placeholder={t('profile.pronounsPlaceholder')}
               className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
             />
           </div>
@@ -239,17 +240,17 @@ export function ProfileTab() {
                     ? 'border-brand-500 bg-brand-500/10'
                     : 'border-line bg-surface-1 hover:border-brand-500/40')
                 }
-                title={d ? 'Süsleme' : 'Yok'}
+                title={d ? t('profile.decoration') : t('common.none')}
               >
                 {d || '∅'}
               </button>
             ))}
           </div>
-          <p className="text-[11px] text-ink-tertiary mt-1">Avatarının köşesinde görünür.</p>
+          <p className="text-[11px] text-ink-tertiary mt-1">{t('profile.decorationHint')}</p>
         </div>
         <div className="flex items-center justify-between bg-surface-1 border border-line rounded-lg px-3 py-2">
           <div>
-            <div className="text-sm font-semibold text-ink-primary">E-posta</div>
+            <div className="text-sm font-semibold text-ink-primary">{t('profile.email')}</div>
             <div className="text-xs text-ink-tertiary">{me.email}</div>
           </div>
           {me.email_verified ? (
@@ -270,7 +271,7 @@ export function ProfileTab() {
           disabled={saving}
           className="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 text-white font-semibold"
         >
-          {saving ? 'Kaydediliyor...' : 'Kaydet'}
+          {saving ? t('common.saving') : t('common.save')}
         </button>
       </div>
     </div>

@@ -1,18 +1,19 @@
 import { closeModal } from '../../store';
+import { t } from '../../i18n';
 
 export function KeyboardTab() {
   const shortcuts = [
-    { keys: ['Ctrl', 'K'], label: 'Sunucu/kanal hızlı geçiş (arama)' },
-    { keys: ['Ctrl', 'Shift', 'K'], label: 'Yeni DM oluştur' },
-    { keys: ['Ctrl', '/'], label: 'Bu yardımı göster' },
-    { keys: ['Ctrl', 'B'], label: 'Üye listesini aç/kapat' },
-    { keys: ['Enter'], label: 'Mesaj gönder' },
-    { keys: ['Shift', 'Enter'], label: 'Yeni satır' },
-    { keys: ['Escape'], label: 'Düzenlemeyi iptal et / Modal kapat' },
-    { keys: ['↑'], label: 'Son mesajı düzenle' },
-    { keys: ['Ctrl', 'Shift', 'M'], label: 'Mikrofonu sustur/aç' },
-    { keys: ['Ctrl', 'Shift', 'D'], label: 'Sağırlaştır/aç' },
-    { keys: ['@', 'isim'], label: 'Bir üyeyi bahset' },
+    { keys: ['Ctrl', 'K'], label: t('kbd.quickSwitch') },
+    { keys: ['Ctrl', 'Shift', 'K'], label: t('kbd.newDM') },
+    { keys: ['Ctrl', '/'], label: t('kbd.showHelp') },
+    { keys: ['Ctrl', 'B'], label: t('member.toggleList') },
+    { keys: ['Enter'], label: t('kbd.sendMessage') },
+    { keys: ['Shift', 'Enter'], label: t('kbd.newLine') },
+    { keys: ['Escape'], label: t('kbd.cancelEdit') },
+    { keys: ['↑'], label: t('kbd.editLast') },
+    { keys: ['Ctrl', 'Shift', 'M'], label: t('kbd.toggleMic') },
+    { keys: ['Ctrl', 'Shift', 'D'], label: t('kbd.toggleDeafen') },
+    { keys: ['@', 'isim'], label: t('kbd.mentionMember') },
     { keys: ['#', 'isim'], label: 'Bir kanal bağla' },
     { keys: [':emoji:'], label: 'Emoji ekle' },
     { keys: ['/komut'], label: 'Slash komut çalıştır' },
