@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector, selectChannel, setMode, selectDM, setPe
 import { ProfileBadges } from './ProfileBadges';
 import { ConnectionChips } from './connectionMeta';
 import { activityVerb, activityElapsed } from '../activity';
+import { t } from '../i18n';
 
 type AnchorRect = { top: number; left: number; right: number; bottom: number; width: number; height: number };
 
@@ -32,7 +33,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
     api.users
       .user(userId)
       .then(setUser)
-      .catch((e) => setError(e?.message ?? 'Yüklenemedi'));
+      .catch((e) => setError(e?.message ?? t('common.loadFailed')));
   }, [userId]);
 
   useEffect(() => {
@@ -113,7 +114,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
       dispatch(setPendingDM({ channelId: channelID, partnerId: user.id }));
       onClose();
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.code === 'dm_restricted' ? 'Bu kullanıcı yalnızca arkadaşlarından mesaj alıyor' : 'DM açılamadı' }));
+      dispatch(addToast({ kind: 'error', message: e?.code === 'dm_restricted' ? 'Bu kullanıcı yalnızca arkadaşlarından mesaj alıyor' : t('dm.openFailed') }));
     } finally {
       setBusy(false);
     }
@@ -126,10 +127,10 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
     offline: 'bg-status-offline',
   };
   const statusLabel: Record<string, string> = {
-    online: 'Çevrimiçi',
-    idle: 'Uzakta',
-    dnd: 'Rahatsız Etmeyin',
-    offline: 'Çevrimdışı',
+    online: t('status.online'),
+    idle: t('status.idle'),
+    dnd: t('status.dnd'),
+    offline: t('status.offline'),
   };
 
   return (
@@ -151,7 +152,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
         )}
 
         {!user && !error && (
-          <div className="p-6 text-center text-ink-tertiary text-sm">Yükleniyor...</div>
+          <div className="p-6 text-center text-ink-tertiary text-sm">{t('common.loading')}</div>
         )}
 
         {user && (
@@ -180,7 +181,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
                     }
                   />
                   {user.avatar_decoration && (
-                    <span className="absolute -top-1 -right-1 text-lg drop-shadow" title="Avatar süslemesi" aria-label="Avatar süslemesi">{user.avatar_decoration}</span>
+                    <span className="absolute -top-1 -right-1 text-lg drop-shadow" title={t('profile.avatarDecoration')} aria-label={t('profile.avatarDecoration')}>{user.avatar_decoration}</span>
                   )}
                 </div>
               </div>
@@ -356,7 +357,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
                           window.dispatchEvent(new CustomEvent('concord:mention-user', { detail: { id: user.id } }));
                           onClose();
                         }}
-                        title="Mesaj kutusunda bu kişiden bahset" aria-label="Mesaj kutusunda bu kişiden bahset"
+                        title={t('profile.mentionHint')} aria-label={t('profile.mentionHint')}
                         className="px-3 py-2 rounded-lg bg-surface-3 hover:bg-brand-500 hover:text-white text-ink-primary text-xs font-semibold"
                       >
                         Bahset

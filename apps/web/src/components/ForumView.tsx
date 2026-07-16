@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { MessagesSquare, Plus, X, Archive, Search } from 'lucide-react';
 import { api, type APIChannel } from '../api';
 import { useAppDispatch, useAppSelector, selectChannel } from '../store';
+import { t } from '../i18n';
 
 type ForumPost = APIChannel & { message_count?: number; member_count?: number; creator_id?: string; archived?: boolean; tag_ids?: string[] };
 type ForumTag = { id: string; name: string; emoji?: string; position: number };
@@ -64,7 +65,7 @@ export function ForumView({ channelId }: { channelId: string }) {
             onClick={() => setShowArchived((v) => !v)}
             className={'text-xs font-medium px-2.5 py-1.5 rounded-lg border ' + (showArchived ? 'border-brand-500 text-brand-400' : 'border-line text-ink-tertiary hover:text-ink-secondary')}
           >
-            {showArchived ? 'Aktifleri göster' : 'Arşivlenenler'}
+            {showArchived ? t('forum.showActive') : t('forum.archived')}
           </button>
           <button
             onClick={() => setCreating(true)}
@@ -101,11 +102,11 @@ export function ForumView({ channelId }: { channelId: string }) {
 
       <div className="flex-1 overflow-y-auto p-4">
         {loading ? (
-          <p className="text-sm text-ink-tertiary text-center py-10">Yükleniyor…</p>
+          <p className="text-sm text-ink-tertiary text-center py-10">{t('common.loading')}</p>
         ) : posts.length === 0 ? (
           <div className="text-center py-16 text-ink-tertiary">
             <MessagesSquare size={40} className="mx-auto mb-3 opacity-40" />
-            <p className="text-sm">Henüz gönderi yok.</p>
+            <p className="text-sm">{t('forum.noPosts')}</p>
             <p className="text-xs mt-1">"Yeni Gönderi" ile ilk tartışmayı başlat.</p>
           </div>
         ) : (
@@ -115,7 +116,7 @@ export function ForumView({ channelId }: { channelId: string }) {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Gönderilerde ara..."
+                placeholder={t('forum.searchPlaceholder')}
                 className="w-full bg-surface-1 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg pl-9 pr-3 py-2 text-sm text-ink-primary"
               />
             </div>
@@ -128,7 +129,7 @@ export function ForumView({ channelId }: { channelId: string }) {
               if (visible.length === 0) {
                 return (
                   <p className="text-sm text-ink-tertiary text-center py-6">
-                    {query.trim() || activeTags.length > 0 ? 'Eşleşen gönderi yok.' : ''}
+                    {query.trim() || activeTags.length > 0 ? t('forum.noMatch') : ''}
                   </p>
                 );
               }
@@ -180,7 +181,7 @@ export function ForumView({ channelId }: { channelId: string }) {
                   </button>
                   <button
                     onClick={() => toggleArchive(p)}
-                    title={p.archived ? 'Arşivden çıkar' : 'Arşivle'}
+                    title={p.archived ? t('forum.unarchive') : t('forum.archive')}
                     className="shrink-0 opacity-0 group-hover:opacity-100 text-ink-tertiary hover:text-ink-primary transition-opacity"
                   >
                     <Archive size={15} />
@@ -245,7 +246,7 @@ function CreatePostModal({
       await api.channels.sendMessage(thread.id, body.trim()).catch(() => {});
       onCreated(thread.id);
     } catch (e: any) {
-      setErr(e?.message ?? 'Gönderi oluşturulamadı');
+      setErr(e?.message ?? t('forum.createFailed'));
     } finally {
       setBusy(false);
     }
@@ -255,7 +256,7 @@ function CreatePostModal({
     <div className="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-lg bg-surface-1 border border-line rounded-2xl shadow-2xl flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b border-line">
-          <h2 className="text-lg font-bold text-ink-primary">Yeni Forum Gönderisi</h2>
+          <h2 className="text-lg font-bold text-ink-primary">{t('forum.newPost')}</h2>
           <button onClick={onClose} className="text-ink-tertiary hover:text-ink-primary"><X size={18} /></button>
         </div>
         <div className="p-5 space-y-3">
@@ -264,19 +265,19 @@ function CreatePostModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={100}
-            placeholder="Gönderi başlığı"
+            placeholder={t('forum.titlePlaceholder')}
             className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2 text-sm text-ink-primary font-semibold"
           />
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={5}
-            placeholder="İlk mesajın…"
+            placeholder={t('forum.bodyPlaceholder')}
             className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2 text-sm text-ink-primary resize-none"
           />
           {tags.length > 0 && (
             <div>
-              <label className="block text-xs font-semibold text-ink-secondary mb-1.5">Etiketler</label>
+              <label className="block text-xs font-semibold text-ink-secondary mb-1.5">{t('forum.tagsLabel')}</label>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {tags.map((t) => (
                   <button
@@ -299,13 +300,13 @@ function CreatePostModal({
           {err && <p className="text-accent-500 text-sm">{err}</p>}
         </div>
         <div className="px-5 py-4 border-t border-line flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-ink-secondary hover:text-ink-primary text-sm">İptal</button>
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-ink-secondary hover:text-ink-primary text-sm">{t('common.cancel')}</button>
           <button
             onClick={create}
             disabled={!title.trim() || !body.trim() || busy}
             className="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold"
           >
-            {busy ? 'Oluşturuluyor…' : 'Gönderiyi Yayınla'}
+            {busy ? t('common.creating') : 'Gönderiyi Yayınla'}
           </button>
         </div>
       </div>

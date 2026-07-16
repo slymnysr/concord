@@ -11,6 +11,7 @@ import { sendTyping, sendDMTyping } from '../gateway';
 import { EmojiPicker } from './EmojiPicker';
 import { MentionPicker } from './MentionPicker';
 import { MarkdownToolbar } from './MarkdownToolbar';
+import { t } from '../i18n';
 
 interface PendingFile {
   id: string;
@@ -443,7 +444,7 @@ export function MessageInput() {
       )}
       {stickerSuggestions.length > 0 && (
         <div className="mb-2 bg-surface-1 border border-line rounded-xl p-2 flex items-center gap-2 overflow-x-auto">
-          <span className="text-[10px] uppercase font-bold text-ink-tertiary shrink-0 px-1">Sticker</span>
+          <span className="text-[10px] uppercase font-bold text-ink-tertiary shrink-0 px-1">{t('msg.sticker')}</span>
           {stickerSuggestions.map((s) => (
             <button
               key={s.id}
@@ -459,7 +460,7 @@ export function MessageInput() {
       {replyTo && (
         <div className="bg-surface-2 border border-line border-b-0 rounded-t-xl px-4 py-2 flex items-center justify-between text-xs">
           <span className="text-ink-secondary truncate">
-            <span className="text-ink-tertiary">Yanıtlanan: </span>
+            <span className="text-ink-tertiary">{t('msg.replyingTo')}</span>
             <span className="text-brand-500 font-semibold">
               @{replyAuthorUser?.display_name ?? '…'}
             </span>
@@ -468,7 +469,7 @@ export function MessageInput() {
             <button
               type="button"
               onClick={() => setReplyPing((v) => !v)}
-              title={replyPing ? 'Bahsetme açık — yazara bildirim gider' : 'Bahsetme kapalı — sessiz yanıt'}
+              title={replyPing ? t('msg.mentionOn') : t('msg.mentionOff')}
               className={
                 'px-2 py-0.5 rounded font-semibold text-[11px] transition-colors ' +
                 (replyPing
@@ -476,7 +477,7 @@ export function MessageInput() {
                   : 'bg-surface-3 text-ink-tertiary hover:text-ink-secondary')
               }
             >
-              @ {replyPing ? 'AÇIK' : 'KAPALI'}
+              @ {replyPing ? t('common.on') : t('common.offCaps')}
             </button>
             <button
               type="button"
@@ -525,7 +526,7 @@ export function MessageInput() {
             type="button"
             onClick={() => fileInput.current?.click()}
             className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0"
-            title="Dosya ekle" aria-label="Dosya ekle"
+            title={t('msg.attachFile')} aria-label={t('msg.attachFile')}
           >
             <Paperclip size={20} />
           </button>
@@ -580,7 +581,7 @@ export function MessageInput() {
               }
             }}
             className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0"
-            title="Birini bahset" aria-label="Birini bahset"
+            title={t('msg.mentionSomeone')} aria-label="Birini bahset"
           >
             <AtSign size={18} />
           </button>

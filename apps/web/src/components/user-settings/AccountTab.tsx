@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Shield } from 'lucide-react';
 import { api, tokenStore } from '../../api';
 import { useAppDispatch, useAppSelector, fetchMe, addToast, logout } from '../../store';
+import { t } from '../../i18n';
 
 export function AccountTab() {
   const dispatch = useAppDispatch();
@@ -30,7 +31,7 @@ export function AccountTab() {
       setNewEmail('');
       setEmailPass('');
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'E-posta değiştirilemedi' }));
+      dispatch(addToast({ kind: 'error', message: e?.message || t('account.emailChangeFailed') }));
     } finally {
       setEmailBusy(false);
     }
@@ -40,11 +41,11 @@ export function AccountTab() {
     setErr(null);
     setOk(false);
     if (next !== confirm) {
-      setErr('Yeni parola eşleşmiyor');
+      setErr(t('account.passwordMismatch'));
       return;
     }
     if (next.length < 8) {
-      setErr('Yeni parola en az 8 karakter olmalı');
+      setErr(t('account.passwordMin'));
       return;
     }
     try {
@@ -54,39 +55,39 @@ export function AccountTab() {
       setNext('');
       setConfirm('');
     } catch (e: any) {
-      setErr(e?.message ?? 'Hata');
+      setErr(e?.message ?? t('common.error'));
     }
   }
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-ink-primary mb-5">Hesap</h2>
+      <h2 className="text-2xl font-bold text-ink-primary mb-5">{t('settings.account')}</h2>
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-2 text-sm mb-5">
         <div>
-          <span className="text-ink-tertiary">Kullanıcı Adı: </span>
+          <span className="text-ink-tertiary">{t('account.username')}</span>
           <span className="text-ink-primary font-mono">@{me.username}</span>
         </div>
         <div>
-          <span className="text-ink-tertiary">E-posta: </span>
+          <span className="text-ink-tertiary">{t('account.email')}</span>
           <span className="text-ink-primary">{me.email}</span>
         </div>
       </div>
 
-      <h3 className="text-base font-bold text-ink-primary mb-2">E-postayı Değiştir</h3>
+      <h3 className="text-base font-bold text-ink-primary mb-2">{t('account.changeEmail')}</h3>
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-3 mb-5">
         <p className="text-xs text-ink-tertiary">
           Yeni adrese onay bağlantısı gönderilir; adresin ancak onaylayınca değişir.
         </p>
         <input
           type="email"
-          placeholder="Yeni e-posta adresi"
+          placeholder={t('account.newEmailPlaceholder')}
           value={newEmail}
           onChange={(e) => setNewEmail(e.target.value)}
           className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
         />
         <input
           type="password"
-          placeholder="Mevcut parolan (güvenlik için)"
+          placeholder={t('account.currentPasswordSecurity')}
           value={emailPass}
           onChange={(e) => setEmailPass(e.target.value)}
           className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
@@ -96,29 +97,29 @@ export function AccountTab() {
           disabled={!newEmail.trim() || !emailPass || emailBusy}
           className="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:opacity-40 text-white text-sm font-semibold"
         >
-          {emailBusy ? 'Gönderiliyor...' : 'Onay Bağlantısı Gönder'}
+          {emailBusy ? t('common.sending') : t('account.sendConfirmLink')}
         </button>
       </div>
 
-      <h3 className="text-base font-bold text-ink-primary mb-2">Parolayı Değiştir</h3>
+      <h3 className="text-base font-bold text-ink-primary mb-2">{t('account.changePassword')}</h3>
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-3">
         <input
           type="password"
-          placeholder="Mevcut parola"
+          placeholder={t('account.currentPassword')}
           value={current}
           onChange={(e) => setCurrent(e.target.value)}
           className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
         />
         <input
           type="password"
-          placeholder="Yeni parola (en az 8 karakter)"
+          placeholder={t('account.newPassword')}
           value={next}
           onChange={(e) => setNext(e.target.value)}
           className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
         />
         <input
           type="password"
-          placeholder="Yeni parola tekrar"
+          placeholder={t('account.newPasswordRepeat')}
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
