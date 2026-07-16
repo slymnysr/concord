@@ -2,10 +2,12 @@ package router
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/concord/api/internal/auth"
 	"github.com/concord/api/internal/handlers"
 	mw "github.com/concord/api/internal/middleware"
@@ -13,30 +15,39 @@ import (
 
 func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 	r := chi.NewRouter()
+	cfg := h.Config()
+	limiter := mw.NewLimiter(h.Redis)
 
 	r.Use(chimw.RequestID)
 	r.Use(chimw.RealIP)
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.Compress(5))
+	r.Use(mw.Metrics)      // Prometheus RED metrikleri
+	r.Use(securityHeaders) // güvenlik başlıkları
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "https://*.concord.com"},
+		AllowedOrigins:   cfg.AllowedOrigins, // env: ALLOWED_ORIGINS
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
+	// Genel çit: per-user (giriş yapılmışsa) / per-IP token-bucket
+	r.Use(limiter.Limit("global", 600, time.Minute))
 
 	r.Get("/health", h.Health)
 	r.Get("/version", h.Version)
+	r.Handle("/metrics", promhttp.Handler())
 
 	r.Route("/api/v1", func(r chi.Router) {
-		// Anonim
-		r.Post("/auth/register", h.Register)
-		r.Post("/auth/login", h.Login)
+		// Anonim — kimlik doğrulama endpoint'leri brute-force'a karşı SIKI limitli (10/dk)
+		r.Group(func(r chi.Router) {
+			r.Use(limiter.Limit("auth", 10, time.Minute))
+			r.Post("/auth/register", h.Register)
+			r.Post("/auth/login", h.Login)
+			r.Post("/auth/forgot-password", h.ForgotPassword)
+			r.Post("/auth/reset-password", h.ResetPassword)
+		})
 		r.Post("/auth/refresh", h.Refresh)
-		// Şifre sıfırlama + e-posta doğrulama (mail bağlantıları, anonim)
-		r.Post("/auth/forgot-password", h.ForgotPassword)
-		r.Post("/auth/reset-password", h.ResetPassword)
 		r.Get("/auth/verify-email", h.ConfirmEmailVerify)
 		// Voice server → API (x-voice-secret ile korunur, kullanıcı JWT'si yok)
 		r.Get("/voice-internal/state", h.GetPersistedVoiceStateInternal)
@@ -294,4 +305,15 @@ func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 	})
 
 	return r
+}
+
+// securityHeaders — temel güvenlik başlıkları (MIME-sniff, clickjacking, referrer sızıntısı).
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		next.ServeHTTP(w, r)
+	})
 }

@@ -50,6 +50,9 @@ type Handler struct {
 	LoginAttempts *repo.LoginAttempts
 }
 
+// Config — router gibi paketlerin config'e erişmesi için (CORS origin'leri vb.).
+func (h *Handler) Config() *config.Config { return h.cfg }
+
 func New(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool, rdb *redis.Client, ids *snowflake.Generator, iss *auth.Issuer, store *storage.Storage) *Handler {
 	return &Handler{
 		logger:        logger,

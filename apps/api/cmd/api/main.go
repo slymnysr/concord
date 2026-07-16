@@ -29,6 +29,10 @@ func main() {
 	defer logger.Sync()
 
 	cfg := config.Load()
+	// Üretimde zayıf dev-default secret ile başlatmayı reddet (fail-fast).
+	if err := cfg.MustSecure(); err != nil {
+		logger.Fatal("güvenli olmayan yapılandırma", zap.Error(err))
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
