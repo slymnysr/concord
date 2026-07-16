@@ -19,15 +19,15 @@ spec:
     metadata:
       labels: { app: api }
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8080"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '8080'
+        prometheus.io/path: '/metrics'
     spec:
       containers:
         - name: api
           image: ghcr.io/slymnysr/concord-api:latest
           # Pod ordinal'ini (api-0 → 0) WORKER_ID yap, sonra binary'i exec et.
-          command: ["/bin/sh", "-c"]
+          command: ['/bin/sh', '-c']
           args:
             - 'export WORKER_ID="${POD_NAME##*-}"; echo "worker_id=$WORKER_ID"; exec /api'
           ports:
@@ -57,7 +57,7 @@ spec:
             periodSeconds: 15
           resources:
             requests: { cpu: 100m, memory: 128Mi }
-            limits: { cpu: "1", memory: 512Mi }
+            limits: { cpu: '1', memory: 512Mi }
 ---
 apiVersion: v1
 kind: Service

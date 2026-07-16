@@ -228,13 +228,25 @@ function parseBlocks(src: string): Node[] {
     const olMatch = ln.match(/^(\s*)(\d+)[.)]\s+(.*)/);
     if (ulMatch) {
       const indent = Math.min(4, Math.floor(ulMatch[1].length / 2));
-      out.push({ kind: 'listitem', ordered: false, num: 0, indent, children: parseInline(ulMatch[2]) });
+      out.push({
+        kind: 'listitem',
+        ordered: false,
+        num: 0,
+        indent,
+        children: parseInline(ulMatch[2]),
+      });
       i++;
       continue;
     }
     if (olMatch) {
       const indent = Math.min(4, Math.floor(olMatch[1].length / 2));
-      out.push({ kind: 'listitem', ordered: true, num: parseInt(olMatch[2], 10), indent, children: parseInline(olMatch[3]) });
+      out.push({
+        kind: 'listitem',
+        ordered: true,
+        num: parseInt(olMatch[2], 10),
+        indent,
+        children: parseInline(olMatch[3]),
+      });
       i++;
       continue;
     }
@@ -274,7 +286,12 @@ function parseBlocks(src: string): Node[] {
   return out;
 }
 
-function renderNode(n: Node, key: number, openMention?: (u: string) => void, jumbo?: boolean): React.ReactNode {
+function renderNode(
+  n: Node,
+  key: number,
+  openMention?: (u: string) => void,
+  jumbo?: boolean,
+): React.ReactNode {
   switch (n.kind) {
     case 'text':
       return <React.Fragment key={key}>{n.value}</React.Fragment>;
@@ -288,7 +305,10 @@ function renderNode(n: Node, key: number, openMention?: (u: string) => void, jum
       return <s key={key}>{n.children.map((c, i) => renderNode(c, i, openMention))}</s>;
     case 'code':
       return (
-        <code key={key} className="bg-surface-2 text-brand-400 rounded px-1 py-0.5 text-[13px] font-mono">
+        <code
+          key={key}
+          className="bg-surface-2 text-brand-400 rounded px-1 py-0.5 text-[13px] font-mono"
+        >
           {n.value}
         </code>
       );
@@ -303,7 +323,12 @@ function renderNode(n: Node, key: number, openMention?: (u: string) => void, jum
     case 'spoiler':
       return <Spoiler key={key} nodes={n.children} openMention={openMention} />;
     case 'heading': {
-      const cls = n.level === 1 ? 'text-xl font-bold' : n.level === 2 ? 'text-lg font-bold' : 'text-base font-semibold';
+      const cls =
+        n.level === 1
+          ? 'text-xl font-bold'
+          : n.level === 2
+            ? 'text-lg font-bold'
+            : 'text-base font-semibold';
       return (
         <div key={key} className={cls + ' text-ink-primary my-1'}>
           {n.children.map((c, i) => renderNode(c, i, openMention))}
@@ -315,7 +340,9 @@ function renderNode(n: Node, key: number, openMention?: (u: string) => void, jum
     case 'listitem':
       return (
         <div key={key} className="flex gap-2" style={{ marginLeft: 8 + n.indent * 18 }}>
-          <span className="text-ink-tertiary select-none">{n.ordered ? `${n.num}.` : n.indent > 0 ? '◦' : '•'}</span>
+          <span className="text-ink-tertiary select-none">
+            {n.ordered ? `${n.num}.` : n.indent > 0 ? '◦' : '•'}
+          </span>
           <span>{n.children.map((c, i) => renderNode(c, i, openMention))}</span>
         </div>
       );
@@ -411,19 +438,22 @@ function RoleMentionChip({ roleId }: { roleId: string }) {
   let role: any = null;
   for (const gid in state?.guildRoles?.byGuild ?? {}) {
     const found = state.guildRoles.byGuild[gid].find((r: any) => r.id === roleId);
-    if (found) { role = found; break; }
+    if (found) {
+      role = found;
+      break;
+    }
   }
   // renk: int veya #hex olabilir
   let color = '';
   const c = role?.color;
   if (typeof c === 'number' && c > 0) color = '#' + c.toString(16).padStart(6, '0');
   else if (typeof c === 'string' && c.startsWith('#')) color = c;
-  const style = color
-    ? { color, backgroundColor: color + '26' }
-    : undefined;
+  const style = color ? { color, backgroundColor: color + '26' } : undefined;
   return (
     <span
-      className={'font-semibold rounded px-1 py-0.5 ' + (color ? '' : 'bg-brand-500/15 text-brand-500')}
+      className={
+        'font-semibold rounded px-1 py-0.5 ' + (color ? '' : 'bg-brand-500/15 text-brand-500')
+      }
       style={style}
     >
       @{role?.name ?? 'rol'}
@@ -447,16 +477,32 @@ function TimestampChip({ unix, style }: { unix: number; style: string }) {
     else if (abs < 2592000) label = fmt(Math.round(abs / 86400), 'gün');
     else if (abs < 31536000) label = fmt(Math.round(abs / 2592000), 'ay');
     else label = fmt(Math.round(abs / 31536000), 'yıl');
-  } else if (style === 't') label = d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  } else if (style === 't')
+    label = d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
   else if (style === 'T') label = d.toLocaleTimeString('tr-TR');
   else if (style === 'd') label = d.toLocaleDateString('tr-TR');
-  else if (style === 'D') label = d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+  else if (style === 'D')
+    label = d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
   else if (style === 'F')
-    label = d.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) +
-      ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-  else label = d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    label =
+      d.toLocaleDateString('tr-TR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }) +
+      ' ' +
+      d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  else
+    label =
+      d.toLocaleDateString('tr-TR') +
+      ' ' +
+      d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
   return (
-    <span className="bg-surface-2 rounded px-1 text-ink-secondary" title={d.toLocaleString('tr-TR')}>
+    <span
+      className="bg-surface-2 rounded px-1 text-ink-secondary"
+      title={d.toLocaleString('tr-TR')}
+    >
       {label}
     </span>
   );
@@ -483,10 +529,21 @@ function useChannelCache(channelId: string) {
 function CustomEmojiChip({ name, jumbo }: { name: string; jumbo?: boolean }) {
   const store = (window as any).__concord_store;
   const gid = store?.getState?.()?.guilds?.selectedId;
-  const emojis = (window as any).__concord_emojis?.[gid] as { name: string; url: string }[] | undefined;
+  const emojis = (window as any).__concord_emojis?.[gid] as
+    | { name: string; url: string }[]
+    | undefined;
   const found = emojis?.find((e) => e.name === name);
   if (found) {
-    return <img src={found.url} alt={`:${name}:`} title={`:${name}:`} className={(jumbo ? 'w-12 h-12 ' : 'w-5 h-5 ') + 'inline-block object-contain align-text-bottom'} />;
+    return (
+      <img
+        src={found.url}
+        alt={`:${name}:`}
+        title={`:${name}:`}
+        className={
+          (jumbo ? 'w-12 h-12 ' : 'w-5 h-5 ') + 'inline-block object-contain align-text-bottom'
+        }
+      />
+    );
   }
   return <>:{name}:</>;
 }
@@ -512,13 +569,7 @@ function CodeBlock({ lang, value }: { lang: string; value: string }) {
   );
 }
 
-function Spoiler({
-  nodes,
-  openMention,
-}: {
-  nodes: Node[];
-  openMention?: (u: string) => void;
-}) {
+function Spoiler({ nodes, openMention }: { nodes: Node[]; openMention?: (u: string) => void }) {
   const [shown, setShown] = React.useState(false);
   return (
     <span
@@ -551,11 +602,21 @@ function isJumboEmoji(content: string): boolean {
   return emojiCount > 0 && emojiCount <= 27 && stripped.trim() === '';
 }
 
-export function Markdown({ content, onMention }: { content: string; onMention?: (u: string) => void }) {
+export function Markdown({
+  content,
+  onMention,
+}: {
+  content: string;
+  onMention?: (u: string) => void;
+}) {
   const nodes = parseBlocks(content);
   const jumbo = isJumboEmoji(content);
   if (jumbo) {
-    return <span className="text-4xl leading-tight inline-flex flex-wrap items-center gap-0.5">{nodes.map((n, i) => renderNode(n, i, onMention, true))}</span>;
+    return (
+      <span className="text-4xl leading-tight inline-flex flex-wrap items-center gap-0.5">
+        {nodes.map((n, i) => renderNode(n, i, onMention, true))}
+      </span>
+    );
   }
   return <>{nodes.map((n, i) => renderNode(n, i, onMention))}</>;
 }

@@ -2,13 +2,28 @@ import { useEffect, useRef, useState } from 'react';
 import { httpUrl } from '../serverConfig';
 import { MessageSquare, UserPlus, X, Check, Clock } from 'lucide-react';
 import { api, type APIPublicUser } from '../api';
-import { useAppDispatch, useAppSelector, selectChannel, setMode, selectDM, setPendingDM, addToast } from '../store';
+import {
+  useAppDispatch,
+  useAppSelector,
+  selectChannel,
+  setMode,
+  selectDM,
+  setPendingDM,
+  addToast,
+} from '../store';
 import { ProfileBadges } from './ProfileBadges';
 import { ConnectionChips } from './connectionMeta';
 import { activityVerb, activityElapsed } from '../activity';
 import { t } from '../i18n';
 
-type AnchorRect = { top: number; left: number; right: number; bottom: number; width: number; height: number };
+type AnchorRect = {
+  top: number;
+  left: number;
+  right: number;
+  bottom: number;
+  width: number;
+  height: number;
+};
 
 interface Props {
   userId: string;
@@ -104,9 +119,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
     if (!user) return;
     setBusy(true);
     try {
-      const channelID =
-        user.dm_channel_id ??
-        (await api.dms.open(user.id)).channel_id;
+      const channelID = user.dm_channel_id ?? (await api.dms.open(user.id)).channel_id;
       dispatch(setMode('dm'));
       dispatch(selectDM(channelID));
       dispatch(selectChannel(channelID));
@@ -114,7 +127,15 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
       dispatch(setPendingDM({ channelId: channelID, partnerId: user.id }));
       onClose();
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.code === 'dm_restricted' ? 'Bu kullanıcı yalnızca arkadaşlarından mesaj alıyor' : t('dm.openFailed') }));
+      dispatch(
+        addToast({
+          kind: 'error',
+          message:
+            e?.code === 'dm_restricted'
+              ? 'Bu kullanıcı yalnızca arkadaşlarından mesaj alıyor'
+              : t('dm.openFailed'),
+        }),
+      );
     } finally {
       setBusy(false);
     }
@@ -147,9 +168,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
           <X size={14} />
         </button>
 
-        {error && (
-          <div className="p-6 text-center text-accent-500 text-sm">{error}</div>
-        )}
+        {error && <div className="p-6 text-center text-accent-500 text-sm">{error}</div>}
 
         {!user && !error && (
           <div className="p-6 text-center text-ink-tertiary text-sm">{t('common.loading')}</div>
@@ -162,7 +181,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
               style={{
                 background: user.banner_url
                   ? `url(${user.banner_url}) center/cover`
-                  : `linear-gradient(135deg, ${user.accent_color ?? user.avatar_color}, ${(user.accent_color ?? user.avatar_color)}80)`,
+                  : `linear-gradient(135deg, ${user.accent_color ?? user.avatar_color}, ${user.accent_color ?? user.avatar_color}80)`,
               }}
             />
             <div className="px-5 pb-5 -mt-10 relative">
@@ -181,7 +200,13 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
                     }
                   />
                   {user.avatar_decoration && (
-                    <span className="absolute -top-1 -right-1 text-lg drop-shadow" title={t('profile.avatarDecoration')} aria-label={t('profile.avatarDecoration')}>{user.avatar_decoration}</span>
+                    <span
+                      className="absolute -top-1 -right-1 text-lg drop-shadow"
+                      title={t('profile.avatarDecoration')}
+                      aria-label={t('profile.avatarDecoration')}
+                    >
+                      {user.avatar_decoration}
+                    </span>
                   )}
                 </div>
               </div>
@@ -217,9 +242,13 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
                     <div className="text-[10px] font-bold uppercase text-ink-tertiary tracking-wider mb-0.5">
                       {activityVerb(activity.type)}
                     </div>
-                    <div className="text-sm font-semibold text-ink-primary truncate">{activity.name}</div>
+                    <div className="text-sm font-semibold text-ink-primary truncate">
+                      {activity.name}
+                    </div>
                     {activity.started_at && (
-                      <div className="text-xs text-ink-tertiary mt-0.5">{activityElapsed(activity.started_at)}</div>
+                      <div className="text-xs text-ink-tertiary mt-0.5">
+                        {activityElapsed(activity.started_at)}
+                      </div>
                     )}
                   </div>
                 )}
@@ -245,7 +274,9 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
                   </h3>
                   <p className="text-xs text-ink-secondary">
                     {new Date(user.created_at).toLocaleDateString('tr-TR', {
-                      day: 'numeric', month: 'long', year: 'numeric',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
                     })}
                   </p>
                 </div>
@@ -354,10 +385,13 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
                     {user.friendship_state !== 'self' && (
                       <button
                         onClick={() => {
-                          window.dispatchEvent(new CustomEvent('concord:mention-user', { detail: { id: user.id } }));
+                          window.dispatchEvent(
+                            new CustomEvent('concord:mention-user', { detail: { id: user.id } }),
+                          );
                           onClose();
                         }}
-                        title={t('profile.mentionHint')} aria-label={t('profile.mentionHint')}
+                        title={t('profile.mentionHint')}
+                        aria-label={t('profile.mentionHint')}
                         className="px-3 py-2 rounded-lg bg-surface-3 hover:bg-brand-500 hover:text-white text-ink-primary text-xs font-semibold"
                       >
                         Bahset
@@ -369,7 +403,8 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
                         setCopiedId(true);
                         setTimeout(() => setCopiedId(false), 1200);
                       }}
-                      title={t('profile.copyUserId')} aria-label={t('profile.copyUserId')}
+                      title={t('profile.copyUserId')}
+                      aria-label={t('profile.copyUserId')}
                       className="px-3 py-2 rounded-lg bg-surface-3 hover:bg-surface-1 text-ink-secondary text-xs font-semibold"
                     >
                       {copiedId ? '✓ Kopyalandı' : 'ID Kopyala'}

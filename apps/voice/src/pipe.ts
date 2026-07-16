@@ -62,11 +62,17 @@ export async function ensureLink(channelId: string, remote: NodeInfo): Promise<P
   const local = await createLocalPipe(channelId);
 
   // 2) Karşıdan kendi ucunu açmasını iste; bize ip/port/srtp döner
-  const remoteSide = await callRemote<{ ip: string; port: number; srtpParameters?: msTypes.SrtpParameters }>(
-    remote,
-    '/internal/pipe/prepare',
-    { channelId, remoteNodeId: cluster.nodeId, localIp: local.ip, localPort: local.port, srtpParameters: local.srtpParameters },
-  );
+  const remoteSide = await callRemote<{
+    ip: string;
+    port: number;
+    srtpParameters?: msTypes.SrtpParameters;
+  }>(remote, '/internal/pipe/prepare', {
+    channelId,
+    remoteNodeId: cluster.nodeId,
+    localIp: local.ip,
+    localPort: local.port,
+    srtpParameters: local.srtpParameters,
+  });
 
   // 3) Yerel ucu karşıya bağla
   await local.transport.connect({
@@ -77,7 +83,10 @@ export async function ensureLink(channelId: string, remote: NodeInfo): Promise<P
 
   const link: PipeLink = { transport: local.transport, producers: new Map() };
   links.set(key, link);
-  log.info({ channelId, remoteNodeId: remote.id, ip: remoteSide.ip, port: remoteSide.port }, 'pipe link kuruldu');
+  log.info(
+    { channelId, remoteNodeId: remote.id, ip: remoteSide.ip, port: remoteSide.port },
+    'pipe link kuruldu',
+  );
   return link;
 }
 
@@ -109,7 +118,10 @@ export async function handlePrepare(params: {
     srtpParameters: params.srtpParameters,
   });
   links.set(key, { transport: local.transport, producers: new Map() });
-  log.info({ channelId: params.channelId, remoteNodeId: params.remoteNodeId }, 'pipe link kabul edildi');
+  log.info(
+    { channelId: params.channelId, remoteNodeId: params.remoteNodeId },
+    'pipe link kabul edildi',
+  );
   return { ip: local.ip, port: local.port, srtpParameters: local.srtpParameters };
 }
 
@@ -131,10 +143,17 @@ export async function pipeInRemoteProducer(
     kind: msTypes.MediaKind;
     rtpParameters: msTypes.RtpParameters;
     paused: boolean;
-  } | null>(remote, '/internal/pipe/consume', { channelId, remoteNodeId: cluster.nodeId, producerId });
+  } | null>(remote, '/internal/pipe/consume', {
+    channelId,
+    remoteNodeId: cluster.nodeId,
+    producerId,
+  });
 
   if (!res) {
-    log.warn({ channelId, producerId, remoteNodeId: remote.id }, 'uzak producer bulunamadı (kapanmış olabilir)');
+    log.warn(
+      { channelId, producerId, remoteNodeId: remote.id },
+      'uzak producer bulunamadı (kapanmış olabilir)',
+    );
     return undefined;
   }
 
@@ -148,7 +167,10 @@ export async function pipeInRemoteProducer(
     appData: { userId, remoteNodeId: remote.id, piped: true },
   });
   link.producers.set(producerId, producer);
-  log.info({ channelId, producerId, remoteNodeId: remote.id, kind: res.kind }, 'uzak producer pipe ile alındı');
+  log.info(
+    { channelId, producerId, remoteNodeId: remote.id, kind: res.kind },
+    'uzak producer pipe ile alındı',
+  );
   return producer;
 }
 
@@ -156,7 +178,11 @@ export async function pipeInRemoteProducer(
 export async function handleConsume(
   params: { channelId: string; remoteNodeId: string; producerId: string },
   findProducer: (id: string) => msTypes.Producer | undefined,
-): Promise<{ kind: msTypes.MediaKind; rtpParameters: msTypes.RtpParameters; paused: boolean } | null> {
+): Promise<{
+  kind: msTypes.MediaKind;
+  rtpParameters: msTypes.RtpParameters;
+  paused: boolean;
+} | null> {
   const producer = findProducer(params.producerId);
   if (!producer) return null;
 
@@ -173,7 +199,11 @@ export async function handleConsume(
 }
 
 /** Uzak producer kapandı → yerel aynası da kapatılmalı (yoksa hayalet ses/görüntü kalır). */
-export function closePipedProducer(channelId: string, remoteNodeId: string, producerId: string): void {
+export function closePipedProducer(
+  channelId: string,
+  remoteNodeId: string,
+  producerId: string,
+): void {
   const link = links.get(linkKey(channelId, remoteNodeId));
   const p = link?.producers.get(producerId);
   if (p) {
@@ -194,7 +224,9 @@ export function closeChannelLinks(channelId: string): void {
 }
 
 /** Yerelde pipe ile alınmış producer'lar (yerel peer'ların consume edebilmesi için). */
-export function pipedProducersFor(channelId: string): { producer: msTypes.Producer; userId: string }[] {
+export function pipedProducersFor(
+  channelId: string,
+): { producer: msTypes.Producer; userId: string }[] {
   const out: { producer: msTypes.Producer; userId: string }[] = [];
   for (const [key, link] of links.entries()) {
     if (!key.startsWith(`${channelId}|`)) continue;
@@ -208,7 +240,10 @@ export function pipedProducersFor(channelId: string): { producer: msTypes.Produc
 async function callRemote<T>(remote: NodeInfo, path: string, body: unknown): Promise<T> {
   const res = await fetch(`${remote.httpUrl}${path}`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-voice-cluster-secret': config.cluster.secret },
+    headers: {
+      'content-type': 'application/json',
+      'x-voice-cluster-secret': config.cluster.secret,
+    },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(10_000),
   });

@@ -14,7 +14,7 @@ self.addEventListener('push', (event) => {
       badge: '/brand/logo.svg',
       tag: data.tag || 'concord',
       data: data.url ? { url: data.url } : undefined,
-    })
+    }),
   );
 });
 
@@ -31,6 +31,6 @@ self.addEventListener('notificationclick', (event) => {
         }
       }
       return self.clients.openWindow(url);
-    })
+    }),
   );
 });

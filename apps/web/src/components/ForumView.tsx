@@ -4,7 +4,13 @@ import { api, type APIChannel } from '../api';
 import { useAppDispatch, useAppSelector, selectChannel } from '../store';
 import { t } from '../i18n';
 
-type ForumPost = APIChannel & { message_count?: number; member_count?: number; creator_id?: string; archived?: boolean; tag_ids?: string[] };
+type ForumPost = APIChannel & {
+  message_count?: number;
+  member_count?: number;
+  creator_id?: string;
+  archived?: boolean;
+  tag_ids?: string[];
+};
 type ForumTag = { id: string; name: string; emoji?: string; position: number };
 
 export function ForumView({ channelId }: { channelId: string }) {
@@ -33,7 +39,10 @@ export function ForumView({ channelId }: { channelId: string }) {
   }
   useEffect(load, [channelId, showArchived]);
   useEffect(() => {
-    api.forumTags.list(channelId).then(setTags).catch(() => setTags([]));
+    api.forumTags
+      .list(channelId)
+      .then(setTags)
+      .catch(() => setTags([]));
     setActiveTags([]);
   }, [channelId]);
 
@@ -55,15 +64,26 @@ export function ForumView({ channelId }: { channelId: string }) {
           <div className="min-w-0">
             <h2 className="font-bold text-ink-primary truncate">
               {channel?.name ?? 'Forum'}
-              {!loading && <span className="ml-2 text-xs font-normal text-ink-tertiary">{posts.length} gönderi</span>}
+              {!loading && (
+                <span className="ml-2 text-xs font-normal text-ink-tertiary">
+                  {posts.length} gönderi
+                </span>
+              )}
             </h2>
-            {channel?.topic && <p className="text-xs text-ink-tertiary truncate">{channel.topic}</p>}
+            {channel?.topic && (
+              <p className="text-xs text-ink-tertiary truncate">{channel.topic}</p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setShowArchived((v) => !v)}
-            className={'text-xs font-medium px-2.5 py-1.5 rounded-lg border ' + (showArchived ? 'border-brand-500 text-brand-400' : 'border-line text-ink-tertiary hover:text-ink-secondary')}
+            className={
+              'text-xs font-medium px-2.5 py-1.5 rounded-lg border ' +
+              (showArchived
+                ? 'border-brand-500 text-brand-400'
+                : 'border-line text-ink-tertiary hover:text-ink-secondary')
+            }
           >
             {showArchived ? t('forum.showActive') : t('forum.archived')}
           </button>
@@ -89,11 +109,15 @@ export function ForumView({ channelId }: { channelId: string }) {
                   : 'bg-surface-1 border-line text-ink-secondary hover:border-brand-500/40')
               }
             >
-              {t.emoji ? t.emoji + ' ' : ''}{t.name}
+              {t.emoji ? t.emoji + ' ' : ''}
+              {t.name}
             </button>
           ))}
           {activeTags.length > 0 && (
-            <button onClick={() => setActiveTags([])} className="text-xs text-ink-tertiary hover:text-ink-primary px-2 py-1">
+            <button
+              onClick={() => setActiveTags([])}
+              className="text-xs text-ink-tertiary hover:text-ink-primary px-2 py-1"
+            >
               Filtreyi temizle
             </button>
           )}
@@ -112,7 +136,10 @@ export function ForumView({ channelId }: { channelId: string }) {
         ) : (
           <div className="max-w-3xl mx-auto space-y-2">
             <div className="relative mb-3">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-tertiary" />
+              <Search
+                size={15}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-tertiary"
+              />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -124,7 +151,8 @@ export function ForumView({ channelId }: { channelId: string }) {
               const visible = posts.filter(
                 (p) =>
                   p.name.toLowerCase().includes(query.trim().toLowerCase()) &&
-                  (activeTags.length === 0 || activeTags.some((t) => (p.tag_ids ?? []).includes(t))),
+                  (activeTags.length === 0 ||
+                    activeTags.some((t) => (p.tag_ids ?? []).includes(t))),
               );
               if (visible.length === 0) {
                 return (
@@ -134,60 +162,71 @@ export function ForumView({ channelId }: { channelId: string }) {
                 );
               }
               return visible.map((p) => {
-              const author = p.creator_id ? users[p.creator_id] : null;
-              return (
-                <div
-                  key={p.id}
-                  className="w-full bg-surface-1 hover:bg-surface-2 border border-line rounded-xl px-4 py-3 transition-colors group flex items-start gap-3"
-                >
-                  <button
-                    onClick={() => {
-                      try { sessionStorage.setItem('concord_forum_return', JSON.stringify({ forumId: channelId, threadId: p.id })); } catch { /* yoksay */ }
-                      dispatch(selectChannel(p.id));
-                    }}
-                    className="flex-1 min-w-0 text-left flex items-start gap-3"
+                const author = p.creator_id ? users[p.creator_id] : null;
+                return (
+                  <div
+                    key={p.id}
+                    className="w-full bg-surface-1 hover:bg-surface-2 border border-line rounded-xl px-4 py-3 transition-colors group flex items-start gap-3"
                   >
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                      style={{ backgroundColor: author?.avatar_color ?? '#5865F2' }}
+                    <button
+                      onClick={() => {
+                        try {
+                          sessionStorage.setItem(
+                            'concord_forum_return',
+                            JSON.stringify({ forumId: channelId, threadId: p.id }),
+                          );
+                        } catch {
+                          /* yoksay */
+                        }
+                        dispatch(selectChannel(p.id));
+                      }}
+                      className="flex-1 min-w-0 text-left flex items-start gap-3"
                     >
-                      {(author?.display_name ?? '#').slice(0, 1).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-ink-primary group-hover:text-brand-400 truncate">
-                        {p.name}
+                      <div
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                        style={{ backgroundColor: author?.avatar_color ?? '#5865F2' }}
+                      >
+                        {(author?.display_name ?? '#').slice(0, 1).toUpperCase()}
                       </div>
-                      <div className="text-xs text-ink-tertiary mt-0.5 flex items-center gap-2">
-                        {author && <span>{author.display_name}</span>}
-                        <span className="flex items-center gap-1">
-                          <MessagesSquare size={11} /> {p.message_count ?? 0} mesaj
-                        </span>
-                        {p.archived && <span className="text-ink-tertiary">· arşivlendi</span>}
-                      </div>
-                      {(p.tag_ids ?? []).length > 0 && (
-                        <div className="flex items-center gap-1 flex-wrap mt-1.5">
-                          {(p.tag_ids ?? []).map((tid) => {
-                            const t = tagMap.get(tid);
-                            if (!t) return null;
-                            return (
-                              <span key={tid} className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-surface-3 text-ink-secondary">
-                                {t.emoji ? t.emoji + ' ' : ''}{t.name}
-                              </span>
-                            );
-                          })}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-ink-primary group-hover:text-brand-400 truncate">
+                          {p.name}
                         </div>
-                      )}
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => toggleArchive(p)}
-                    title={p.archived ? t('forum.unarchive') : t('forum.archive')}
-                    className="shrink-0 opacity-0 group-hover:opacity-100 text-ink-tertiary hover:text-ink-primary transition-opacity"
-                  >
-                    <Archive size={15} />
-                  </button>
-                </div>
-              );
+                        <div className="text-xs text-ink-tertiary mt-0.5 flex items-center gap-2">
+                          {author && <span>{author.display_name}</span>}
+                          <span className="flex items-center gap-1">
+                            <MessagesSquare size={11} /> {p.message_count ?? 0} mesaj
+                          </span>
+                          {p.archived && <span className="text-ink-tertiary">· arşivlendi</span>}
+                        </div>
+                        {(p.tag_ids ?? []).length > 0 && (
+                          <div className="flex items-center gap-1 flex-wrap mt-1.5">
+                            {(p.tag_ids ?? []).map((tid) => {
+                              const t = tagMap.get(tid);
+                              if (!t) return null;
+                              return (
+                                <span
+                                  key={tid}
+                                  className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-surface-3 text-ink-secondary"
+                                >
+                                  {t.emoji ? t.emoji + ' ' : ''}
+                                  {t.name}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => toggleArchive(p)}
+                      title={p.archived ? t('forum.unarchive') : t('forum.archive')}
+                      className="shrink-0 opacity-0 group-hover:opacity-100 text-ink-tertiary hover:text-ink-primary transition-opacity"
+                    >
+                      <Archive size={15} />
+                    </button>
+                  </div>
+                );
               });
             })()}
           </div>
@@ -202,7 +241,14 @@ export function ForumView({ channelId }: { channelId: string }) {
           onCreated={(threadId) => {
             setCreating(false);
             load();
-            try { sessionStorage.setItem('concord_forum_return', JSON.stringify({ forumId: channelId, threadId })); } catch { /* yoksay */ }
+            try {
+              sessionStorage.setItem(
+                'concord_forum_return',
+                JSON.stringify({ forumId: channelId, threadId }),
+              );
+            } catch {
+              /* yoksay */
+            }
             dispatch(selectChannel(threadId));
           }}
         />
@@ -253,11 +299,19 @@ function CreatePostModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-lg bg-surface-1 border border-line rounded-2xl shadow-2xl flex flex-col">
+    <div
+      className="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg bg-surface-1 border border-line rounded-2xl shadow-2xl flex flex-col"
+      >
         <div className="flex items-center justify-between px-5 py-4 border-b border-line">
           <h2 className="text-lg font-bold text-ink-primary">{t('forum.newPost')}</h2>
-          <button onClick={onClose} className="text-ink-tertiary hover:text-ink-primary"><X size={18} /></button>
+          <button onClick={onClose} className="text-ink-tertiary hover:text-ink-primary">
+            <X size={18} />
+          </button>
         </div>
         <div className="p-5 space-y-3">
           <input
@@ -277,7 +331,9 @@ function CreatePostModal({
           />
           {tags.length > 0 && (
             <div>
-              <label className="block text-xs font-semibold text-ink-secondary mb-1.5">{t('forum.tagsLabel')}</label>
+              <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
+                {t('forum.tagsLabel')}
+              </label>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {tags.map((t) => (
                   <button
@@ -291,7 +347,8 @@ function CreatePostModal({
                         : 'bg-surface-2 border-line text-ink-secondary hover:border-brand-500/40')
                     }
                   >
-                    {t.emoji ? t.emoji + ' ' : ''}{t.name}
+                    {t.emoji ? t.emoji + ' ' : ''}
+                    {t.name}
                   </button>
                 ))}
               </div>
@@ -300,7 +357,12 @@ function CreatePostModal({
           {err && <p className="text-accent-500 text-sm">{err}</p>}
         </div>
         <div className="px-5 py-4 border-t border-line flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-ink-secondary hover:text-ink-primary text-sm">{t('common.cancel')}</button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-ink-secondary hover:text-ink-primary text-sm"
+          >
+            {t('common.cancel')}
+          </button>
           <button
             onClick={create}
             disabled={!title.trim() || !body.trim() || busy}

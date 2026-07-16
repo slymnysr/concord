@@ -65,14 +65,18 @@ export function OnboardingGate() {
           </div>
           <h1 className="text-2xl font-bold text-ink-primary">{guildName}</h1>
           {welcome.description && (
-            <p className="text-sm text-ink-secondary mt-2 whitespace-pre-wrap">{welcome.description}</p>
+            <p className="text-sm text-ink-secondary mt-2 whitespace-pre-wrap">
+              {welcome.description}
+            </p>
           )}
         </div>
 
         <div className="px-6 py-5 max-h-[50vh] overflow-y-auto space-y-5">
           {welcome.welcome_channels.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-xs font-bold uppercase text-ink-tertiary">{t('onboard.getStarted')}</h3>
+              <h3 className="text-xs font-bold uppercase text-ink-tertiary">
+                {t('onboard.getStarted')}
+              </h3>
               {welcome.welcome_channels.map((wc, i) => (
                 <div key={i} className="bg-surface-2 border border-line rounded-xl px-4 py-3">
                   <div className="text-sm font-semibold text-ink-primary">
@@ -89,7 +93,9 @@ export function OnboardingGate() {
 
           {welcome.rules_text && (
             <div className="space-y-2">
-              <h3 className="text-xs font-bold uppercase text-ink-tertiary">{t('onboard.rules')}</h3>
+              <h3 className="text-xs font-bold uppercase text-ink-tertiary">
+                {t('onboard.rules')}
+              </h3>
               <div className="bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm text-ink-secondary whitespace-pre-wrap">
                 {welcome.rules_text}
               </div>
@@ -108,11 +114,15 @@ export function OnboardingGate() {
                       onClick={() => toggleOption(o.id)}
                       className={
                         'p-3 rounded-xl border-2 text-left transition-all flex items-center gap-2 ' +
-                        (on ? 'border-brand-500 bg-brand-500/10' : 'border-line bg-surface-2 hover:border-brand-500/40')
+                        (on
+                          ? 'border-brand-500 bg-brand-500/10'
+                          : 'border-line bg-surface-2 hover:border-brand-500/40')
                       }
                     >
                       {o.emoji && <span className="text-lg shrink-0">{o.emoji}</span>}
-                      <span className="text-sm font-medium text-ink-primary flex-1 min-w-0 truncate">{o.label}</span>
+                      <span className="text-sm font-medium text-ink-primary flex-1 min-w-0 truncate">
+                        {o.label}
+                      </span>
                       {on && <Check size={14} className="text-brand-500 shrink-0" />}
                     </button>
                   );

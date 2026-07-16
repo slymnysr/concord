@@ -49,7 +49,16 @@ import {
   fetchGuildRoles,
 } from './store';
 import { tokenStore, api } from './api';
-import { connectGateway, joinGuild, joinUser, disconnectGateway, onGuildEvent, joinDMChannel, leaveDMChannel, setPresenceStatus } from './gateway';
+import {
+  connectGateway,
+  joinGuild,
+  joinUser,
+  disconnectGateway,
+  onGuildEvent,
+  joinDMChannel,
+  leaveDMChannel,
+  setPresenceStatus,
+} from './gateway';
 import { playMessageSound, playMentionSound, showDesktopNotification } from './notifSound';
 import { playSound, stopAllSounds, soundsPlaying, onSoundboardChange } from './soundboardAudio';
 import { t } from './i18n';
@@ -156,15 +165,25 @@ export default function App() {
       if (ev.message_id) dispatch(fetchReactions(ev.message_id));
     });
     const offPoll = onGuildEvent(guildId, 'POLL_UPDATE', (ev: any) => {
-      if (ev.message_id) window.dispatchEvent(new CustomEvent('concord:poll-update', { detail: { messageId: String(ev.message_id) } }));
+      if (ev.message_id)
+        window.dispatchEvent(
+          new CustomEvent('concord:poll-update', { detail: { messageId: String(ev.message_id) } }),
+        );
     });
     // Kanal oluşturma/güncelleme/silme → kanal listesini gerçek-zamanlı tazele
-    const offChCreate = onGuildEvent(guildId, 'CHANNEL_CREATE', () => dispatch(fetchChannels(guildId)));
-    const offChUpdate = onGuildEvent(guildId, 'CHANNEL_UPDATE', () => dispatch(fetchChannels(guildId)));
-    const offChDelete = onGuildEvent(guildId, 'CHANNEL_DELETE', () => dispatch(fetchChannels(guildId)));
+    const offChCreate = onGuildEvent(guildId, 'CHANNEL_CREATE', () =>
+      dispatch(fetchChannels(guildId)),
+    );
+    const offChUpdate = onGuildEvent(guildId, 'CHANNEL_UPDATE', () =>
+      dispatch(fetchChannels(guildId)),
+    );
+    const offChDelete = onGuildEvent(guildId, 'CHANNEL_DELETE', () =>
+      dispatch(fetchChannels(guildId)),
+    );
     // Sunucu susturma/sağırlaştırma olayı → voice durumu UI'da güncellensin (gerekirse presence tazele)
     const offVoiceState = onGuildEvent(guildId, 'GUILD_VOICE_STATE_UPDATE', (ev: any) => {
-      if (ev.user_id) window.dispatchEvent(new CustomEvent('concord:guild-voice-state', { detail: ev }));
+      if (ev.user_id)
+        window.dispatchEvent(new CustomEvent('concord:guild-voice-state', { detail: ev }));
     });
     const offReactRem = onGuildEvent(guildId, 'REACTION_REMOVE', (ev: any) => {
       if (ev.message_id) dispatch(fetchReactions(ev.message_id));
@@ -220,7 +239,10 @@ export default function App() {
     api.emojis
       .list(guildId)
       .then((list) => {
-        (window as any).__concord_emojis = { ...((window as any).__concord_emojis ?? {}), [guildId]: list };
+        (window as any).__concord_emojis = {
+          ...((window as any).__concord_emojis ?? {}),
+          [guildId]: list,
+        };
       })
       .catch(() => {});
   }, [guildId]);
@@ -264,7 +286,8 @@ export default function App() {
   // Alt+↑/↓ ile kanal değiştir (Discord paritesi)
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (!e.altKey || e.ctrlKey || e.metaKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+      if (!e.altKey || e.ctrlKey || e.metaKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown'))
+        return;
       if (mode !== 'guild' || !channels) return;
       const selectable = channels.filter((c) => c.type !== 'category');
       if (selectable.length === 0) return;
@@ -283,7 +306,8 @@ export default function App() {
   const selectedGuildId = useAppSelector((s) => s.guilds.selectedId);
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (!(e.ctrlKey || e.metaKey) || !e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+      if (!(e.ctrlKey || e.metaKey) || !e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown'))
+        return;
       if (guildList.length === 0) return;
       e.preventDefault();
       const idx = guildList.findIndex((g) => g.id === selectedGuildId);
@@ -310,7 +334,8 @@ export default function App() {
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Escape' || anyModalOpen) return;
       const el = document.activeElement as HTMLElement | null;
-      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable))
+        return;
       if (!channelId) return;
       const lastMsgId = channels?.find((c) => c.id === channelId)?.last_message_id;
       if (lastMsgId) dispatch(ackChannel({ channelId, lastMessageId: lastMsgId }));
@@ -336,7 +361,10 @@ export default function App() {
       if (statusRef.current === 'online') {
         autoIdleRef.current = true;
         setPresenceStatus('idle');
-        api.updateStatus('idle').then(() => dispatch(fetchMe())).catch(() => {});
+        api
+          .updateStatus('idle')
+          .then(() => dispatch(fetchMe()))
+          .catch(() => {});
       }
     };
     const onActivity = () => {
@@ -345,7 +373,10 @@ export default function App() {
       if (autoIdleRef.current && statusRef.current === 'idle') {
         autoIdleRef.current = false;
         setPresenceStatus('online');
-        api.updateStatus('online').then(() => dispatch(fetchMe())).catch(() => {});
+        api
+          .updateStatus('online')
+          .then(() => dispatch(fetchMe()))
+          .catch(() => {});
       }
     };
     const events = ['mousemove', 'keydown', 'mousedown', 'touchstart'];
@@ -365,13 +396,7 @@ export default function App() {
   if (bootChecking) {
     return (
       <div className="h-screen flex items-center justify-center bg-bg">
-        <img
-          src="/brand/logo.svg"
-          width={80}
-          height={80}
-          alt="Concord"
-          className="animate-pulse"
-        />
+        <img src="/brand/logo.svg" width={80} height={80} alt="Concord" className="animate-pulse" />
       </div>
     );
   }
@@ -389,79 +414,104 @@ export default function App() {
         }
       >
         <ServerRail />
-        {mode === 'dm' ? <DMSidebar /> : mode === 'discover' ? <DiscoverSidebar /> : <ChannelList />}
+        {mode === 'dm' ? (
+          <DMSidebar />
+        ) : mode === 'discover' ? (
+          <DiscoverSidebar />
+        ) : (
+          <ChannelList />
+        )}
       </div>
       {/* Mobil backdrop */}
       {mobileNav && (
-        <div className="md:hidden fixed inset-0 bg-black/50 z-30" onClick={() => dispatch(setMobileNav(false))} />
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => dispatch(setMobileNav(false))}
+        />
       )}
       {mode === 'discover' ? (
         <DiscoverContent />
       ) : (
-      <main className="flex-1 flex flex-col min-w-0 min-h-0">
-        <ChannelHeader />
-        <div className="flex-1 flex min-h-0">
-          <div className="flex-1 flex flex-col min-w-0 min-h-0">
-            {dmHubVisible ? (
-              <FriendsHub />
-            ) : channel?.type === 'stage' ? (
-              <>
-                <ErrorBoundary scope="Sahne" fallback={() => <div className="p-4 text-sm text-accent-500">{t('err.stage')}</div>}>
-                  <StageView />
-                </ErrorBoundary>
-              </>
-            ) : channel?.type === 'voice' ? (
-              <>
-                <ErrorBoundary
-                  scope="Sesli sohbet"
-                  onReset={() => {
-                    // Çöken video/ekran yayınını temizle ki yeniden denerken tekrar patlamasın
-                    voice.unpublishCamera().catch(() => {});
-                    voice.unpublishScreen().catch(() => {});
-                  }}
-                  fallback={(err, reset) => (
-                    <div className="shrink-0 px-5 py-4 border-b border-line bg-surface-1 flex items-center gap-3">
-                      <Video size={20} className="text-accent-500 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-ink-primary">{t('err.video')}</div>
-                        <div className="text-xs text-accent-500 truncate" title={err.message}>
-                          {err.message}
+        <main className="flex-1 flex flex-col min-w-0 min-h-0">
+          <ChannelHeader />
+          <div className="flex-1 flex min-h-0">
+            <div className="flex-1 flex flex-col min-w-0 min-h-0">
+              {dmHubVisible ? (
+                <FriendsHub />
+              ) : channel?.type === 'stage' ? (
+                <>
+                  <ErrorBoundary
+                    scope="Sahne"
+                    fallback={() => (
+                      <div className="p-4 text-sm text-accent-500">{t('err.stage')}</div>
+                    )}
+                  >
+                    <StageView />
+                  </ErrorBoundary>
+                </>
+              ) : channel?.type === 'voice' ? (
+                <>
+                  <ErrorBoundary
+                    scope="Sesli sohbet"
+                    onReset={() => {
+                      // Çöken video/ekran yayınını temizle ki yeniden denerken tekrar patlamasın
+                      voice.unpublishCamera().catch(() => {});
+                      voice.unpublishScreen().catch(() => {});
+                    }}
+                    fallback={(err, reset) => (
+                      <div className="shrink-0 px-5 py-4 border-b border-line bg-surface-1 flex items-center gap-3">
+                        <Video size={20} className="text-accent-500 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-ink-primary">
+                            {t('err.video')}
+                          </div>
+                          <div className="text-xs text-accent-500 truncate" title={err.message}>
+                            {err.message}
+                          </div>
                         </div>
+                        <button
+                          onClick={reset}
+                          className="shrink-0 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-xs font-semibold"
+                        >
+                          Yeniden dene
+                        </button>
                       </div>
-                      <button
-                        onClick={reset}
-                        className="shrink-0 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-xs font-semibold"
-                      >
-                        Yeniden dene
-                      </button>
-                    </div>
-                  )}
-                >
-                  <VoiceStage />
-                </ErrorBoundary>
-                <div className="flex-1 min-h-0 flex flex-col border-t border-line">
-                  <MessageList />
+                    )}
+                  >
+                    <VoiceStage />
+                  </ErrorBoundary>
+                  <div className="flex-1 min-h-0 flex flex-col border-t border-line">
+                    <MessageList />
+                  </div>
+                </>
+              ) : channel?.type === 'forum' && channelId ? (
+                <ForumView channelId={channelId} />
+              ) : channel?.type === 'media' && channelId ? (
+                <MediaView channelId={channelId} />
+              ) : (
+                <MessageList />
+              )}
+              {!dmHubVisible && channel?.type !== 'forum' && channel?.type !== 'stage' && (
+                <MessageInput />
+              )}
+            </div>
+            {showMembers && (mode === 'guild' || (mode === 'dm' && channelId)) && (
+              <>
+                <div
+                  className="md:hidden fixed inset-0 bg-black/50 z-30"
+                  onClick={() => dispatch(toggleMemberList())}
+                />
+                <div className="max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:z-40 max-md:shadow-2xl shrink-0">
+                  {mode === 'guild' ? (
+                    <MemberList />
+                  ) : channelId ? (
+                    <DMUserPanel channelId={channelId} />
+                  ) : null}
                 </div>
               </>
-            ) : channel?.type === 'forum' && channelId ? (
-              <ForumView channelId={channelId} />
-            ) : channel?.type === 'media' && channelId ? (
-              <MediaView channelId={channelId} />
-            ) : (
-              <MessageList />
             )}
-            {!dmHubVisible && channel?.type !== 'forum' && channel?.type !== 'stage' && <MessageInput />}
           </div>
-          {showMembers && (mode === 'guild' || (mode === 'dm' && channelId)) && (
-            <>
-              <div className="md:hidden fixed inset-0 bg-black/50 z-30" onClick={() => dispatch(toggleMemberList())} />
-              <div className="max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:z-40 max-md:shadow-2xl shrink-0">
-                {mode === 'guild' ? <MemberList /> : channelId ? <DMUserPanel channelId={channelId} /> : null}
-              </div>
-            </>
-          )}
-        </div>
-      </main>
+        </main>
       )}
       <Modal />
       {profileCardUserId && (
@@ -483,9 +533,7 @@ export default function App() {
 function FriendsHub() {
   const dispatch = useAppDispatch();
   const [tab, setTab] = useState<'online' | 'all' | 'pending' | 'blocked'>('online');
-  const [friends, setFriends] = useState<Awaited<ReturnType<typeof api.friends.list>>>(
-    [],
-  );
+  const [friends, setFriends] = useState<Awaited<ReturnType<typeof api.friends.list>>>([]);
 
   async function refresh() {
     try {
@@ -739,8 +787,15 @@ function VoiceStage() {
         try {
           await voice.disconnect();
           await voice.connect(afkId);
-          afkDispatch(addToast({ kind: 'info', message: '💤 Uzun süre ses aktivitesi olmadığı için AFK kanalına taşındın' }));
-        } catch { /* taşıma başarısızsa bir sonraki turda tekrar denenir */ }
+          afkDispatch(
+            addToast({
+              kind: 'info',
+              message: '💤 Uzun süre ses aktivitesi olmadığı için AFK kanalına taşındın',
+            }),
+          );
+        } catch {
+          /* taşıma başarısızsa bir sonraki turda tekrar denenir */
+        }
       }
     }, 30_000);
     return () => clearInterval(iv);
@@ -752,7 +807,7 @@ function VoiceStage() {
   });
   const guildMembers = useAppSelector((s) => {
     const gid = s.guilds.selectedId;
-    return gid ? s.members.byGuild[gid] ?? [] : [];
+    return gid ? (s.members.byGuild[gid] ?? []) : [];
   });
   const nameOf = (uid: string) => {
     if (uid === me?.id) return me?.display_name ?? t('common.you');
@@ -879,7 +934,9 @@ function VoiceStage() {
       <div className="shrink-0 px-5 py-4 border-b border-line bg-surface-1 flex items-center gap-3">
         <Volume2 size={20} className="text-brand-500 shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-ink-primary">{isStage ? '🎙️ Sahne kanalı' : t('voice.chat')}</div>
+          <div className="text-sm font-semibold text-ink-primary">
+            {isStage ? '🎙️ Sahne kanalı' : t('voice.chat')}
+          </div>
           {error && <div className="text-xs text-accent-500 truncate">{error}</div>}
         </div>
         <button
@@ -894,9 +951,28 @@ function VoiceStage() {
     );
   }
 
-  const videoTiles: { key: string; label: string; stream: MediaStream; me?: boolean; producerId?: string; source?: 'camera' | 'screen' }[] = [];
-  if (localCamera) videoTiles.push({ key: 'self-cam', label: `${me?.display_name ?? t('common.you')} · kamera`, stream: localCamera, me: true });
-  if (localScreen) videoTiles.push({ key: 'self-scr', label: `${me?.display_name ?? t('common.you')} · ekran`, stream: localScreen, me: true });
+  const videoTiles: {
+    key: string;
+    label: string;
+    stream: MediaStream;
+    me?: boolean;
+    producerId?: string;
+    source?: 'camera' | 'screen';
+  }[] = [];
+  if (localCamera)
+    videoTiles.push({
+      key: 'self-cam',
+      label: `${me?.display_name ?? t('common.you')} · kamera`,
+      stream: localCamera,
+      me: true,
+    });
+  if (localScreen)
+    videoTiles.push({
+      key: 'self-scr',
+      label: `${me?.display_name ?? t('common.you')} · ekran`,
+      stream: localScreen,
+      me: true,
+    });
   const hiddenCamList: { producerId: string; name: string }[] = [];
   for (const r of voice.remoteStreams()) {
     if (r.kind === 'video') {
@@ -923,7 +999,12 @@ function VoiceStage() {
   const hasVisual = videoTiles.length > 0 || available.length > 0 || hiddenCamList.length > 0;
 
   return (
-    <div className={'shrink-0 flex flex-col bg-gradient-to-b from-surface-1 via-surface-1 to-brand-900/10 border-b border-line overflow-hidden ' + (hasVisual ? 'max-h-[55%]' : '')}>
+    <div
+      className={
+        'shrink-0 flex flex-col bg-gradient-to-b from-surface-1 via-surface-1 to-brand-900/10 border-b border-line overflow-hidden ' +
+        (hasVisual ? 'max-h-[55%]' : '')
+      }
+    >
       <div className={'overflow-y-auto ' + (hasVisual ? 'flex-1 p-4 min-h-[120px]' : 'px-4 py-2')}>
         {videoTiles.length === 0 && available.length === 0 && hiddenCamList.length === 0 ? (
           <div className="flex items-center gap-2">
@@ -942,8 +1023,12 @@ function VoiceStage() {
                 className="rounded-xl border-2 border-dashed border-brand-500/40 bg-surface-2 hover:bg-surface-3 hover:border-brand-500 flex flex-col items-center justify-center gap-2 min-h-[140px] transition-colors"
               >
                 <ScreenShare size={28} className="text-brand-500" />
-                <span className="text-sm font-semibold text-ink-primary">{nameOf(s.userId)} ekran paylaşıyor</span>
-                <span className="px-3 py-1 rounded-full bg-brand-500 text-white text-xs font-bold">▶ İzle</span>
+                <span className="text-sm font-semibold text-ink-primary">
+                  {nameOf(s.userId)} ekran paylaşıyor
+                </span>
+                <span className="px-3 py-1 rounded-full bg-brand-500 text-white text-xs font-bold">
+                  ▶ İzle
+                </span>
               </button>
             ))}
             {videoTiles.map((t) => (
@@ -952,20 +1037,36 @@ function VoiceStage() {
                 stream={t.stream}
                 label={t.label}
                 isLocal={t.me}
-                onUnwatch={!t.me && t.source === 'screen' && t.producerId ? () => voice.unwatchStream(t.producerId!) : undefined}
-                onHide={!t.me && t.source === 'camera' && t.producerId ? () => setHiddenCams((s) => new Set(s).add(t.producerId!)) : undefined}
+                onUnwatch={
+                  !t.me && t.source === 'screen' && t.producerId
+                    ? () => voice.unwatchStream(t.producerId!)
+                    : undefined
+                }
+                onHide={
+                  !t.me && t.source === 'camera' && t.producerId
+                    ? () => setHiddenCams((s) => new Set(s).add(t.producerId!))
+                    : undefined
+                }
               />
             ))}
             {/* Gizlenmiş kameralar */}
             {hiddenCamList.map((h) => (
               <button
                 key={h.producerId}
-                onClick={() => setHiddenCams((s) => { const n = new Set(s); n.delete(h.producerId); return n; })}
+                onClick={() =>
+                  setHiddenCams((s) => {
+                    const n = new Set(s);
+                    n.delete(h.producerId);
+                    return n;
+                  })
+                }
                 className="rounded-xl border border-line bg-surface-2 hover:bg-surface-3 flex flex-col items-center justify-center gap-2 min-h-[140px] text-ink-tertiary hover:text-ink-primary"
               >
                 <Video size={24} className="opacity-50" />
                 <span className="text-sm">{h.name} · kamera gizli</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-surface-3">{t('common.show')}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-surface-3">
+                  {t('common.show')}
+                </span>
               </button>
             ))}
           </div>
@@ -981,7 +1082,10 @@ function VoiceStage() {
       )}
 
       {error && (
-        <div className="shrink-0 px-4 py-1.5 bg-accent-500/10 border-t border-accent-500/30 text-xs text-accent-400 text-center truncate" title={error}>
+        <div
+          className="shrink-0 px-4 py-1.5 bg-accent-500/10 border-t border-accent-500/30 text-xs text-accent-400 text-center truncate"
+          title={error}
+        >
           {error}
         </div>
       )}
@@ -1038,9 +1142,7 @@ function VoiceStage() {
 function SoundboardButton({ channelId }: { channelId: string }) {
   const guildId = useAppSelector((s) => s.guilds.selectedId);
   const [open, setOpen] = useState(false);
-  const [sounds, setSounds] = useState<Awaited<ReturnType<typeof api.sounds.list>>>(
-    [],
-  );
+  const [sounds, setSounds] = useState<Awaited<ReturnType<typeof api.sounds.list>>>([]);
   const [playingCount, setPlayingCount] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -1056,7 +1158,10 @@ function SoundboardButton({ channelId }: { channelId: string }) {
 
   useEffect(() => {
     if (!open || !guildId) return;
-    api.sounds.list(guildId).then(setSounds).catch(() => {});
+    api.sounds
+      .list(guildId)
+      .then(setSounds)
+      .catch(() => {});
   }, [open, guildId]);
 
   function play(sound: { id: string; file_url: string; volume?: number }) {
@@ -1141,7 +1246,10 @@ function SoundboardStopBar() {
 function PeerVolumeRow({ userId }: { userId: string }) {
   const user = useAppSelector((s) => s.users.byId[userId]);
   const me = useAppSelector((s) => s.auth.user);
-  const name = userId === me?.id ? `${me.display_name} (sen)` : user?.display_name ?? t('user.unknownShort', { id: userId.slice(-4) });
+  const name =
+    userId === me?.id
+      ? `${me.display_name} (sen)`
+      : (user?.display_name ?? t('user.unknownShort', { id: userId.slice(-4) }));
   const color = user?.avatar_color ?? '#6B7280';
   const [vol, setVol] = useState(Math.round(voice.getUserVolume(userId) * 100));
 
@@ -1182,7 +1290,19 @@ function PeerVolumeRow({ userId }: { userId: string }) {
   );
 }
 
-function VideoTile({ stream, label, isLocal, onUnwatch, onHide }: { stream: MediaStream; label: string; isLocal?: boolean; onUnwatch?: () => void; onHide?: () => void }) {
+function VideoTile({
+  stream,
+  label,
+  isLocal,
+  onUnwatch,
+  onHide,
+}: {
+  stream: MediaStream;
+  label: string;
+  isLocal?: boolean;
+  onUnwatch?: () => void;
+  onHide?: () => void;
+}) {
   const ref = useRef<HTMLVideoElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -1205,7 +1325,10 @@ function VideoTile({ stream, label, isLocal, onUnwatch, onHide }: { stream: Medi
   }
 
   return (
-    <div ref={boxRef} className="group/vt relative bg-black rounded-2xl overflow-hidden border border-line aspect-video">
+    <div
+      ref={boxRef}
+      className="group/vt relative bg-black rounded-2xl overflow-hidden border border-line aspect-video"
+    >
       <video
         ref={ref}
         autoPlay
@@ -1227,12 +1350,20 @@ function VideoTile({ stream, label, isLocal, onUnwatch, onHide }: { stream: Medi
           ⛶
         </button>
         {onHide && (
-          <button onClick={onHide} title={t('voice.hideVideo')} className="bg-black/70 hover:bg-surface-1 text-white text-[11px] font-semibold px-2 h-7 rounded">
+          <button
+            onClick={onHide}
+            title={t('voice.hideVideo')}
+            className="bg-black/70 hover:bg-surface-1 text-white text-[11px] font-semibold px-2 h-7 rounded"
+          >
             🙈 Gizle
           </button>
         )}
         {onUnwatch && (
-          <button onClick={onUnwatch} title={t('voice.stopWatching')} className="bg-black/70 hover:bg-accent-500 text-white text-[11px] font-semibold px-2 h-7 rounded">
+          <button
+            onClick={onUnwatch}
+            title={t('voice.stopWatching')}
+            className="bg-black/70 hover:bg-accent-500 text-white text-[11px] font-semibold px-2 h-7 rounded"
+          >
             ✕ Bırak
           </button>
         )}

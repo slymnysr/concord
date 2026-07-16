@@ -17,9 +17,15 @@ export function connectGateway(): Socket | null {
 
   socket = new Socket(wsUrl('/socket'), { params: { token }, logger: () => {} });
   // Bağlantı durumu olaylarını yayınla → ConnectionBanner dinler
-  socket.onOpen(() => { window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'connected' })); });
-  socket.onClose(() => { window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'disconnected' })); });
-  socket.onError(() => { window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'disconnected' })); });
+  socket.onOpen(() => {
+    window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'connected' }));
+  });
+  socket.onClose(() => {
+    window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'disconnected' }));
+  });
+  socket.onError(() => {
+    window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'disconnected' }));
+  });
   socket.connect();
   return socket;
 }
@@ -76,7 +82,8 @@ export function setActivity(
   // elle ayarladığı aktivite localStorage'da korunur, oyun kapanınca ona dönülür.
   if (persist) {
     try {
-      if (currentActivity) localStorage.setItem('concord_activity', JSON.stringify(currentActivity));
+      if (currentActivity)
+        localStorage.setItem('concord_activity', JSON.stringify(currentActivity));
       else localStorage.removeItem('concord_activity');
     } catch {}
   }
@@ -168,7 +175,10 @@ export function onGuildEvent(guildId: string, event: string, handler: (ev: any) 
     const m = guildEventHandlers.get(guildId);
     if (!m) return;
     const list = m.get(event) ?? [];
-    m.set(event, list.filter((h) => h !== handler));
+    m.set(
+      event,
+      list.filter((h) => h !== handler),
+    );
   };
 }
 
@@ -213,7 +223,10 @@ export function sendTyping(guildId: string, channelId: string) {
 // === DM "yazıyor" göstergesi (dm:<channelId> Phoenix kanalı) ===
 const dmChannels = new Map<string, Channel>();
 
-export function joinDMChannel(channelId: string, onTyping?: (userId: string) => void): Channel | null {
+export function joinDMChannel(
+  channelId: string,
+  onTyping?: (userId: string) => void,
+): Channel | null {
   const s = connectGateway();
   if (!s) return null;
   const existing = dmChannels.get(channelId);

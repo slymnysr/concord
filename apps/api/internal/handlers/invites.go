@@ -7,14 +7,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/concord/api/internal/middleware"
 	"github.com/concord/api/internal/repo"
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
 type createInviteReq struct {
-	MaxUses     int32  `json:"max_uses,omitempty"`
+	MaxUses      int32 `json:"max_uses,omitempty"`
 	ExpiresInSec int64 `json:"expires_in_sec,omitempty"`
 }
 

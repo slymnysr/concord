@@ -100,7 +100,10 @@ export function AuthPage() {
           </p>
         </div>
 
-        <form onSubmit={submit} className="bg-surface-1 rounded-2xl border border-line p-6 space-y-4">
+        <form
+          onSubmit={submit}
+          className="bg-surface-1 rounded-2xl border border-line p-6 space-y-4"
+        >
           {mode === 'register' && (
             <>
               <Field label={t('auth.username')} hint={t('auth.username.hint')}>
@@ -140,7 +143,10 @@ export function AuthPage() {
           )}
 
           {(mode === 'login' || mode === 'register') && (
-            <Field label={t('auth.password')} hint={mode === 'register' ? t('auth.password.hint.min8') : ''}>
+            <Field
+              label={t('auth.password')}
+              hint={mode === 'register' ? t('auth.password.hint.min8') : ''}
+            >
               <input
                 type="password"
                 value={password}
@@ -157,7 +163,10 @@ export function AuthPage() {
             <div className="-mt-2 text-right">
               <button
                 type="button"
-                onClick={() => { setMode('forgot'); setFlowMsg(null); }}
+                onClick={() => {
+                  setMode('forgot');
+                  setFlowMsg(null);
+                }}
                 className="text-xs text-ink-tertiary hover:text-brand-400"
               >
                 {t('auth.forgotLink')}
@@ -248,10 +257,13 @@ export function AuthPage() {
           </button>
 
           <div className="text-center text-sm text-ink-secondary pt-2">
-            {(mode === 'forgot' || mode === 'reset') ? (
+            {mode === 'forgot' || mode === 'reset' ? (
               <button
                 type="button"
-                onClick={() => { setMode('login'); setFlowMsg(null); }}
+                onClick={() => {
+                  setMode('login');
+                  setFlowMsg(null);
+                }}
                 className="text-brand-500 hover:text-brand-400 font-medium"
               >
                 {t('auth.backToLogin')}
@@ -303,7 +315,15 @@ export function AuthPage() {
   );
 }
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <label className="block text-sm font-semibold text-ink-primary mb-1.5">{label}</label>

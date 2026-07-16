@@ -53,7 +53,11 @@ export function CreatePollModal({ channelId, onClose }: Props) {
         duration_hours: duration,
       });
       // Optimistik: mesajı store'a ekle (gateway de yayar)
-      dispatch({ type: 'messages/send/fulfilled', payload: msg, meta: { arg: { channelId, content: '' } } });
+      dispatch({
+        type: 'messages/send/fulfilled',
+        payload: msg,
+        meta: { arg: { channelId, content: '' } },
+      });
       onClose();
     } catch (e: any) {
       setErr(e?.message ?? t('poll.createFailed'));
@@ -63,7 +67,10 @@ export function CreatePollModal({ channelId, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
       <div
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-md bg-surface-1 border border-line rounded-2xl shadow-2xl flex flex-col max-h-[85vh]"
@@ -79,7 +86,9 @@ export function CreatePollModal({ channelId, onClose }: Props) {
 
         <div className="p-5 overflow-y-auto space-y-4">
           <div>
-            <label className="text-xs font-semibold uppercase text-ink-tertiary">{t('poll.question')}</label>
+            <label className="text-xs font-semibold uppercase text-ink-tertiary">
+              {t('poll.question')}
+            </label>
             <input
               autoFocus
               value={question}
@@ -91,7 +100,9 @@ export function CreatePollModal({ channelId, onClose }: Props) {
           </div>
 
           <div>
-            <label className="text-xs font-semibold uppercase text-ink-tertiary">{t('poll.answers')}</label>
+            <label className="text-xs font-semibold uppercase text-ink-tertiary">
+              {t('poll.answers')}
+            </label>
             <div className="space-y-2 mt-1">
               {answers.map((a, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -103,7 +114,10 @@ export function CreatePollModal({ channelId, onClose }: Props) {
                     className="flex-1 bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2 text-sm text-ink-primary"
                   />
                   {answers.length > 2 && (
-                    <button onClick={() => removeAnswer(i)} className="text-ink-tertiary hover:text-accent-500 shrink-0">
+                    <button
+                      onClick={() => removeAnswer(i)}
+                      className="text-ink-tertiary hover:text-accent-500 shrink-0"
+                    >
                       <Trash2 size={15} />
                     </button>
                   )}
@@ -128,17 +142,29 @@ export function CreatePollModal({ channelId, onClose }: Props) {
               className="bg-surface-2 border border-line rounded-lg px-3 py-1.5 text-sm text-ink-primary"
             >
               {DURATIONS.map((d) => (
-                <option key={d.hours} value={d.hours}>{d.label}</option>
+                <option key={d.hours} value={d.hours}>
+                  {d.label}
+                </option>
               ))}
             </select>
           </div>
 
           <label className="flex items-center gap-2 text-sm text-ink-secondary cursor-pointer">
-            <input type="checkbox" checked={multi} onChange={(e) => setMulti(e.target.checked)} className="accent-brand-500" />
+            <input
+              type="checkbox"
+              checked={multi}
+              onChange={(e) => setMulti(e.target.checked)}
+              className="accent-brand-500"
+            />
             Birden fazla cevaba izin ver
           </label>
           <label className="flex items-center gap-2 text-sm text-ink-secondary cursor-pointer">
-            <input type="checkbox" checked={anon} onChange={(e) => setAnon(e.target.checked)} className="accent-brand-500" />
+            <input
+              type="checkbox"
+              checked={anon}
+              onChange={(e) => setAnon(e.target.checked)}
+              className="accent-brand-500"
+            />
             Anonim oylama (kimin oy verdiği gizli)
           </label>
 
@@ -146,7 +172,10 @@ export function CreatePollModal({ channelId, onClose }: Props) {
         </div>
 
         <div className="px-5 py-4 border-t border-line flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-ink-secondary hover:text-ink-primary text-sm">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-ink-secondary hover:text-ink-primary text-sm"
+          >
             İptal
           </button>
           <button

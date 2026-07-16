@@ -58,15 +58,21 @@ const ChannelIcon: Record<string, LucideIcon> = {
 
 export function ChannelList() {
   const guildId = useAppSelector((s) => s.guilds.selectedId);
-  const all = useAppSelector((s) => (guildId ? s.channels.byGuild[guildId] ?? [] : []));
+  const all = useAppSelector((s) => (guildId ? (s.channels.byGuild[guildId] ?? []) : []));
   const selectedId = useAppSelector((s) => s.channels.selectedId);
   const voiceByChannel = useAppSelector((s) => s.presence.voiceByChannel);
   const meId = useAppSelector((s) => s.auth.user?.id);
-  const isOwner = useAppSelector((s) => s.guilds.list.find((g) => g.id === s.guilds.selectedId)?.owner_id === meId);
+  const isOwner = useAppSelector(
+    (s) => s.guilds.list.find((g) => g.id === s.guilds.selectedId)?.owner_id === meId,
+  );
 
   // Metin/Ses bölüm katlama (localStorage'da kalıcı)
-  const [collapsedText, setCollapsedTextRaw] = useState(() => localStorage.getItem('concord_collapse_text') === '1');
-  const [collapsedVoice, setCollapsedVoiceRaw] = useState(() => localStorage.getItem('concord_collapse_voice') === '1');
+  const [collapsedText, setCollapsedTextRaw] = useState(
+    () => localStorage.getItem('concord_collapse_text') === '1',
+  );
+  const [collapsedVoice, setCollapsedVoiceRaw] = useState(
+    () => localStorage.getItem('concord_collapse_voice') === '1',
+  );
   const setCollapsedText = (v: boolean | ((p: boolean) => boolean)) =>
     setCollapsedTextRaw((p) => {
       const n = typeof v === 'function' ? v(p) : v;
@@ -84,7 +90,9 @@ export function ChannelList() {
 
   // Voice kanalları için periyodik presence çek
   useEffect(() => {
-    const voiceChannels = all.filter((c) => c.type === 'voice' || c.type === 'stage').map((c) => c.id);
+    const voiceChannels = all
+      .filter((c) => c.type === 'voice' || c.type === 'stage')
+      .map((c) => c.id);
     if (voiceChannels.length === 0) return;
     const tick = () => {
       dispatch(fetchVoicePresence(voiceChannels));
@@ -100,7 +108,10 @@ export function ChannelList() {
     for (const cid in voiceByChannel) for (const uid of voiceByChannel[cid] ?? []) ids.add(uid);
     for (const uid of ids) {
       if (!usersById[uid]) {
-        api.users.user(uid).then((u) => dispatch(upsertUser(u as any))).catch(() => {});
+        api.users
+          .user(uid)
+          .then((u) => dispatch(upsertUser(u as any)))
+          .catch(() => {});
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,7 +176,8 @@ export function ChannelList() {
   function renderChannel(ch: APIChannel, siblings: APIChannel[], parentId: string | null) {
     const active = ch.id === selectedId;
     const Icon = ChannelIcon[ch.type] ?? Hash;
-    const connected = ch.type === 'voice' || ch.type === 'stage' ? voiceByChannel[ch.id] ?? [] : [];
+    const connected =
+      ch.type === 'voice' || ch.type === 'stage' ? (voiceByChannel[ch.id] ?? []) : [];
     return (
       <li
         key={ch.id}
@@ -235,13 +247,17 @@ export function ChannelList() {
                       onClick={() => setCollapsedText((v) => !v)}
                       className="flex items-center gap-0.5 flex-1 min-w-0 text-left hover:text-ink-secondary"
                     >
-                      <ChevronDown size={12} className={'transition-transform ' + (collapsedText ? '-rotate-90' : '')} />
+                      <ChevronDown
+                        size={12}
+                        className={'transition-transform ' + (collapsedText ? '-rotate-90' : '')}
+                      />
                       <span className="truncate">{t('channel.textChannels')}</span>
                     </button>
                     {isOwner && (
                       <button
                         onClick={() => dispatch(openCreateChannel('text'))}
-                        title={t('channel.createText')} aria-label={t('channel.createText')}
+                        title={t('channel.createText')}
+                        aria-label={t('channel.createText')}
                         className="opacity-0 group-hover/sec:opacity-100 text-base leading-none hover:text-ink-primary transition-opacity px-1"
                       >
                         +
@@ -252,7 +268,8 @@ export function ChannelList() {
                     <ul
                       className="space-y-0.5 mb-3"
                       onDragOver={(e) => {
-                        if (e.dataTransfer.types.includes('text/concord-channel')) e.preventDefault();
+                        if (e.dataTransfer.types.includes('text/concord-channel'))
+                          e.preventDefault();
                       }}
                       onDrop={(e) => onDropChannel(e, { parentId: null, siblings: uncategorized })}
                     >
@@ -268,13 +285,17 @@ export function ChannelList() {
                       onClick={() => setCollapsedVoice((v) => !v)}
                       className="flex items-center gap-0.5 flex-1 min-w-0 text-left hover:text-ink-secondary"
                     >
-                      <ChevronDown size={12} className={'transition-transform ' + (collapsedVoice ? '-rotate-90' : '')} />
+                      <ChevronDown
+                        size={12}
+                        className={'transition-transform ' + (collapsedVoice ? '-rotate-90' : '')}
+                      />
                       <span className="truncate">{t('channel.voiceChannels')}</span>
                     </button>
                     {isOwner && (
                       <button
                         onClick={() => dispatch(openCreateChannel('voice'))}
-                        title={t('channel.createVoice')} aria-label={t('channel.createVoice')}
+                        title={t('channel.createVoice')}
+                        aria-label={t('channel.createVoice')}
                         className="opacity-0 group-hover/sec:opacity-100 text-base leading-none hover:text-ink-primary transition-opacity px-1"
                       >
                         +
@@ -285,7 +306,8 @@ export function ChannelList() {
                     <ul
                       className="space-y-0.5 mb-3"
                       onDragOver={(e) => {
-                        if (e.dataTransfer.types.includes('text/concord-channel')) e.preventDefault();
+                        if (e.dataTransfer.types.includes('text/concord-channel'))
+                          e.preventDefault();
                       }}
                       onDrop={(e) => onDropChannel(e, { parentId: null, siblings: uncategorized })}
                     >
@@ -305,7 +327,9 @@ export function ChannelList() {
             category={cat}
             children={byParent[cat.id] ?? []}
             renderChannel={(ch) => renderChannel(ch, byParent[cat.id] ?? [], cat.id)}
-            onDropEmpty={(e) => onDropChannel(e, { parentId: cat.id, siblings: byParent[cat.id] ?? [] })}
+            onDropEmpty={(e) =>
+              onDropChannel(e, { parentId: cat.id, siblings: byParent[cat.id] ?? [] })
+            }
           />
         ))}
       </div>
@@ -356,7 +380,8 @@ function CategorySection({
         <button
           type="button"
           onClick={() => dispatch(openModal('create_channel'))}
-          title={t('channel.addToCategory')} aria-label={t('channel.addToCategory')}
+          title={t('channel.addToCategory')}
+          aria-label={t('channel.addToCategory')}
           className="opacity-0 group-hover:opacity-100 text-base leading-none hover:text-ink-primary"
         >
           +
@@ -390,29 +415,39 @@ function VoiceConnectedRow({ userId, user }: { userId: string; user: any }) {
   const isSelf = userId === me?.id;
   const guildId = useAppSelector((s) => s.guilds.selectedId);
   const guild = useAppSelector((s) => s.guilds.list.find((g) => g.id === guildId));
-  const member = useAppSelector((s) => (guildId ? s.members.byGuild[guildId]?.find((m) => m.user_id === userId) : null));
-  const myRoleIds = useAppSelector((s) => (guildId ? s.members.byGuild[guildId]?.find((m) => m.user_id === me?.id)?.role_ids ?? [] : []));
-  const roles = useAppSelector((s) => (guildId ? s.guildRoles?.byGuild?.[guildId] ?? [] : []));
+  const member = useAppSelector((s) =>
+    guildId ? s.members.byGuild[guildId]?.find((m) => m.user_id === userId) : null,
+  );
+  const myRoleIds = useAppSelector((s) =>
+    guildId ? (s.members.byGuild[guildId]?.find((m) => m.user_id === me?.id)?.role_ids ?? []) : [],
+  );
+  const roles = useAppSelector((s) => (guildId ? (s.guildRoles?.byGuild?.[guildId] ?? []) : []));
   const dispatch = useAppDispatch();
   // Voice presence'ın taşıdığı görünen ad — ID→ad lookup'ı gerektirmez (en güvenilir kaynak)
   const voiceName = useAppSelector((s) => s.presence.voiceNamesByUser[userId]);
   // İsim çözümle: guild takma adı > üye adı > presence adı > props.user > tek-sefer çekilen
-  const resolvedName = (member as any)?.nickname || member?.display_name || voiceName || user?.display_name;
+  const resolvedName =
+    (member as any)?.nickname || member?.display_name || voiceName || user?.display_name;
   const [fetchedName, setFetchedName] = useState<string | null>(null);
   // Store'da yoksa kullanıcıyı tek sefer çek — "Yükleniyor…" takılı kalmasın
   useEffect(() => {
     if (isSelf || resolvedName) return;
     let cancelled = false;
-    api.users.user(userId)
+    api.users
+      .user(userId)
       .then((u) => {
         if (cancelled) return;
         setFetchedName(u.display_name);
         dispatch(upsertUser(u as any));
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId, isSelf, resolvedName, dispatch]);
-  const displayName = isSelf ? (me?.display_name ?? t('common.you')) : (resolvedName || fetchedName || t('common.loading'));
+  const displayName = isSelf
+    ? (me?.display_name ?? t('common.you'))
+    : resolvedName || fetchedName || t('common.loading');
   const [speaking, setSpeaking] = useState(false);
   const [muted, setMuted] = useState(() => voice.getUserVolume(userId) === 0);
   const [volume, setVolume] = useState(() => Math.round(voice.getUserVolume(userId) * 100));
@@ -427,11 +462,18 @@ function VoiceConnectedRow({ userId, user }: { userId: string; user: any }) {
 
   useEffect(() => {
     setSpeaking(voice.speakingSet().has(userId));
-    const onSpeak = (ev: any) => { if (ev.userId === userId) setSpeaking(ev.speaking); };
-    const onVs = (ev: any) => { if (String(ev.userId) === userId) setSv({ mute: ev.serverMute, deafen: ev.serverDeaf }); };
+    const onSpeak = (ev: any) => {
+      if (ev.userId === userId) setSpeaking(ev.speaking);
+    };
+    const onVs = (ev: any) => {
+      if (String(ev.userId) === userId) setSv({ mute: ev.serverMute, deafen: ev.serverDeaf });
+    };
     voice.on('speaking:changed', onSpeak);
     voice.on('voiceState:changed', onVs);
-    return () => { voice.off('speaking:changed', onSpeak); voice.off('voiceState:changed', onVs); };
+    return () => {
+      voice.off('speaking:changed', onSpeak);
+      voice.off('voiceState:changed', onVs);
+    };
   }, [userId]);
 
   // Yetki: owner / admin / MUTE_MEMBERS / DEAFEN_MEMBERS
@@ -439,7 +481,11 @@ function VoiceConnectedRow({ userId, user }: { userId: string; user: any }) {
     let p = 0n;
     for (const r of roles) {
       if (r.is_everyone || myRoleIds.includes(r.id)) {
-        try { p |= BigInt(r.permissions); } catch { /* yoksay */ }
+        try {
+          p |= BigInt(r.permissions);
+        } catch {
+          /* yoksay */
+        }
       }
     }
     return p;
@@ -467,32 +513,83 @@ function VoiceConnectedRow({ userId, user }: { userId: string; user: any }) {
 
   return (
     <li
-      onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }); }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setMenu({ x: e.clientX, y: e.clientY });
+      }}
       className="group flex items-center gap-1.5 px-2 py-0.5 text-xs text-ink-secondary relative"
     >
       <span
         className={
           'w-2 h-2 rounded-full transition-colors shrink-0 ' +
-          (muted || sv.mute ? 'bg-ink-tertiary' : speaking ? 'bg-status-online ring-2 ring-status-online/40 animate-pulse' : 'bg-status-online')
+          (muted || sv.mute
+            ? 'bg-ink-tertiary'
+            : speaking
+              ? 'bg-status-online ring-2 ring-status-online/40 animate-pulse'
+              : 'bg-status-online')
         }
       />
-      <span className={'truncate flex-1 ' + (muted ? 'opacity-50 line-through' : speaking ? 'text-status-online font-semibold' : '')}>
-        {displayName}{isSelf && <span className="text-ink-tertiary"> (sen)</span>}
+      <span
+        className={
+          'truncate flex-1 ' +
+          (muted ? 'opacity-50 line-through' : speaking ? 'text-status-online font-semibold' : '')
+        }
+      >
+        {displayName}
+        {isSelf && <span className="text-ink-tertiary"> (sen)</span>}
       </span>
-      {sv.deafen && <span title={t('voice.serverDeafened')} aria-label={t('voice.serverDeafened')} className="shrink-0">🔇🎧</span>}
-      {sv.mute && <span title={t('voice.serverMuted')} aria-label={t('voice.serverMuted')} className="shrink-0 text-accent-500">🔴</span>}
-      {muted && !sv.mute && <span title={t('voice.mutedForYou')} aria-label={t('voice.mutedForYou')} className="shrink-0">🔇</span>}
+      {sv.deafen && (
+        <span
+          title={t('voice.serverDeafened')}
+          aria-label={t('voice.serverDeafened')}
+          className="shrink-0"
+        >
+          🔇🎧
+        </span>
+      )}
+      {sv.mute && (
+        <span
+          title={t('voice.serverMuted')}
+          aria-label={t('voice.serverMuted')}
+          className="shrink-0 text-accent-500"
+        >
+          🔴
+        </span>
+      )}
+      {muted && !sv.mute && (
+        <span
+          title={t('voice.mutedForYou')}
+          aria-label={t('voice.mutedForYou')}
+          className="shrink-0"
+        >
+          🔇
+        </span>
+      )}
 
       {menu && (
-        <div className="fixed inset-0 z-50" onClick={() => setMenu(null)} onContextMenu={(e) => { e.preventDefault(); setMenu(null); }}>
+        <div
+          className="fixed inset-0 z-50"
+          onClick={() => setMenu(null)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setMenu(null);
+          }}
+        >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ left: Math.min(menu.x, window.innerWidth - 220), top: Math.min(menu.y, window.innerHeight - 200) }}
+            style={{
+              left: Math.min(menu.x, window.innerWidth - 220),
+              top: Math.min(menu.y, window.innerHeight - 200),
+            }}
             className="absolute w-52 bg-surface-1 border border-line rounded-xl shadow-2xl p-1 text-sm"
           >
             {!isSelf && (
-              <button onClick={toggleLocalMute} className="w-full text-left px-3 py-1.5 rounded-lg text-ink-primary hover:bg-surface-2">
-                {muted ? '🔊 Sesi aç' : '🔇 Sustur'}{(canMute || canDeafen) ? ' (benim için)' : ''}
+              <button
+                onClick={toggleLocalMute}
+                className="w-full text-left px-3 py-1.5 rounded-lg text-ink-primary hover:bg-surface-2"
+              >
+                {muted ? '🔊 Sesi aç' : '🔇 Sustur'}
+                {canMute || canDeafen ? ' (benim için)' : ''}
               </button>
             )}
             {!isSelf && (
@@ -514,16 +611,26 @@ function VoiceConnectedRow({ userId, user }: { userId: string; user: any }) {
               </div>
             )}
             {canMute && !isSelf && (
-              <button onClick={() => serverMute(!sv.mute)} className="w-full text-left px-3 py-1.5 rounded-lg text-ink-primary hover:bg-surface-2">
+              <button
+                onClick={() => serverMute(!sv.mute)}
+                className="w-full text-left px-3 py-1.5 rounded-lg text-ink-primary hover:bg-surface-2"
+              >
                 {sv.mute ? '🎙️ Sunucu susturmasını kaldır' : '🔴 Sunucuda Sustur'}
               </button>
             )}
             {canDeafen && !isSelf && (
-              <button onClick={() => serverDeafen(!sv.deafen)} className="w-full text-left px-3 py-1.5 rounded-lg text-ink-primary hover:bg-surface-2">
+              <button
+                onClick={() => serverDeafen(!sv.deafen)}
+                className="w-full text-left px-3 py-1.5 rounded-lg text-ink-primary hover:bg-surface-2"
+              >
                 {sv.deafen ? '🎧 Sağırlaştırmayı kaldır' : '🎧 Sunucuda Sağırlaştır'}
               </button>
             )}
-            {isSelf && <div className="px-3 py-1.5 text-ink-tertiary text-xs">{t('common.cannotActOnSelf')}</div>}
+            {isSelf && (
+              <div className="px-3 py-1.5 text-ink-tertiary text-xs">
+                {t('common.cannotActOnSelf')}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -573,7 +680,10 @@ function ChannelButton({
         onClick={() => {
           dispatch(selectChannel(channel.id));
           // Discord davranışı: ses/sahne kanalına tıklamak = anında katıl
-          if ((channel.type === 'voice' || channel.type === 'stage') && voice.channelId !== channel.id) {
+          if (
+            (channel.type === 'voice' || channel.type === 'stage') &&
+            voice.channelId !== channel.id
+          ) {
             voice.connect(channel.id).catch(() => {});
           }
         }}
@@ -594,21 +704,34 @@ function ChannelButton({
         <span className={clsx('text-sm truncate', unread ? 'font-semibold' : 'font-medium')}>
           {channel.name}
         </span>
-        {channel.nsfw && <span className="text-[9px] text-accent-500 shrink-0" title={t('channel.nsfw')} aria-label={t('channel.nsfw')}>🔞</span>}
-        {(channel.type === 'voice' || channel.type === 'stage') && (connectedCount > 0 || (channel.user_limit ?? 0) > 0) && (
+        {channel.nsfw && (
           <span
-            className={
-              'ml-auto text-[10px] font-semibold ' +
-              ((channel.user_limit ?? 0) > 0 && connectedCount >= (channel.user_limit ?? 0)
-                ? 'text-accent-500'
-                : 'text-brand-500')
-            }
-            title={(channel.user_limit ?? 0) > 0 ? t('channel.userLimit', { n: channel.user_limit }) : undefined}
+            className="text-[9px] text-accent-500 shrink-0"
+            title={t('channel.nsfw')}
+            aria-label={t('channel.nsfw')}
           >
-            {connectedCount}
-            {(channel.user_limit ?? 0) > 0 && `/${channel.user_limit}`}
+            🔞
           </span>
         )}
+        {(channel.type === 'voice' || channel.type === 'stage') &&
+          (connectedCount > 0 || (channel.user_limit ?? 0) > 0) && (
+            <span
+              className={
+                'ml-auto text-[10px] font-semibold ' +
+                ((channel.user_limit ?? 0) > 0 && connectedCount >= (channel.user_limit ?? 0)
+                  ? 'text-accent-500'
+                  : 'text-brand-500')
+              }
+              title={
+                (channel.user_limit ?? 0) > 0
+                  ? t('channel.userLimit', { n: channel.user_limit ?? 0 })
+                  : undefined
+              }
+            >
+              {connectedCount}
+              {(channel.user_limit ?? 0) > 0 && `/${channel.user_limit}`}
+            </span>
+          )}
         {mentionCount > 0 && (
           <span className="ml-auto min-w-[18px] h-[18px] px-1.5 rounded-full bg-accent-500 text-white text-[10px] font-bold flex items-center justify-center">
             {mentionCount > 99 ? '99+' : mentionCount}
@@ -620,7 +743,8 @@ function ChannelButton({
       <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
         <button
           onClick={openInvite}
-          title={t('channel.invite')} aria-label={t('channel.invite')}
+          title={t('channel.invite')}
+          aria-label={t('channel.invite')}
           className="w-5 h-5 flex items-center justify-center text-ink-tertiary hover:text-ink-primary"
         >
           <UserPlus size={15} />
@@ -631,7 +755,8 @@ function ChannelButton({
               e.stopPropagation();
               dispatch(openChannelSettings(channel.id));
             }}
-            title={t('channel.edit')} aria-label={t('channel.edit')}
+            title={t('channel.edit')}
+            aria-label={t('channel.edit')}
             className="w-5 h-5 flex items-center justify-center text-ink-tertiary hover:text-ink-primary"
           >
             <Settings size={15} />
@@ -640,12 +765,7 @@ function ChannelButton({
       </div>
 
       {menu && (
-        <ChannelContextMenu
-          channel={channel}
-          x={menu.x}
-          y={menu.y}
-          onClose={() => setMenu(null)}
-        />
+        <ChannelContextMenu channel={channel} x={menu.x} y={menu.y} onClose={() => setMenu(null)} />
       )}
       {inviteAt && (
         <ChannelInvitePopover
@@ -709,7 +829,12 @@ function ChannelContextMenu({
         mute_until_sec: seconds, // 0 = süresiz (açana kadar)
       });
       setMuted(true);
-      dispatch(addToast({ kind: 'success', message: seconds > 0 ? t('channel.mutedTemp') : t('channel.muted') }));
+      dispatch(
+        addToast({
+          kind: 'success',
+          message: seconds > 0 ? t('channel.mutedTemp') : t('channel.muted'),
+        }),
+      );
     } catch {}
     onClose();
   }
@@ -780,17 +905,15 @@ function ChannelContextMenu({
           label="Okundu İşaretle"
           onClick={() => {
             if (channel.last_message_id) {
-              dispatch(ackChannel({ channelId: channel.id, lastMessageId: channel.last_message_id }));
+              dispatch(
+                ackChannel({ channelId: channel.id, lastMessageId: channel.last_message_id }),
+              );
             }
             onClose();
           }}
         />
         {muted ? (
-          <CtxItem
-            icon={<Bell size={14} />}
-            label="Sesi Aç"
-            onClick={unmute}
-          />
+          <CtxItem icon={<Bell size={14} />} label="Sesi Aç" onClick={unmute} />
         ) : (
           <>
             <CtxItem
@@ -854,11 +977,7 @@ function ChannelContextMenu({
             onClose();
           }}
         />
-        <CtxItem
-          icon={<LinkIcon size={14} />}
-          label="Kanal Linkini Kopyala"
-          onClick={copyLink}
-        />
+        <CtxItem icon={<LinkIcon size={14} />} label="Kanal Linkini Kopyala" onClick={copyLink} />
         <CtxItem
           icon={<Copy size={14} />}
           label="Kanal ID'sini Kopyala"
@@ -869,12 +988,7 @@ function ChannelContextMenu({
           }}
         />
         <div className="my-1 h-px bg-line" />
-        <CtxItem
-          icon={<Trash2 size={14} />}
-          label="Kanalı Sil"
-          danger
-          onClick={doDelete}
-        />
+        <CtxItem icon={<Trash2 size={14} />} label="Kanalı Sil" danger onClick={doDelete} />
       </div>
     </div>
   );
@@ -896,9 +1010,7 @@ function CtxItem({
       onClick={onClick}
       className={clsx(
         'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2.5 transition-colors',
-        danger
-          ? 'text-accent-500 hover:bg-accent-500/10'
-          : 'text-ink-primary hover:bg-surface-2',
+        danger ? 'text-accent-500 hover:bg-accent-500/10' : 'text-ink-primary hover:bg-surface-2',
       )}
     >
       <span className={danger ? 'text-accent-500' : 'text-ink-tertiary'}>{icon}</span>
@@ -909,9 +1021,7 @@ function CtxItem({
 
 function GuildHeader() {
   const guild = useAppSelector((s) => s.guilds.list.find((g) => g.id === s.guilds.selectedId));
-  const guildChannels = useAppSelector((s) =>
-    guild ? s.channels.byGuild[guild.id] ?? [] : [],
-  );
+  const guildChannels = useAppSelector((s) => (guild ? (s.channels.byGuild[guild.id] ?? []) : []));
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -944,7 +1054,9 @@ function GuildHeader() {
     setMuted(true);
     localStorage.setItem('concord_guildmute_' + guild.id, '1');
     await api.guilds.notifSettings(guild.id, 'nothing', seconds).catch(() => {});
-    dispatch(addToast({ kind: 'success', message: seconds > 0 ? t('guild.mutedTemp') : t('guild.muted') }));
+    dispatch(
+      addToast({ kind: 'success', message: seconds > 0 ? t('guild.mutedTemp') : t('guild.muted') }),
+    );
     setGuildMuteOpen(false);
     setOpen(false);
   }
@@ -987,18 +1099,29 @@ function GuildHeader() {
         }
         style={
           guild.banner_url
-            ? { background: `linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0.15)), url(${guild.banner_url}) center/cover` }
+            ? {
+                background: `linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0.15)), url(${guild.banner_url}) center/cover`,
+              }
             : undefined
         }
       >
         <div className="flex-1 min-w-0 text-left">
-          <h2 className={'font-semibold text-[15px] truncate ' + (guild.banner_url ? 'text-white drop-shadow' : 'text-ink-primary')}>
+          <h2
+            className={
+              'font-semibold text-[15px] truncate ' +
+              (guild.banner_url ? 'text-white drop-shadow' : 'text-ink-primary')
+            }
+          >
             {guild.name}
           </h2>
         </div>
         <ChevronDown
           size={18}
-          className={'transition-transform ' + (guild.banner_url ? 'text-white' : 'text-ink-secondary') + (open ? ' rotate-180' : '')}
+          className={
+            'transition-transform ' +
+            (guild.banner_url ? 'text-white' : 'text-ink-secondary') +
+            (open ? ' rotate-180' : '')
+          }
         />
       </button>
 
@@ -1070,7 +1193,10 @@ function GuildHeader() {
           )}
           <button
             type="button"
-            onClick={() => { setProfileOpen(true); setOpen(false); }}
+            onClick={() => {
+              setProfileOpen(true);
+              setOpen(false);
+            }}
             className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface-2 text-ink-primary flex items-center gap-2"
           >
             <Pencil size={16} className="text-brand-500" />
@@ -1154,7 +1280,8 @@ function UserPanel() {
       <button
         onClick={() => setMenuOpen((v) => !v)}
         className="relative shrink-0"
-        title={t('status.change')} aria-label={t('status.change')}
+        title={t('status.change')}
+        aria-label={t('status.change')}
       >
         <div
           className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
@@ -1191,10 +1318,15 @@ function UserPanel() {
           ))}
           <div className="h-px bg-line my-1" />
           <button
-            onClick={() => { setMenuOpen(false); dispatch(openModal('user_settings')); }}
+            onClick={() => {
+              setMenuOpen(false);
+              dispatch(openModal('user_settings'));
+            }}
             className="w-full text-left px-3 py-1.5 rounded text-ink-secondary hover:bg-surface-2 hover:text-ink-primary text-sm"
           >
-            {me.custom_status_text || me.custom_status_emoji ? t('status.editCustom') : t('status.setCustom')}
+            {me.custom_status_text || me.custom_status_emoji
+              ? t('status.editCustom')
+              : t('status.setCustom')}
           </button>
         </div>
       )}
@@ -1214,7 +1346,8 @@ function UserPanel() {
       <button
         type="button"
         onClick={() => dispatch(openModal('user_settings'))}
-        title={t('settings.user')} aria-label={t('settings.user')}
+        title={t('settings.user')}
+        aria-label={t('settings.user')}
         className="w-8 h-8 rounded-md hover:bg-surface-3 text-ink-secondary hover:text-brand-500 flex items-center justify-center transition-colors"
       >
         <Settings size={16} />
@@ -1224,7 +1357,8 @@ function UserPanel() {
         onClick={() => {
           if (confirm('Çıkış yapmak istediğine emin misin?')) dispatch(logout());
         }}
-        title={t('common.logout')} aria-label={t('common.logout')}
+        title={t('common.logout')}
+        aria-label={t('common.logout')}
         className="w-8 h-8 rounded-md hover:bg-surface-3 text-ink-secondary hover:text-accent-500 flex items-center justify-center transition-colors"
       >
         <LogOut size={16} />
@@ -1315,7 +1449,10 @@ function ChannelInvitePopover({
           <p className="text-xs text-ink-tertiary py-3 text-center">Davet edilecek arkadaş yok.</p>
         ) : (
           friends.map((f) => (
-            <div key={f.user_id} className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-surface-2">
+            <div
+              key={f.user_id}
+              className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-surface-2"
+            >
               <span
                 className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
                 style={{ backgroundColor: f.avatar_color }}

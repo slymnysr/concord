@@ -55,7 +55,11 @@ export function InsightsTab({ guildId }: { guildId: string }) {
           items={data.top_channels}
           prefix="#"
         />
-        <TopList title={t('insights.topMembers')} aria-label={t('insights.topMembers')} items={data.top_members} />
+        <TopList
+          title={t('insights.topMembers')}
+          aria-label={t('insights.topMembers')}
+          items={data.top_members}
+        />
       </div>
     </div>
   );

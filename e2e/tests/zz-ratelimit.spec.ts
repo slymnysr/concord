@@ -33,14 +33,17 @@ test('hesap kilidi: aynı hesaba art arda yanlış parola 429 ile kesilir', asyn
   expect((await goodLogin(request, u)).status()).toBe(429);
 });
 
-test('kilit 429\'u Retry-After başlığı taşır', async ({ request }) => {
+test("kilit 429'u Retry-After başlığı taşır", async ({ request }) => {
   const u = makeUser('retry');
   await registerViaApi(request, u);
 
   let retryAfter: string | undefined;
   for (let i = 0; i < 8; i++) {
     const r = await badLogin(request, u.email);
-    if (r.status() === 429) { retryAfter = r.headers()['retry-after']; break; }
+    if (r.status() === 429) {
+      retryAfter = r.headers()['retry-after'];
+      break;
+    }
   }
   expect(retryAfter, '429 istemciye ne zaman döneceğini söylemeli').toBeTruthy();
   expect(Number(retryAfter)).toBeGreaterThan(0);
@@ -52,7 +55,9 @@ test('kilit 429\'u Retry-After başlığı taşır', async ({ request }) => {
  * Operatör CGNAT'ı arkasında (Türkiye'de yaygın) bu, üretimde toplu giriş çökmesi demekti.
  * Ayrıca saldırgan kurbanın e-postasını bilerek hesabını kilitleyebiliyordu.
  */
-test('kilitlenen hesap AYNI IP\'deki başka kullanıcıyı etkilemez (CGNAT tahribatı yok)', async ({ request }) => {
+test("kilitlenen hesap AYNI IP'deki başka kullanıcıyı etkilemez (CGNAT tahribatı yok)", async ({
+  request,
+}) => {
   const kurban = makeUser('kurban');
   const masum = makeUser('masum');
   await registerViaApi(request, kurban);
@@ -64,10 +69,15 @@ test('kilitlenen hesap AYNI IP\'deki başka kullanıcıyı etkilemez (CGNAT tahr
 
   // Aynı IP'den masum kullanıcı SORUNSUZ girebilmeli
   const r = await goodLogin(request, masum);
-  expect(r.status(), `aynı IP'deki masum kullanıcı kilitlendi — çapraz hesap kilidi geri geldi`).toBe(200);
+  expect(
+    r.status(),
+    `aynı IP'deki masum kullanıcı kilitlendi — çapraz hesap kilidi geri geldi`,
+  ).toBe(200);
 });
 
-test('başarılı giriş hata sayacını sıfırlar (parolayı hatırlayan kilitli kalmaz)', async ({ request }) => {
+test('başarılı giriş hata sayacını sıfırlar (parolayı hatırlayan kilitli kalmaz)', async ({
+  request,
+}) => {
   const u = makeUser('reset');
   await registerViaApi(request, u);
 

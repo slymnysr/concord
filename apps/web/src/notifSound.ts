@@ -58,7 +58,9 @@ export function showDesktopNotification(title: string, body: string) {
       tag: 'concord-msg',
     });
     n.onclick = () => {
-      try { window.focus(); } catch {}
+      try {
+        window.focus();
+      } catch {}
       n.close();
     };
     setTimeout(() => n.close(), 6000);

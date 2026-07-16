@@ -115,9 +115,7 @@ export function InviteLinkModal() {
         <h3 className="text-sm font-bold text-ink-primary uppercase tracking-wider mb-2">
           Aktif Davetler ({invites.length})
         </h3>
-        {invites.length === 0 && (
-          <p className="text-sm text-ink-tertiary">{t('invite.none')}</p>
-        )}
+        {invites.length === 0 && <p className="text-sm text-ink-tertiary">{t('invite.none')}</p>}
         <ul className="space-y-2">
           {invites.map((inv) => (
             <li
@@ -131,21 +129,25 @@ export function InviteLinkModal() {
                     {inv.uses} / {inv.max_uses ?? '∞'} kullanım
                   </span>
                   <span>
-                    {inv.expires_at ? `${formatRelative(inv.expires_at)} sonra dolar` : t('invite.unlimited')}
+                    {inv.expires_at
+                      ? `${formatRelative(inv.expires_at)} sonra dolar`
+                      : t('invite.unlimited')}
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => copy(inv.code)}
                 className="w-9 h-9 rounded-lg bg-surface-3 hover:bg-brand-500 hover:text-white text-ink-secondary flex items-center justify-center transition-colors"
-                title={t('common.copy')} aria-label={t('common.copy')}
+                title={t('common.copy')}
+                aria-label={t('common.copy')}
               >
                 {copied === inv.code ? <Check size={16} /> : <Copy size={16} />}
               </button>
               <button
                 onClick={() => remove(inv.code)}
                 className="w-9 h-9 rounded-lg bg-surface-3 hover:bg-accent-500 hover:text-white text-ink-secondary flex items-center justify-center transition-colors"
-                title={t('common.delete')} aria-label={t('common.delete')}
+                title={t('common.delete')}
+                aria-label={t('common.delete')}
               >
                 <Trash2 size={16} />
               </button>

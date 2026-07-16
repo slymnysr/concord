@@ -11,12 +11,22 @@ import { NewDMModal } from './NewDMModal';
 import { FollowChannelModal } from './FollowChannelModal';
 
 // Ağır modallar — on-demand (kod-bölme): yalnızca açıldıklarında indirilir
-const ServerSettingsModal = lazy(() => import('./ServerSettingsModal').then((m) => ({ default: m.ServerSettingsModal })));
-const UserSettingsModal = lazy(() => import('./UserSettingsModal').then((m) => ({ default: m.UserSettingsModal })));
-const ChannelSettingsModal = lazy(() => import('./ChannelSettingsModal').then((m) => ({ default: m.ChannelSettingsModal })));
-const ChannelPermissionsModal = lazy(() => import('./ChannelPermissionsModal').then((m) => ({ default: m.ChannelPermissionsModal })));
+const ServerSettingsModal = lazy(() =>
+  import('./ServerSettingsModal').then((m) => ({ default: m.ServerSettingsModal })),
+);
+const UserSettingsModal = lazy(() =>
+  import('./UserSettingsModal').then((m) => ({ default: m.UserSettingsModal })),
+);
+const ChannelSettingsModal = lazy(() =>
+  import('./ChannelSettingsModal').then((m) => ({ default: m.ChannelSettingsModal })),
+);
+const ChannelPermissionsModal = lazy(() =>
+  import('./ChannelPermissionsModal').then((m) => ({ default: m.ChannelPermissionsModal })),
+);
 const SearchModal = lazy(() => import('./SearchModal').then((m) => ({ default: m.SearchModal })));
-const AddFriendModal = lazy(() => import('./AddFriendModal').then((m) => ({ default: m.AddFriendModal })));
+const AddFriendModal = lazy(() =>
+  import('./AddFriendModal').then((m) => ({ default: m.AddFriendModal })),
+);
 
 function ModalFallback() {
   return (
@@ -65,13 +75,13 @@ export function Modal() {
             ? 'w-full max-w-4xl'
             : modal === 'channel_perms'
               ? 'w-full max-w-3xl overflow-hidden'
-            : modal === 'channel_settings'
-              ? 'w-full max-w-3xl overflow-hidden'
-              : modal === 'friends' || modal === 'search'
-                ? 'w-full max-w-2xl'
-                : modal === 'new_dm'
-                  ? 'w-full max-w-md'
-                  : 'w-full max-w-md')
+              : modal === 'channel_settings'
+                ? 'w-full max-w-3xl overflow-hidden'
+                : modal === 'friends' || modal === 'search'
+                  ? 'w-full max-w-2xl'
+                  : modal === 'new_dm'
+                    ? 'w-full max-w-md'
+                    : 'w-full max-w-md')
         }
       >
         <button
@@ -90,9 +100,15 @@ export function Modal() {
           {modal === 'friends' && <AddFriendModal />}
           {modal === 'search' && <SearchModal />}
           {modal === 'create_channel' && <CreateChannelModal />}
-          {modal === 'edit_channel' && editingChannel && <ChannelEditModal channel={editingChannel} />}
-          {modal === 'channel_perms' && editingChannel && <ChannelPermissionsModal channel={editingChannel} />}
-          {modal === 'channel_settings' && editingChannel && <ChannelSettingsModal channel={editingChannel} />}
+          {modal === 'edit_channel' && editingChannel && (
+            <ChannelEditModal channel={editingChannel} />
+          )}
+          {modal === 'channel_perms' && editingChannel && (
+            <ChannelPermissionsModal channel={editingChannel} />
+          )}
+          {modal === 'channel_settings' && editingChannel && (
+            <ChannelSettingsModal channel={editingChannel} />
+          )}
           {modal === 'user_settings' && <UserSettingsModal />}
           {modal === 'new_dm' && <NewDMModal />}
           {modal === 'follow_channel' && <FollowChannelModal />}

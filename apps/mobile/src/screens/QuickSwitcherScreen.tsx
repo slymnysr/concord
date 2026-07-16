@@ -19,13 +19,25 @@ export function QuickSwitcherScreen({ nav, onBack }: { nav: Nav; onBack: () => v
       try {
         const [guilds, dms] = await Promise.all([api.guilds.list(), api.dms.list()]);
         const chanLists = await Promise.all(
-          guilds.map((g) => api.guilds.channels(g.id).then((cs) => ({ g, cs })).catch(() => ({ g, cs: [] }))),
+          guilds.map((g) =>
+            api.guilds
+              .channels(g.id)
+              .then((cs) => ({ g, cs }))
+              .catch(() => ({ g, cs: [] })),
+          ),
         );
         const channels: Item[] = [];
         for (const { g, cs } of chanLists) {
           for (const c of cs) {
             if (['text', 'announcement', 'forum', 'media', 'voice'].includes(c.type)) {
-              channels.push({ kind: 'channel', id: c.id, name: c.name, guildId: g.id, guildName: g.name, type: c.type });
+              channels.push({
+                kind: 'channel',
+                id: c.id,
+                name: c.name,
+                guildId: g.id,
+                guildName: g.name,
+                type: c.type,
+              });
             }
           }
         }
@@ -38,13 +50,27 @@ export function QuickSwitcherScreen({ nav, onBack }: { nav: Nav; onBack: () => v
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return items.slice(0, 40);
-    return items.filter((i) => i.name.toLowerCase().includes(s) || (i.kind === 'channel' && i.guildName.toLowerCase().includes(s))).slice(0, 40);
+    return items
+      .filter(
+        (i) =>
+          i.name.toLowerCase().includes(s) ||
+          (i.kind === 'channel' && i.guildName.toLowerCase().includes(s)),
+      )
+      .slice(0, 40);
   }, [q, items]);
 
   function open(i: Item) {
     if (i.kind === 'dm') nav.push({ kind: 'chat', channel: { id: i.id, name: i.name } });
-    else if (i.type === 'voice') nav.push({ kind: 'chat', channel: { id: i.id, name: i.name, guildId: i.guildId, type: i.type } });
-    else nav.push({ kind: 'chat', channel: { id: i.id, name: i.name, guildId: i.guildId, type: i.type } });
+    else if (i.type === 'voice')
+      nav.push({
+        kind: 'chat',
+        channel: { id: i.id, name: i.name, guildId: i.guildId, type: i.type },
+      });
+    else
+      nav.push({
+        kind: 'chat',
+        channel: { id: i.id, name: i.name, guildId: i.guildId, type: i.type },
+      });
   }
 
   return (
@@ -64,9 +90,17 @@ export function QuickSwitcherScreen({ nav, onBack }: { nav: Nav; onBack: () => v
         ListEmptyComponent={<Empty text="Sonuç yok." />}
         renderItem={({ item }) => (
           <TouchableOpacity style={s.row} onPress={() => open(item)}>
-            <Text style={s.icon}>{item.kind === 'dm' ? '@' : item.type === 'voice' ? '🔊' : '#'}</Text>
-            <Text style={s.name} numberOfLines={1}>{item.name}</Text>
-            {item.kind === 'channel' && <Text style={s.guild} numberOfLines={1}>{item.guildName}</Text>}
+            <Text style={s.icon}>
+              {item.kind === 'dm' ? '@' : item.type === 'voice' ? '🔊' : '#'}
+            </Text>
+            <Text style={s.name} numberOfLines={1}>
+              {item.name}
+            </Text>
+            {item.kind === 'channel' && (
+              <Text style={s.guild} numberOfLines={1}>
+                {item.guildName}
+              </Text>
+            )}
           </TouchableOpacity>
         )}
       />
@@ -75,7 +109,15 @@ export function QuickSwitcherScreen({ nav, onBack }: { nav: Nav; onBack: () => v
 }
 
 const s = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
   icon: { color: colors.inkTertiary, width: 20, fontSize: 15, fontWeight: '700' },
   name: { color: colors.ink, fontSize: 15, flex: 1 },
   guild: { color: colors.inkTertiary, fontSize: 12, maxWidth: '40%' },

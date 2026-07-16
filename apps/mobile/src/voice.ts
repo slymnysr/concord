@@ -7,7 +7,10 @@ import { voiceWsUrl } from './config';
 import { getAccessToken } from './api';
 
 type Handler = (payload?: any) => void;
-export interface VoicePeer { userId: string; serverMute?: boolean }
+export interface VoicePeer {
+  userId: string;
+  serverMute?: boolean;
+}
 
 class VoiceClient {
   private ws: WebSocket | null = null;
@@ -20,7 +23,7 @@ class VoiceClient {
   private cameraStream: any = null;
   private screenProducer: any = null;
   private screenStream: any = null;
-  private consumers = new Map<string, any>();      // producerId -> consumer
+  private consumers = new Map<string, any>(); // producerId -> consumer
   private producerOwner = new Map<string, string>(); // producerId -> userId
   private videoRemotes = new Map<string, { userId: string; source: string; stream: any }>();
   private stage = false;
@@ -36,14 +39,28 @@ class VoiceClient {
   private muted = false;
   private deafened = false;
 
-  on(e: string, h: Handler) { (this.handlers[e] ??= []).push(h); }
-  off(e: string, h: Handler) { this.handlers[e] = (this.handlers[e] ?? []).filter((x) => x !== h); }
-  private emit(e: string, p?: any) { for (const h of this.handlers[e] ?? []) h(p); }
+  on(e: string, h: Handler) {
+    (this.handlers[e] ??= []).push(h);
+  }
+  off(e: string, h: Handler) {
+    this.handlers[e] = (this.handlers[e] ?? []).filter((x) => x !== h);
+  }
+  private emit(e: string, p?: any) {
+    for (const h of this.handlers[e] ?? []) h(p);
+  }
 
-  isConnected() { return !!this.channelId && !!this.audioProducer; }
-  isMuted() { return this.muted; }
-  isDeafened() { return this.deafened; }
-  participants(): VoicePeer[] { return Array.from(this.peers.values()); }
+  isConnected() {
+    return !!this.channelId && !!this.audioProducer;
+  }
+  isMuted() {
+    return this.muted;
+  }
+  isDeafened() {
+    return this.deafened;
+  }
+  participants(): VoicePeer[] {
+    return Array.from(this.peers.values());
+  }
 
   async connect(channelId: string, channelName = '', opts?: { meId?: string; stage?: boolean }) {
     const token = getAccessToken();
@@ -83,7 +100,8 @@ class VoiceClient {
       for (const p of joinRes.producers ?? []) {
         if (this.meId && String(p.userId) === this.meId) continue; // kendi yayınını tüketme (yankı)
         const src = p.appData?.source ?? 'mic';
-        if (['mic', 'camera', 'screen'].includes(src)) this.consume(p.producerId, String(p.userId), src).catch(() => {});
+        if (['mic', 'camera', 'screen'].includes(src))
+          this.consume(p.producerId, String(p.userId), src).catch(() => {});
       }
 
       this.micStream = await mediaDevices.getUserMedia({ audio: true, video: false });
@@ -106,36 +124,63 @@ class VoiceClient {
   private async createSendTransport() {
     const info = await this.request('createWebRtcTransport', { direction: 'send' });
     this.sendTransport = this.device.createSendTransport({
-      id: info.id, iceParameters: info.iceParameters, iceCandidates: info.iceCandidates, dtlsParameters: info.dtlsParameters,
+      id: info.id,
+      iceParameters: info.iceParameters,
+      iceCandidates: info.iceCandidates,
+      dtlsParameters: info.dtlsParameters,
     });
     this.sendTransport.on('connect', ({ dtlsParameters }: any, cb: any, eb: any) =>
-      this.request('connectTransport', { transportId: info.id, dtlsParameters }).then(() => cb()).catch(eb));
+      this.request('connectTransport', { transportId: info.id, dtlsParameters })
+        .then(() => cb())
+        .catch(eb),
+    );
     this.sendTransport.on('produce', ({ kind, rtpParameters, appData }: any, cb: any, eb: any) =>
-      this.request('produce', { kind, rtpParameters, appData }).then(({ id }: any) => cb({ id })).catch(eb));
+      this.request('produce', { kind, rtpParameters, appData })
+        .then(({ id }: any) => cb({ id }))
+        .catch(eb),
+    );
   }
 
   private async createRecvTransport() {
     const info = await this.request('createWebRtcTransport', { direction: 'recv' });
     this.recvTransport = this.device.createRecvTransport({
-      id: info.id, iceParameters: info.iceParameters, iceCandidates: info.iceCandidates, dtlsParameters: info.dtlsParameters,
+      id: info.id,
+      iceParameters: info.iceParameters,
+      iceCandidates: info.iceCandidates,
+      dtlsParameters: info.dtlsParameters,
     });
     this.recvTransport.on('connect', ({ dtlsParameters }: any, cb: any, eb: any) =>
-      this.request('connectTransport', { transportId: info.id, dtlsParameters }).then(() => cb()).catch(eb));
+      this.request('connectTransport', { transportId: info.id, dtlsParameters })
+        .then(() => cb())
+        .catch(eb),
+    );
   }
 
   private async consume(producerId: string, userId: string, source = 'mic') {
     if (!this.device || !this.recvTransport) return;
-    const data = await this.request('consume', { producerId, rtpCapabilities: this.device.rtpCapabilities });
+    const data = await this.request('consume', {
+      producerId,
+      rtpCapabilities: this.device.rtpCapabilities,
+    });
     const consumer = await this.recvTransport.consume({
-      id: data.id, producerId: data.producerId, kind: data.kind, rtpParameters: data.rtpParameters,
+      id: data.id,
+      producerId: data.producerId,
+      kind: data.kind,
+      rtpParameters: data.rtpParameters,
     });
     this.consumers.set(producerId, consumer);
     this.producerOwner.set(producerId, userId);
     if (data.kind === 'video') {
       const MS = (globalThis as any).MediaStream;
-      this.videoRemotes.set(producerId, { userId, source, stream: MS ? new MS([consumer.track]) : null });
+      this.videoRemotes.set(producerId, {
+        userId,
+        source,
+        stream: MS ? new MS([consumer.track]) : null,
+      });
     } else if (this.deafened) {
-      try { consumer.track.enabled = false; } catch {}
+      try {
+        consumer.track.enabled = false;
+      } catch {}
     }
     consumer.on('trackended', () => this.removeConsumer(producerId));
     if (!this.peers.has(userId)) this.peers.set(userId, { userId });
@@ -143,7 +188,9 @@ class VoiceClient {
   }
 
   private removeConsumer(producerId: string) {
-    try { this.consumers.get(producerId)?.close(); } catch {}
+    try {
+      this.consumers.get(producerId)?.close();
+    } catch {}
     this.consumers.delete(producerId);
     this.producerOwner.delete(producerId);
     this.videoRemotes.delete(producerId);
@@ -151,72 +198,128 @@ class VoiceClient {
   }
 
   // --- Kamera (görüntülü görüşme) ---
-  isCameraOn() { return !!this.cameraProducer; }
-  localCameraStream() { return this.cameraStream; }
-  videoStreams() { return Array.from(this.videoRemotes.entries()).map(([producerId, v]) => ({ producerId, ...v })); }
+  isCameraOn() {
+    return !!this.cameraProducer;
+  }
+  localCameraStream() {
+    return this.cameraStream;
+  }
+  videoStreams() {
+    return Array.from(this.videoRemotes.entries()).map(([producerId, v]) => ({ producerId, ...v }));
+  }
 
   async publishCamera() {
     if (!this.sendTransport || this.cameraProducer) return;
-    this.cameraStream = await mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false } as any);
+    this.cameraStream = await mediaDevices.getUserMedia({
+      video: { facingMode: 'user' },
+      audio: false,
+    } as any);
     const track = (this.cameraStream as any).getVideoTracks()[0];
-    this.cameraProducer = await this.sendTransport.produce({ track, appData: { source: 'camera' } });
+    this.cameraProducer = await this.sendTransport.produce({
+      track,
+      appData: { source: 'camera' },
+    });
     this.emit('change');
   }
   async stopCamera() {
-    try { this.cameraProducer?.close(); this.cameraStream?.getTracks?.().forEach((t: any) => t.stop()); } catch {}
-    this.cameraProducer = null; this.cameraStream = null;
+    try {
+      this.cameraProducer?.close();
+      this.cameraStream?.getTracks?.().forEach((t: any) => t.stop());
+    } catch {}
+    this.cameraProducer = null;
+    this.cameraStream = null;
     this.emit('change');
   }
-  toggleCamera() { return this.cameraProducer ? this.stopCamera() : this.publishCamera(); }
+  toggleCamera() {
+    return this.cameraProducer ? this.stopCamera() : this.publishCamera();
+  }
 
   // --- Ekran paylaşımı (Android; iOS broadcast extension gerektirir, desteklenmez) ---
-  isScreenOn() { return !!this.screenProducer; }
+  isScreenOn() {
+    return !!this.screenProducer;
+  }
   async publishScreen() {
     if (!this.sendTransport || this.screenProducer) return;
     this.screenStream = await (mediaDevices as any).getDisplayMedia();
     const track = (this.screenStream as any).getVideoTracks()[0];
-    this.screenProducer = await this.sendTransport.produce({ track, appData: { source: 'screen' } });
+    this.screenProducer = await this.sendTransport.produce({
+      track,
+      appData: { source: 'screen' },
+    });
     track.addEventListener?.('ended', () => this.stopScreen());
     this.emit('change');
   }
   async stopScreen() {
-    try { this.screenProducer?.close(); this.screenStream?.getTracks?.().forEach((t: any) => t.stop()); } catch {}
-    this.screenProducer = null; this.screenStream = null;
+    try {
+      this.screenProducer?.close();
+      this.screenStream?.getTracks?.().forEach((t: any) => t.stop());
+    } catch {}
+    this.screenProducer = null;
+    this.screenStream = null;
     this.emit('change');
   }
-  toggleScreen() { return this.screenProducer ? this.stopScreen() : this.publishScreen(); }
+  toggleScreen() {
+    return this.screenProducer ? this.stopScreen() : this.publishScreen();
+  }
 
   // --- Sahne (stage) ---
-  isStageChannel() { return this.stage; }
-  amSpeaker() { return !this.stage || this.stageSpeakers.has(this.meId); }
-  myHandRaised() { return this.stageHands.has(this.meId); }
-  speakerIds() { return Array.from(this.stageSpeakers); }
-  handIds() { return Array.from(this.stageHands); }
+  isStageChannel() {
+    return this.stage;
+  }
+  amSpeaker() {
+    return !this.stage || this.stageSpeakers.has(this.meId);
+  }
+  myHandRaised() {
+    return this.stageHands.has(this.meId);
+  }
+  speakerIds() {
+    return Array.from(this.stageSpeakers);
+  }
+  handIds() {
+    return Array.from(this.stageHands);
+  }
   raiseHand(raise: boolean) {
-    try { this.ws?.send(JSON.stringify({ type: 'stageHand', payload: { raised: raise } })); } catch {}
+    try {
+      this.ws?.send(JSON.stringify({ type: 'stageHand', payload: { raised: raise } }));
+    } catch {}
   }
   makeSpeaker(userId: string, isSpeaker: boolean) {
-    try { this.ws?.send(JSON.stringify({ type: 'stageSpeaker', payload: { userId, isSpeaker } })); } catch {}
+    try {
+      this.ws?.send(JSON.stringify({ type: 'stageSpeaker', payload: { userId, isSpeaker } }));
+    } catch {}
   }
 
   setMuted(m: boolean) {
     this.muted = m;
     try {
-      if (m) this.audioProducer?.pause(); else this.audioProducer?.resume();
+      if (m) this.audioProducer?.pause();
+      else this.audioProducer?.resume();
       const t = this.micStream?.getAudioTracks?.()[0];
       if (t) t.enabled = !m;
     } catch {}
-    if (this.ws && this.ws.readyState === 1) { try { this.ws.send(JSON.stringify({ type: 'voiceState', payload: { mute: m } })); } catch {} }
+    if (this.ws && this.ws.readyState === 1) {
+      try {
+        this.ws.send(JSON.stringify({ type: 'voiceState', payload: { mute: m } }));
+      } catch {}
+    }
     this.emit('change');
   }
   setDeafened(d: boolean) {
     this.deafened = d;
-    for (const c of this.consumers.values()) { try { c.track.enabled = !d; } catch {} }
+    for (const c of this.consumers.values()) {
+      try {
+        c.track.enabled = !d;
+      } catch {}
+    }
     if (d && !this.muted) this.setMuted(true);
     this.emit('change');
   }
-  toggleMute() { this.setMuted(!this.muted); }
-  toggleDeafen() { this.setDeafened(!this.deafened); }
+  toggleMute() {
+    this.setMuted(!this.muted);
+  }
+  toggleDeafen() {
+    this.setDeafened(!this.deafened);
+  }
 
   async disconnect() {
     try {
@@ -226,27 +329,59 @@ class VoiceClient {
       this.micStream?.getTracks?.().forEach((t: any) => t.stop());
       this.cameraStream?.getTracks?.().forEach((t: any) => t.stop());
       this.screenStream?.getTracks?.().forEach((t: any) => t.stop());
-      for (const c of this.consumers.values()) { try { c.close(); } catch {} }
+      for (const c of this.consumers.values()) {
+        try {
+          c.close();
+        } catch {}
+      }
       this.sendTransport?.close();
       this.recvTransport?.close();
-      if (this.ws && this.ws.readyState === 1) { await this.request('leave').catch(() => {}); this.ws.close(); }
+      if (this.ws && this.ws.readyState === 1) {
+        await this.request('leave').catch(() => {});
+        this.ws.close();
+      }
     } catch {}
-    this.consumers.clear(); this.producerOwner.clear(); this.peers.clear(); this.videoRemotes.clear();
-    this.stageSpeakers.clear(); this.stageHands.clear(); this.stage = false;
-    this.ws = null; this.device = null; this.sendTransport = null; this.recvTransport = null;
-    this.audioProducer = null; this.micStream = null; this.cameraProducer = null; this.cameraStream = null;
-    this.screenProducer = null; this.screenStream = null;
+    this.consumers.clear();
+    this.producerOwner.clear();
+    this.peers.clear();
+    this.videoRemotes.clear();
+    this.stageSpeakers.clear();
+    this.stageHands.clear();
+    this.stage = false;
+    this.ws = null;
+    this.device = null;
+    this.sendTransport = null;
+    this.recvTransport = null;
+    this.audioProducer = null;
+    this.micStream = null;
+    this.cameraProducer = null;
+    this.cameraStream = null;
+    this.screenProducer = null;
+    this.screenStream = null;
     const ch = this.channelId;
-    this.channelId = null; this.channelName = ''; this.muted = false; this.deafened = false;
-    this.emit('change'); this.emit('disconnected', { channelId: ch });
+    this.channelId = null;
+    this.channelName = '';
+    this.muted = false;
+    this.deafened = false;
+    this.emit('change');
+    this.emit('disconnected', { channelId: ch });
   }
 
   private onMessage(raw: string) {
     let msg: any;
-    try { msg = JSON.parse(raw); } catch { return; }
+    try {
+      msg = JSON.parse(raw);
+    } catch {
+      return;
+    }
     if (msg.replyTo) {
       const p = this.pending.get(msg.replyTo);
-      if (p) { this.pending.delete(msg.replyTo); msg.type === 'error' ? p.reject(new Error(msg.payload?.message ?? 'hata')) : p.resolve(msg.payload); }
+      if (p) {
+        this.pending.delete(msg.replyTo);
+        msg.type === 'error'
+          ? p.reject(new Error(msg.payload?.message ?? 'hata'))
+          : p.resolve(msg.payload);
+      }
       return;
     }
     switch (msg.type) {
@@ -256,7 +391,8 @@ class VoiceClient {
         break;
       case 'peer:left': {
         const uid = String(msg.payload.userId);
-        for (const [pid, owner] of this.producerOwner.entries()) if (owner === uid) this.removeConsumer(pid);
+        for (const [pid, owner] of this.producerOwner.entries())
+          if (owner === uid) this.removeConsumer(pid);
         this.peers.delete(uid);
         this.emit('change');
         break;
@@ -264,7 +400,8 @@ class VoiceClient {
       case 'newProducer': {
         if (this.meId && String(msg.payload.userId) === this.meId) break; // kendi yayınını tüketme
         const src = msg.payload.appData?.source ?? 'mic';
-        if (['mic', 'camera', 'screen'].includes(src)) this.consume(msg.payload.producerId, String(msg.payload.userId), src).catch(() => {});
+        if (['mic', 'camera', 'screen'].includes(src))
+          this.consume(msg.payload.producerId, String(msg.payload.userId), src).catch(() => {});
         break;
       }
       case 'producerClosed':
@@ -280,13 +417,15 @@ class VoiceClient {
       }
       case 'stageHand': {
         const uid = String(msg.payload.userId);
-        if (msg.payload.raised) this.stageHands.add(uid); else this.stageHands.delete(uid);
+        if (msg.payload.raised) this.stageHands.add(uid);
+        else this.stageHands.delete(uid);
         this.emit('change');
         break;
       }
       case 'stageSpeaker': {
         const uid = String(msg.payload.userId);
-        if (msg.payload.isSpeaker) this.stageSpeakers.add(uid); else this.stageSpeakers.delete(uid);
+        if (msg.payload.isSpeaker) this.stageSpeakers.add(uid);
+        else this.stageSpeakers.delete(uid);
         this.stageHands.delete(uid);
         if (uid === this.meId) this.setMuted(!msg.payload.isSpeaker);
         this.emit('change');
@@ -297,11 +436,19 @@ class VoiceClient {
 
   private request(type: string, payload?: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      if (!this.ws || this.ws.readyState !== 1) { reject(new Error('ws kapalı')); return; }
+      if (!this.ws || this.ws.readyState !== 1) {
+        reject(new Error('ws kapalı'));
+        return;
+      }
       const id = String(++this.requestId);
       this.pending.set(id, { resolve, reject });
       this.ws.send(JSON.stringify({ id, type, payload }));
-      setTimeout(() => { if (this.pending.has(id)) { this.pending.delete(id); reject(new Error('zaman aşımı: ' + type)); } }, 10000);
+      setTimeout(() => {
+        if (this.pending.has(id)) {
+          this.pending.delete(id);
+          reject(new Error('zaman aşımı: ' + type));
+        }
+      }, 10000);
     });
   }
 }

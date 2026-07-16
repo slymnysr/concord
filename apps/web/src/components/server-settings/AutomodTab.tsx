@@ -218,7 +218,9 @@ export function AutomodTab({ guildId }: { guildId: string }) {
             </div>
           )}
           <div>
-            <label className="text-xs font-semibold uppercase text-ink-tertiary">{t('automod.actions')}</label>
+            <label className="text-xs font-semibold uppercase text-ink-tertiary">
+              {t('automod.actions')}
+            </label>
             <label className="flex items-center gap-2 mt-1.5 text-sm text-ink-secondary cursor-pointer">
               <input
                 type="checkbox"

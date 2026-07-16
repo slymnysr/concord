@@ -1,12 +1,22 @@
 import { test, expect } from '@playwright/test';
-import { makeUser, registerViaApi, seedSession, createGuild, guildChannels, sendMessage } from './helpers';
+import {
+  makeUser,
+  registerViaApi,
+  seedSession,
+  createGuild,
+  guildChannels,
+  sendMessage,
+} from './helpers';
 
 /**
  * Elle test turunda bulunan gerçek bug'ların regresyon testleri.
  * Bunlar bir kez kırıldı — bir daha sessizce kırılmasınlar.
  */
-test.describe('UI regresyonları (elle bulunan bug\'lar)', () => {
-  test('mesaj listesi KAYIYOR — metin ve ses kanalında (flexbox min-h-0 regresyonu)', async ({ page, request }) => {
+test.describe("UI regresyonları (elle bulunan bug'lar)", () => {
+  test('mesaj listesi KAYIYOR — metin ve ses kanalında (flexbox min-h-0 regresyonu)', async ({
+    page,
+    request,
+  }) => {
     const u = makeUser('scroll');
     const token = await registerViaApi(request, u);
     const guild = await createGuild(request, token, `E2E-S ${Date.now()}`);
@@ -21,7 +31,8 @@ test.describe('UI regresyonları (elle bulunan bug\'lar)', () => {
      */
     const check = async (label: string, needle: string) => {
       const r = await page.evaluate((txt) => {
-        const node = [...document.querySelectorAll('*')].reverse()
+        const node = [...document.querySelectorAll('*')]
+          .reverse()
           .find((e) => (e as HTMLElement).innerText?.includes(txt) && e.children.length === 0);
         if (!node) return { found: false } as const;
         let el = node.parentElement;
@@ -40,13 +51,21 @@ test.describe('UI regresyonları (elle bulunan bug\'lar)', () => {
       }, needle);
 
       expect(r.found, `${label}: mesaj ekranda yok — test kurulumu bozuk`).toBeTruthy();
-      expect(r.overflows, `${label}: liste kaymıyor — kayan ata yok, min-h-0 kısıtı kayıp`).toBeTruthy();
+      expect(
+        r.overflows,
+        `${label}: liste kaymıyor — kayan ata yok, min-h-0 kısıtı kayıp`,
+      ).toBeTruthy();
       expect(r.pageOverflows, `${label}: SAYFA taşıyor — yükseklik kısıtı kayıp`).toBeFalsy();
     };
 
     // Metin kanalı — taşıracak kadar mesaj
     for (let i = 0; i < 30; i++) {
-      await sendMessage(request, token, text.id, `Metin ${i} — container'ı doldurmak için yeterince uzun bir satır.`);
+      await sendMessage(
+        request,
+        token,
+        text.id,
+        `Metin ${i} — container'ı doldurmak için yeterince uzun bir satır.`,
+      );
     }
     await seedSession(page, request, u);
     await page.getByRole('button', { name: text.name, exact: true }).first().click();
@@ -57,7 +76,12 @@ test.describe('UI regresyonları (elle bulunan bug\'lar)', () => {
     // Metin kanalını doldurup ses kanalına bakmak boş liste ölçer, bug'ı kaçırır.
     expect(voice, 'ses kanalı bulunamadı').toBeTruthy();
     for (let i = 0; i < 30; i++) {
-      await sendMessage(request, token, voice.id, `Ses ${i} — ses kanalı sohbetini doldurmak için yeterince uzun bir satır.`);
+      await sendMessage(
+        request,
+        token,
+        voice.id,
+        `Ses ${i} — ses kanalı sohbetini doldurmak için yeterince uzun bir satır.`,
+      );
     }
     await page.getByRole('button', { name: voice.name, exact: true }).first().click();
     await expect(page.getByText('Ses 29')).toBeVisible({ timeout: 10_000 });

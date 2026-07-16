@@ -247,14 +247,16 @@ func (h *Handler) CreateMessage(w http.ResponseWriter, r *http.Request) {
 			if pid == uid || mentionedSet[pid] {
 				continue
 			}
-			_ = h.Notifications.Create(r.Context(), &repo.Notification{
+			dmN := &repo.Notification{
 				ID:        h.IDs.Next(),
 				UserID:    pid,
 				Type:      "dm_message",
 				ChannelID: &ch.ID,
 				MessageID: &m.ID,
 				ActorID:   &uid,
-			})
+			}
+			_ = h.Notifications.Create(r.Context(), dmN)
+			h.pushForNotification(dmN, h.actorName(r.Context(), uid), pushPreview(m.Content))
 		}
 	}
 

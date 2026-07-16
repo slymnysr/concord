@@ -15,10 +15,10 @@ scrape_configs:
     static_configs:
       # concord-host → compose'daki extra_hosts ile çözülür (bkz. .env HOST_IP).
       # PROD: API container olur → burada "api:8080" yazılır.
-      - targets: ["concord-host:8080"]
+      - targets: ['concord-host:8080']
         labels:
           service: api
 
   - job_name: prometheus
     static_configs:
-      - targets: ["localhost:9090"]
+      - targets: ['localhost:9090']

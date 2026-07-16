@@ -8,13 +8,17 @@ export function SearchModal() {
   const [q, setQ] = useState('');
   const mode = useAppSelector((s) => s.ui.mode);
   // DM görünümünde varsayılan kapsam "bu sohbet" (sunucu kapsamı DM'de anlamsız)
-  const [scope, setScope] = useState<'all' | 'guild' | 'channel'>(mode === 'dm' ? 'channel' : 'guild');
+  const [scope, setScope] = useState<'all' | 'guild' | 'channel'>(
+    mode === 'dm' ? 'channel' : 'guild',
+  );
   const [results, setResults] = useState<APISearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
   const guildId = useAppSelector((s) => s.guilds.selectedId);
   const channelId = useAppSelector((s) => s.channels.selectedId);
-  const guildChannels = useAppSelector((s) => (s.guilds.selectedId ? s.channels.byGuild[s.guilds.selectedId] ?? [] : []));
+  const guildChannels = useAppSelector((s) =>
+    s.guilds.selectedId ? (s.channels.byGuild[s.guilds.selectedId] ?? []) : [],
+  );
   const [members, setMembers] = useState<Awaited<ReturnType<typeof api.guilds.members>>>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -23,7 +27,11 @@ export function SearchModal() {
   }, []);
 
   useEffect(() => {
-    if (guildId) api.guilds.members(guildId).then(setMembers).catch(() => {});
+    if (guildId)
+      api.guilds
+        .members(guildId)
+        .then(setMembers)
+        .catch(() => {});
   }, [guildId]);
 
   useEffect(() => {
@@ -110,7 +118,9 @@ export function SearchModal() {
     const mid = r.message.id;
     const cid = r.channel.id;
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('concord:jump-to-message', { detail: { messageId: mid, channelId: cid } }));
+      window.dispatchEvent(
+        new CustomEvent('concord:jump-to-message', { detail: { messageId: mid, channelId: cid } }),
+      );
     }, 350);
   }
 
@@ -197,9 +207,7 @@ export function SearchModal() {
       <div className="max-h-96 overflow-y-auto space-y-2">
         {loading && <p className="text-sm text-ink-tertiary">{t('search.searching')}</p>}
         {!loading && q && results.length === 0 && (
-          <p className="text-sm text-ink-tertiary text-center py-6">
-            "{q}" için sonuç bulunamadı.
-          </p>
+          <p className="text-sm text-ink-tertiary text-center py-6">"{q}" için sonuç bulunamadı.</p>
         )}
         {results.map((r) => (
           <button

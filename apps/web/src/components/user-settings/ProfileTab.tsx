@@ -204,7 +204,9 @@ export function ProfileTab() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-ink-primary mb-1.5">{t('profile.pronouns')}</label>
+            <label className="block text-sm font-semibold text-ink-primary mb-1.5">
+              {t('profile.pronouns')}
+            </label>
             <input
               value={pronouns}
               onChange={(e) => setPronouns(e.target.value.slice(0, 40))}

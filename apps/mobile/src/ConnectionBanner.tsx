@@ -10,7 +10,9 @@ export function ConnectionBanner() {
   if (!state || state === 'connected') return null;
   return (
     <View style={[s.banner, state === 'disconnected' && s.bad]}>
-      <Text style={s.text}>{state === 'connecting' ? 'Bağlanıyor…' : 'Bağlantı koptu — yeniden bağlanılıyor…'}</Text>
+      <Text style={s.text}>
+        {state === 'connecting' ? 'Bağlanıyor…' : 'Bağlantı koptu — yeniden bağlanılıyor…'}
+      </Text>
     </View>
   );
 }

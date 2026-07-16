@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 import { makeUser, registerViaApi, seedSession, createGuild, guildChannels, API } from './helpers';
 
 test.describe('Kanal CRUD', () => {
-  test('kanal oluşturulur, listelenir, yeniden adlandırılır, silinir (API sözleşmesi)', async ({ request }) => {
+  test('kanal oluşturulur, listelenir, yeniden adlandırılır, silinir (API sözleşmesi)', async ({
+    request,
+  }) => {
     const u = makeUser('chan');
     const token = await registerViaApi(request, u);
     const auth = { Authorization: `Bearer ${token}` };
@@ -13,13 +15,19 @@ test.describe('Kanal CRUD', () => {
       headers: auth,
       data: { guild_id: guild.id, name: 'e2e-kanal', type: 'text' },
     });
-    expect(created.ok(), `kanal oluşturulamadı: ${created.status()} ${await created.text()}`).toBeTruthy();
+    expect(
+      created.ok(),
+      `kanal oluşturulamadı: ${created.status()} ${await created.text()}`,
+    ).toBeTruthy();
     const ch = await created.json();
     expect(typeof ch.id, 'kanal ID string olmalı (Snowflake hassasiyeti)').toBe('string');
 
     // READ
     let list = await guildChannels(request, token, guild.id);
-    expect(list.some((c: any) => c.id === ch.id), 'yeni kanal listede yok').toBeTruthy();
+    expect(
+      list.some((c: any) => c.id === ch.id),
+      'yeni kanal listede yok',
+    ).toBeTruthy();
 
     // UPDATE
     const renamed = await request.patch(`${API}/api/v1/channels/${ch.id}`, {
@@ -34,7 +42,10 @@ test.describe('Kanal CRUD', () => {
     const del = await request.delete(`${API}/api/v1/channels/${ch.id}`, { headers: auth });
     expect(del.ok(), `silme başarısız: ${del.status()}`).toBeTruthy();
     list = await guildChannels(request, token, guild.id);
-    expect(list.some((c: any) => c.id === ch.id), 'silinen kanal hâlâ listede').toBeFalsy();
+    expect(
+      list.some((c: any) => c.id === ch.id),
+      'silinen kanal hâlâ listede',
+    ).toBeFalsy();
   });
 
   test('üye olmayan kullanıcı sunucuya kanal açamaz (yetki)', async ({ request }) => {
@@ -64,6 +75,8 @@ test.describe('Kanal CRUD', () => {
     });
 
     await seedSession(page, request, u);
-    await expect(page.getByRole('button', { name: ad, exact: true }).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('button', { name: ad, exact: true }).first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });

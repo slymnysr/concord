@@ -11,12 +11,12 @@ services:
       POSTGRES_PASSWORD: concord_dev
       POSTGRES_DB: concord
     ports:
-      - "5433:5432"  # lokal postgres 5432'yi tutuyor, çakışmayı önle
+      - '5433:5432' # lokal postgres 5432'yi tutuyor, çakışmayı önle
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U concord"]
+      test: ['CMD-SHELL', 'pg_isready -U concord']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -26,12 +26,12 @@ services:
     container_name: concord-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ['redis-server', '--appendonly', 'yes']
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -47,13 +47,13 @@ services:
     container_name: concord-clamav
     restart: unless-stopped
     ports:
-      - "3310:3310"
+      - '3310:3310'
     healthcheck:
-      test: ["CMD-SHELL", "clamdscan --ping 1 || exit 1"]
+      test: ['CMD-SHELL', 'clamdscan --ping 1 || exit 1']
       interval: 30s
       timeout: 10s
       retries: 10
-      start_period: 120s  # ilk imza veritabanı indirmesi uzun sürer
+      start_period: 120s # ilk imza veritabanı indirmesi uzun sürer
 
   # Metrik toplama — API'nin /metrics endpoint'ini kazır
   prometheus:
@@ -61,14 +61,14 @@ services:
     container_name: concord-prometheus
     restart: unless-stopped
     ports:
-      - "9090:9090"
+      - '9090:9090'
     # DEV: API host'ta (WSL) çalışıyor. Docker Desktop'ta host.docker.internal VE
     # host-gateway'in ikisi de WINDOWS host'una çıkar → WSL'deki API'ye ULAŞMAZ.
     # Bu yüzden WSL IP'si .env'deki HOST_IP ile verilir (IP reboot'ta değişir, sabitleme!):
     #   echo "HOST_IP=$(hostname -I | awk '{print $1}')" > infra/docker/.env
     # PROD'da API container olur → prometheus.yml hedefi "api:8080" yapılır, bu satır silinir.
     extra_hosts:
-      - "concord-host:${HOST_IP:-host-gateway}"
+      - 'concord-host:${HOST_IP:-host-gateway}'
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -84,11 +84,11 @@ services:
     depends_on:
       - prometheus
     ports:
-      - "3001:3000"  # web :3000'i tuttuğu için 3001
+      - '3001:3000' # web :3000'i tuttuğu için 3001
     environment:
       GF_SECURITY_ADMIN_USER: concord
       GF_SECURITY_ADMIN_PASSWORD: concord_dev
-      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_ALLOW_SIGN_UP: 'false'
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - grafana_data:/var/lib/grafana
@@ -99,14 +99,14 @@ services:
     container_name: concord-minio
     restart: unless-stopped
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - '9000:9000'
+      - '9001:9001'
     # MinIO, ObjectCreated olaylarını host'ta çalışan API'ye POST eder (medya webhook'u).
     # NOT: Docker Desktop/WSL2'de host.docker.internal WINDOWS'u gösterir, WSL dağıtımını
     # DEĞİL → API'ye ulaşmaz. Prometheus'ta aynı tuzağa düşülmüştü; aynı çözüm:
     # HOST_IP=$(ip -4 addr show eth0 | grep -oP 'inet \K[0-9.]+') docker compose up -d
     extra_hosts:
-      - "concord-host:${HOST_IP:-host-gateway}"
+      - 'concord-host:${HOST_IP:-host-gateway}'
     environment:
       MINIO_ROOT_USER: concord
       MINIO_ROOT_PASSWORD: concord_dev_minio
@@ -114,7 +114,7 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -125,8 +125,8 @@ services:
     container_name: concord-mailhog
     restart: unless-stopped
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - '1025:1025'
+      - '8025:8025'
 
 volumes:
   postgres_data:

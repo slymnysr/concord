@@ -14,7 +14,8 @@ async function joinVoice(token: string, channelId: string): Promise<WebSocket> {
     ws.once('error', reject);
     // Sunucu upgrade'i kabul edip HEMEN kapatabilir (auth/param hatası) → open yanıltıcı
     ws.once('close', (code: number, reason: Buffer) =>
-      reject(new Error(`voice WS kapandı: ${code} ${reason.toString()}`)));
+      reject(new Error(`voice WS kapandı: ${code} ${reason.toString()}`)),
+    );
     setTimeout(() => reject(new Error('voice WS bağlantısı zaman aşımı')), 10_000);
   });
   ws.removeAllListeners('close');
@@ -32,7 +33,9 @@ test.describe('Ses presence sözleşmesi', () => {
    *      ID eşleşmediği için istemci adı çözemiyordu.
    * Bu test ikisini birden sabitler.
    */
-  test('/presence peer\'ı ID + AD ile döner (ad "yükleniyor" değil, ID string)', async ({ request }) => {
+  test('/presence peer\'ı ID + AD ile döner (ad "yükleniyor" değil, ID string)', async ({
+    request,
+  }) => {
     const u = makeUser('vp');
     const token = await registerViaApi(request, u);
     const guild = await createGuild(request, token, `E2E-V ${Date.now()}`);
@@ -48,7 +51,7 @@ test.describe('Ses presence sözleşmesi', () => {
       const peers = body[voice.id];
 
       expect(peers, 'kanalda peer listesi yok').toBeTruthy();
-      expect(peers.length, 'katılan kullanıcı presence\'ta görünmüyor').toBe(1);
+      expect(peers.length, "katılan kullanıcı presence'ta görünmüyor").toBe(1);
       expect(peers[0].name, 'peer ADI eksik → UI "yükleniyor..." gösterir').toBe(u.displayName);
       // Snowflake ID'ler 64-bit; JS Number 53-bit tutar → JSON'da STRING olmalı
       expect(typeof peers[0].id, 'peer ID string olmalı (Snowflake hassasiyeti)').toBe('string');
@@ -58,7 +61,7 @@ test.describe('Ses presence sözleşmesi', () => {
     }
   });
 
-  test('ayrılan kullanıcı presence\'tan düşer', async ({ request }) => {
+  test("ayrılan kullanıcı presence'tan düşer", async ({ request }) => {
     const u = makeUser('vl');
     const token = await registerViaApi(request, u);
     const guild = await createGuild(request, token, `E2E-VL ${Date.now()}`);
@@ -73,6 +76,9 @@ test.describe('Ses presence sözleşmesi', () => {
     await new Promise((res) => setTimeout(res, 1500));
 
     r = await request.get(`${VOICE_HTTP}/presence?channels=${voice.id}`);
-    expect((await r.json())[voice.id].length, 'bağlantı kapandı ama peer presence\'ta kaldı (hayalet)').toBe(0);
+    expect(
+      (await r.json())[voice.id].length,
+      "bağlantı kapandı ama peer presence'ta kaldı (hayalet)",
+    ).toBe(0);
   });
 });

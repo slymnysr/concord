@@ -1,0 +1,15 @@
+# Üretilmiş / dış kaynaklı dosyalar — format denetimi bunlara uygulanmamalı
+node_modules
+dist
+build
+coverage
+.expo
+apps/mobile/dist
+apps/voice/dist
+apps/gateway/_build
+apps/gateway/deps
+apps/api/bin
+e2e/test-results
+e2e/playwright-report
+pnpm-lock.yaml
+CHANGELOG.md

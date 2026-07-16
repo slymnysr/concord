@@ -10,22 +10,22 @@ import (
 )
 
 type welcomeView struct {
-	GuildID         string          `json:"guild_id"`
-	Enabled         bool            `json:"enabled"`
-	Description     string          `json:"description"`
-	WelcomeChannels json.RawMessage `json:"welcome_channels"`
-	RulesText       string          `json:"rules_text"`
-	RequireAccept   bool            `json:"require_accept"`
+	GuildID           string          `json:"guild_id"`
+	Enabled           bool            `json:"enabled"`
+	Description       string          `json:"description"`
+	WelcomeChannels   json.RawMessage `json:"welcome_channels"`
+	RulesText         string          `json:"rules_text"`
+	RequireAccept     bool            `json:"require_accept"`
 	OnboardingPrompts json.RawMessage `json:"onboarding_prompts"`
-	Accepted        bool            `json:"accepted"` // istek sahibi onboarding'i kabul etti mi
+	Accepted          bool            `json:"accepted"` // istek sahibi onboarding'i kabul etti mi
 }
 
 type updateWelcomeReq struct {
-	Enabled         *bool            `json:"enabled"`
-	Description     *string          `json:"description"`
-	WelcomeChannels *json.RawMessage `json:"welcome_channels"`
-	RulesText       *string          `json:"rules_text"`
-	RequireAccept   *bool            `json:"require_accept"`
+	Enabled           *bool            `json:"enabled"`
+	Description       *string          `json:"description"`
+	WelcomeChannels   *json.RawMessage `json:"welcome_channels"`
+	RulesText         *string          `json:"rules_text"`
+	RequireAccept     *bool            `json:"require_accept"`
 	OnboardingPrompts *json.RawMessage `json:"onboarding_prompts"`
 }
 

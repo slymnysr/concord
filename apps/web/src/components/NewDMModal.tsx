@@ -43,8 +43,7 @@ export function NewDMModal() {
     const q = query.trim().toLowerCase();
     if (!q) return friends;
     return friends.filter(
-      (f) =>
-        f.display_name.toLowerCase().includes(q) || f.username.toLowerCase().includes(q),
+      (f) => f.display_name.toLowerCase().includes(q) || f.username.toLowerCase().includes(q),
     );
   }, [friends, query]);
 
@@ -107,7 +106,8 @@ export function NewDMModal() {
                 key={id}
                 onClick={() => toggle(id)}
                 className="flex items-center gap-1.5 bg-brand-500/15 text-brand-300 text-xs font-medium pl-1 pr-2 py-1 rounded-full hover:bg-brand-500/25"
-                title={t('common.remove')} aria-label={t('common.remove')}
+                title={t('common.remove')}
+                aria-label={t('common.remove')}
               >
                 <span
                   className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold"
@@ -139,9 +139,7 @@ export function NewDMModal() {
           <p className="text-sm text-ink-tertiary px-2 py-4 text-center">{t('common.loading')}</p>
         ) : filtered.length === 0 ? (
           <p className="text-sm text-ink-tertiary px-2 py-4 text-center">
-            {friends.length === 0
-              ? t('dm.noFriends')
-              : t('dm.noMatchFriend')}
+            {friends.length === 0 ? t('dm.noFriends') : t('dm.noMatchFriend')}
           </p>
         ) : (
           filtered.map((f) => {

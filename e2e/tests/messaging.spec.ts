@@ -1,8 +1,19 @@
 import { test, expect } from '@playwright/test';
-import { makeUser, registerViaApi, seedSession, createGuild, guildChannels, sendMessage, API } from './helpers';
+import {
+  makeUser,
+  registerViaApi,
+  seedSession,
+  createGuild,
+  guildChannels,
+  sendMessage,
+  API,
+} from './helpers';
 
 test.describe('Mesajlaşma + realtime', () => {
-  test('mesaj gönderilir, realtime düşer, düzenleme/silme canlı yansır', async ({ page, request }) => {
+  test('mesaj gönderilir, realtime düşer, düzenleme/silme canlı yansır', async ({
+    page,
+    request,
+  }) => {
     const alice = makeUser('alice');
     const bob = makeUser('bob');
     const aliceToken = await registerViaApi(request, alice);
@@ -65,9 +76,12 @@ test.describe('Mesajlaşma + realtime', () => {
     const text = channels.find((c: any) => c.type === 'text');
 
     const msg = await sendMessage(request, token, text.id, 'tepki testi');
-    const add = await request.put(`${API}/api/v1/messages/${msg.id}/reactions/${encodeURIComponent('🔥')}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const add = await request.put(
+      `${API}/api/v1/messages/${msg.id}/reactions/${encodeURIComponent('🔥')}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     expect(add.ok()).toBeTruthy();
 
     const list = await request.get(`${API}/api/v1/channels/${text.id}/messages?limit=50`, {
@@ -87,7 +101,10 @@ test.describe('Mesajlaşma + realtime', () => {
    * Chrome'a anında geliyordu, ama Chrome'dan atılan Linux'a gelmiyordu (sayfa yenilemek
    * gerekiyordu). Tek tarayıcı + API'den enjekte eden test bunu KAÇIRIR; iki gerçek istemci şart.
    */
-  test('realtime ÇİFT YÖNLÜ: iki tarayıcı birbirinin mesajını yenilemeden görür', async ({ browser, request }) => {
+  test('realtime ÇİFT YÖNLÜ: iki tarayıcı birbirinin mesajını yenilemeden görür', async ({
+    browser,
+    request,
+  }) => {
     const alice = makeUser('rta');
     const bob = makeUser('rtb');
     const aliceToken = await registerViaApi(request, alice);
@@ -99,9 +116,13 @@ test.describe('Mesajlaşma + realtime', () => {
       data: {},
     });
     const { code } = await inv.json();
-    expect((await request.post(`${API}/api/v1/invites/${code}/accept`, {
-      headers: { Authorization: `Bearer ${bobToken}` },
-    })).ok()).toBeTruthy();
+    expect(
+      (
+        await request.post(`${API}/api/v1/invites/${code}/accept`, {
+          headers: { Authorization: `Bearer ${bobToken}` },
+        })
+      ).ok(),
+    ).toBeTruthy();
 
     const channels = await guildChannels(request, aliceToken, guild.id);
     const text = channels.find((c: any) => c.type === 'text');
@@ -130,7 +151,10 @@ test.describe('Mesajlaşma + realtime', () => {
       const fromB = `B-DEN-${Date.now()}`;
       await pageB.getByRole('textbox', { name: box }).fill(fromB);
       await pageB.keyboard.press('Enter');
-      await expect(pageA.getByText(fromB), 'B→A yönü düşmedi — tek yönlü realtime geri geldi').toBeVisible({ timeout: 10_000 });
+      await expect(
+        pageA.getByText(fromB),
+        'B→A yönü düşmedi — tek yönlü realtime geri geldi',
+      ).toBeVisible({ timeout: 10_000 });
     } finally {
       await ctxA.close();
       await ctxB.close();

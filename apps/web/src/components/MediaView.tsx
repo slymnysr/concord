@@ -10,7 +10,9 @@ export function MediaView({ channelId }: { channelId: string }) {
   const dispatch = useAppDispatch();
   const messages = useAppSelector((s) => s.messages.byChannel[channelId] ?? []);
   const guildId = useAppSelector((s) => s.guilds.selectedId);
-  const channel = useAppSelector((s) => (guildId ? s.channels.byGuild[guildId]?.find((c) => c.id === channelId) : null));
+  const channel = useAppSelector((s) =>
+    guildId ? s.channels.byGuild[guildId]?.find((c) => c.id === channelId) : null,
+  );
   const usersById = useAppSelector((s) => s.users.byId);
   const [lightbox, setLightbox] = useState<string | null>(null);
 
@@ -24,7 +26,11 @@ export function MediaView({ channelId }: { channelId: string }) {
     for (const a of m.attachments ?? []) {
       const ct = a.content_type ?? '';
       if (ct.startsWith('image/') || ct.startsWith('video/')) {
-        items.push({ att: a, author: usersById[m.author_id]?.display_name, created_at: m.created_at });
+        items.push({
+          att: a,
+          author: usersById[m.author_id]?.display_name,
+          created_at: m.created_at,
+        });
       }
     }
   }
@@ -60,12 +66,21 @@ export function MediaView({ channelId }: { channelId: string }) {
                   key={it.att.id + '-' + i}
                   onClick={() => !isVideo && setLightbox(it.att.url)}
                   className="group relative aspect-square rounded-lg overflow-hidden bg-surface-2 border border-line hover:ring-2 hover:ring-brand-500 transition"
-                  title={it.author ? `${it.author} · ${new Date(it.created_at).toLocaleString('tr-TR')}` : undefined}
+                  title={
+                    it.author
+                      ? `${it.author} · ${new Date(it.created_at).toLocaleString('tr-TR')}`
+                      : undefined
+                  }
                 >
                   {isVideo ? (
                     <video src={it.att.url} className="w-full h-full object-cover" muted />
                   ) : (
-                    <img src={it.att.url} alt={it.att.filename} loading="lazy" className="w-full h-full object-cover" />
+                    <img
+                      src={it.att.url}
+                      alt={it.att.filename}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
                   )}
                   {it.author && (
                     <span className="absolute bottom-0 inset-x-0 px-1.5 py-1 text-[10px] text-white bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 truncate text-left">
@@ -80,9 +95,19 @@ export function MediaView({ channelId }: { channelId: string }) {
       </div>
 
       {lightbox && (
-        <div className="fixed inset-0 z-[80] bg-black/80 flex items-center justify-center p-6" onClick={() => setLightbox(null)}>
-          <button className="absolute top-4 right-4 text-white/70 hover:text-white"><X size={28} /></button>
-          <img src={lightbox} alt="" className="max-w-full max-h-full rounded-lg object-contain" onClick={(e) => e.stopPropagation()} />
+        <div
+          className="fixed inset-0 z-[80] bg-black/80 flex items-center justify-center p-6"
+          onClick={() => setLightbox(null)}
+        >
+          <button className="absolute top-4 right-4 text-white/70 hover:text-white">
+            <X size={28} />
+          </button>
+          <img
+            src={lightbox}
+            alt=""
+            className="max-w-full max-h-full rounded-lg object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>

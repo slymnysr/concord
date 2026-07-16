@@ -1,6 +1,32 @@
 import { useEffect, useRef, useState } from 'react';
-import { Hash, Volume2, Megaphone, MessagesSquare, Mic, Users, UserPlus, Bell, Search, AtSign, Pin, Clock, Menu, type LucideIcon } from 'lucide-react';
-import { useAppDispatch, useAppSelector, toggleMemberList, setMobileNav, openModal, openProfileCard, selectChannel, switchToGuild, switchToDM, selectDM } from '../store';
+import {
+  Hash,
+  Volume2,
+  Megaphone,
+  MessagesSquare,
+  Mic,
+  Users,
+  UserPlus,
+  Bell,
+  Search,
+  AtSign,
+  Pin,
+  Clock,
+  Menu,
+  type LucideIcon,
+} from 'lucide-react';
+import {
+  useAppDispatch,
+  useAppSelector,
+  toggleMemberList,
+  setMobileNav,
+  openModal,
+  openProfileCard,
+  selectChannel,
+  switchToGuild,
+  switchToDM,
+  selectDM,
+} from '../store';
 import { api, type APIPublicUser } from '../api';
 import { t } from '../i18n';
 
@@ -22,9 +48,11 @@ export function ChannelHeader() {
     guildId && channelId ? s.channels.byGuild[guildId]?.find((c) => c.id === channelId) : null,
   );
   const showMembers = useAppSelector((s) => s.ui.showMemberList);
-  const memberCount = useAppSelector((s) => (guildId ? s.members.byGuild[guildId]?.length ?? 0 : 0));
+  const memberCount = useAppSelector((s) =>
+    guildId ? (s.members.byGuild[guildId]?.length ?? 0) : 0,
+  );
   const dispatch = useAppDispatch();
-  const Ico = mode === 'dm' ? AtSign : channel ? Icon[channel.type] ?? Hash : Hash;
+  const Ico = mode === 'dm' ? AtSign : channel ? (Icon[channel.type] ?? Hash) : Hash;
 
   const [dmPartner, setDmPartner] = useState<APIPublicUser | null>(null);
   useEffect(() => {
@@ -54,7 +82,8 @@ export function ChannelHeader() {
       <button
         onClick={() => dispatch(setMobileNav(true))}
         className="md:hidden w-8 h-8 -ml-1 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 shrink-0"
-        title={t('common.menu')} aria-label={t('common.menu')}
+        title={t('common.menu')}
+        aria-label={t('common.menu')}
       >
         <Menu size={20} />
       </button>
@@ -62,8 +91,9 @@ export function ChannelHeader() {
       <div className="flex items-baseline gap-3 min-w-0">
         <h1 className="text-ink-primary font-semibold truncate">
           {mode === 'dm'
-            ? dmPartner?.display_name ?? (channelId ? t('common.loading') : t('dm.pickConversation'))
-            : channel?.name ?? '—'}
+            ? (dmPartner?.display_name ??
+              (channelId ? t('common.loading') : t('dm.pickConversation')))
+            : (channel?.name ?? '—')}
         </h1>
         {channel?.type === 'announcement' && (
           <span className="text-[10px] font-bold uppercase tracking-wider bg-brand-500/15 text-brand-400 px-1.5 py-0.5 rounded shrink-0">
@@ -76,7 +106,11 @@ export function ChannelHeader() {
           </span>
         )}
         {channel && channel.rate_limit_sec > 0 && (
-          <span className="text-ink-tertiary text-[11px] flex items-center gap-0.5 shrink-0" title={t('channel.slowmodeActive')} aria-label={t('channel.slowmodeActive')}>
+          <span
+            className="text-ink-tertiary text-[11px] flex items-center gap-0.5 shrink-0"
+            title={t('channel.slowmodeActive')}
+            aria-label={t('channel.slowmodeActive')}
+          >
             <Clock size={12} /> {channel.rate_limit_sec}sn
           </span>
         )}
@@ -116,7 +150,8 @@ export function ChannelHeader() {
         {channelId && mode !== 'dm' && <PinsButton channelId={channelId} />}
         <button
           onClick={() => dispatch(openModal('search'))}
-          title={t('common.search')} aria-label={t('common.search')}
+          title={t('common.search')}
+          aria-label={t('common.search')}
           className="w-9 h-9 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 hover:text-ink-primary transition-colors"
         >
           <Search size={18} />
@@ -126,7 +161,8 @@ export function ChannelHeader() {
           <button
             type="button"
             onClick={() => dispatch(openModal('invite_link'))}
-            title={t('guild.createInviteLink')} aria-label={t('guild.createInviteLink')}
+            title={t('guild.createInviteLink')}
+            aria-label={t('guild.createInviteLink')}
             className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold flex items-center gap-1.5 transition-colors"
           >
             <UserPlus size={16} />
@@ -140,7 +176,9 @@ export function ChannelHeader() {
           aria-label={mode === 'dm' ? t('profile.toggle') : t('member.toggleList')}
           className={
             'h-9 px-2 min-w-9 rounded-lg flex items-center justify-center gap-1 transition-colors text-ink-secondary ' +
-            (showMembers ? 'bg-brand-500/15 text-brand-500' : 'hover:bg-surface-2 hover:text-ink-primary')
+            (showMembers
+              ? 'bg-brand-500/15 text-brand-500'
+              : 'hover:bg-surface-2 hover:text-ink-primary')
           }
         >
           <Users size={18} />
@@ -175,7 +213,9 @@ function NotificationsBell() {
     refreshCount();
     const t = setInterval(refreshCount, 15000);
     // Gerçek-zamanlı: yeni bildirim gelince (App → gateway → window) anında tazele
-    function onNotif() { refreshCount(); }
+    function onNotif() {
+      refreshCount();
+    }
     window.addEventListener('concord:notification', onNotif);
     return () => {
       clearInterval(t);
@@ -197,7 +237,8 @@ function NotificationsBell() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        title="Bildirimler" aria-label="Bildirimler"
+        title="Bildirimler"
+        aria-label="Bildirimler"
         className="w-9 h-9 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 hover:text-ink-primary transition-colors relative"
       >
         <Bell size={18} />
@@ -278,7 +319,7 @@ function NotificationItem({ n }: { n: import('../api').APINotification }) {
   } else if (n.type === 'reminder') {
     title = '⏰ Hatırlatma';
     const where = n.channel_name ? `#${n.channel_name}` : '';
-    body = n.message_preview ? `${where} — ${n.message_preview}` : (where || 'Kaydettiğin mesaj');
+    body = n.message_preview ? `${where} — ${n.message_preview}` : where || 'Kaydettiğin mesaj';
   } else {
     title = n.type;
     body = n.message_preview ?? '';
@@ -312,9 +353,7 @@ function NotificationItem({ n }: { n: import('../api').APINotification }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm text-ink-primary leading-snug">{title}</div>
-          {body && (
-            <div className="text-xs text-ink-tertiary truncate mt-0.5">{body}</div>
-          )}
+          {body && <div className="text-xs text-ink-tertiary truncate mt-0.5">{body}</div>}
           <div className="text-[10px] text-ink-muted mt-1">{rel}</div>
         </div>
         {unread && <span className="w-2 h-2 rounded-full bg-brand-500 mt-2 shrink-0" />}
@@ -351,18 +390,31 @@ function PinsButton({ channelId }: { channelId: string }) {
 
   const [count, setCount] = useState(0);
   useEffect(() => {
-    api.channels.pins(channelId).then((p) => { setItems(p); setCount(p.length); }).catch(() => {});
+    api.channels
+      .pins(channelId)
+      .then((p) => {
+        setItems(p);
+        setCount(p.length);
+      })
+      .catch(() => {});
   }, [channelId]);
   useEffect(() => {
     if (!open) return;
-    api.channels.pins(channelId).then((p) => { setItems(p); setCount(p.length); }).catch(() => {});
+    api.channels
+      .pins(channelId)
+      .then((p) => {
+        setItems(p);
+        setCount(p.length);
+      })
+      .catch(() => {});
   }, [open, channelId]);
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        title={t('msg.pinnedMessages')} aria-label={t('msg.pinnedMessages')}
+        title={t('msg.pinnedMessages')}
+        aria-label={t('msg.pinnedMessages')}
         className="w-9 h-9 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 hover:text-ink-primary transition-colors relative"
       >
         <Pin size={18} />
@@ -395,7 +447,11 @@ function PinsButton({ channelId }: { channelId: string }) {
                       onClick={() => {
                         setOpen(false);
                         setTimeout(() => {
-                          window.dispatchEvent(new CustomEvent('concord:jump-to-message', { detail: { messageId: m.id, channelId } }));
+                          window.dispatchEvent(
+                            new CustomEvent('concord:jump-to-message', {
+                              detail: { messageId: m.id, channelId },
+                            }),
+                          );
                         }, 100);
                       }}
                     >
@@ -425,7 +481,8 @@ function PinsButton({ channelId }: { channelId: string }) {
                             await api.messages.unpin(m.id).catch(() => {});
                             setItems((xs) => xs.filter((x) => x.id !== m.id));
                           }}
-                          title={t('msg.unpin')} aria-label={t('msg.unpin')}
+                          title={t('msg.unpin')}
+                          aria-label={t('msg.unpin')}
                           className="text-ink-tertiary hover:text-accent-500 text-xs shrink-0"
                         >
                           ✕
@@ -459,14 +516,18 @@ function ThreadsButton({ channelId }: { channelId: string }) {
 
   useEffect(() => {
     if (!open) return;
-    api.threads.list(channelId).then(setItems).catch(() => setItems([]));
+    api.threads
+      .list(channelId)
+      .then(setItems)
+      .catch(() => setItems([]));
   }, [open, channelId]);
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        title="Thread'ler" aria-label="Thread'ler"
+        title="Thread'ler"
+        aria-label="Thread'ler"
         className="w-9 h-9 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 hover:text-ink-primary transition-colors"
       >
         <MessagesSquare size={18} />
@@ -495,9 +556,11 @@ function ThreadsButton({ channelId }: { channelId: string }) {
                     >
                       <MessagesSquare size={14} className="text-ink-tertiary mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-ink-primary truncate">{t.name}</div>
+                        <div className="text-sm font-semibold text-ink-primary truncate">
+                          {t.name}
+                        </div>
                         <div className="text-[10px] text-ink-tertiary mt-0.5">
-                          {(t.message_count ?? 0)} mesaj · {(t.member_count ?? 0)} katılımcı
+                          {t.message_count ?? 0} mesaj · {t.member_count ?? 0} katılımcı
                         </div>
                       </div>
                     </button>

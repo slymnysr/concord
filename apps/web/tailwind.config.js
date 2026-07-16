@@ -45,14 +45,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: [
-          'Inter',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Roboto',
-          'sans-serif',
-        ],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
       boxShadow: {
         glow: '0 0 0 1px rgba(0, 217, 166, 0.4), 0 0 12px rgba(0, 217, 166, 0.25)',

@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/concord/api/internal/middleware"
 	"github.com/concord/api/internal/perms"
 	"github.com/concord/api/internal/repo"
+	"github.com/go-chi/chi/v5"
 )
 
 func (h *Handler) AddReaction(w http.ResponseWriter, r *http.Request) {
@@ -162,7 +162,6 @@ func (h *Handler) publishReaction(ctx context.Context, ch *repo.Channel, message
 		}
 	}
 }
-
 
 // GET /messages/{messageID}/reactions/{emoji}/users — bir emojiye kim tepki verdi
 func (h *Handler) ListReactionUsers(w http.ResponseWriter, r *http.Request) {

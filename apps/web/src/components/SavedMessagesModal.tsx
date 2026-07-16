@@ -9,7 +9,10 @@ export function SavedMessagesModal({ onClose }: { onClose: () => void }) {
   const [items, setItems] = useState<APISavedMessage[] | null>(null);
 
   useEffect(() => {
-    api.savedMessages.list().then(setItems).catch(() => setItems([]));
+    api.savedMessages
+      .list()
+      .then(setItems)
+      .catch(() => setItems([]));
   }, []);
 
   async function unsave(id: string) {
@@ -28,12 +31,19 @@ export function SavedMessagesModal({ onClose }: { onClose: () => void }) {
     }
     onClose();
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('concord:jump-to-message', { detail: { messageId: sm.message_id, channelId: sm.channel_id } }));
+      window.dispatchEvent(
+        new CustomEvent('concord:jump-to-message', {
+          detail: { messageId: sm.message_id, channelId: sm.channel_id },
+        }),
+      );
     }, 700);
   }
 
   return (
-    <div className="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
       <div
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-lg bg-surface-1 border border-line rounded-2xl shadow-2xl flex flex-col max-h-[80vh]"
@@ -77,13 +87,21 @@ export function SavedMessagesModal({ onClose }: { onClose: () => void }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 text-xs">
                       <span className="font-semibold text-ink-primary">{m.author_name}</span>
-                      {m.channel_name && <span className="text-ink-tertiary truncate">#{m.channel_name}</span>}
+                      {m.channel_name && (
+                        <span className="text-ink-tertiary truncate">#{m.channel_name}</span>
+                      )}
                     </div>
-                    <div className="text-sm text-ink-secondary truncate">{m.content || t('saved.fileOrPoll')}</div>
+                    <div className="text-sm text-ink-secondary truncate">
+                      {m.content || t('saved.fileOrPoll')}
+                    </div>
                   </div>
                   <button
-                    onClick={(e) => { e.stopPropagation(); unsave(m.message_id); }}
-                    title={t('saved.unsave')} aria-label={t('saved.unsave')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      unsave(m.message_id);
+                    }}
+                    title={t('saved.unsave')}
+                    aria-label={t('saved.unsave')}
                     className="opacity-0 group-hover:opacity-100 text-ink-tertiary hover:text-accent-500 shrink-0"
                   >
                     <Trash2 size={15} />

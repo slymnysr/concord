@@ -132,11 +132,11 @@ func (h *Handler) CreateAutomodRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"id":            strconv.FormatInt(id, 10),
-		"guild_id":      strconv.FormatInt(guildID, 10),
-		"name":          req.Name,
-		"enabled":       enabled,
-		"trigger_type":  req.TriggerType,
+		"id":           strconv.FormatInt(id, 10),
+		"guild_id":     strconv.FormatInt(guildID, 10),
+		"name":         req.Name,
+		"enabled":      enabled,
+		"trigger_type": req.TriggerType,
 	})
 }
 

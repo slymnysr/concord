@@ -42,49 +42,49 @@ spec:
             - { name: control, containerPort: 4444, hostPort: 4444 }
           env:
             - name: VOICE_PORT
-              value: "4443"
+              value: '4443'
             - name: VOICE_HTTP_PORT
-              value: "4444"
+              value: '4444'
             # Node'un DIŞARIDAN görünen IP'si — ICE adaylarında ilan edilir.
             - name: MS_ANNOUNCED_IP
               valueFrom: { fieldRef: { fieldPath: status.hostIP } }
             - name: MS_RTC_MIN_PORT
-              value: "40000"
+              value: '40000'
             - name: MS_RTC_MAX_PORT
-              value: "40100"
+              value: '40100'
             - name: JWT_SECRET
               valueFrom: { secretKeyRef: { name: concord-secrets, key: JWT_SECRET } }
             - name: VOICE_CONTROL_SECRET
               valueFrom: { secretKeyRef: { name: concord-secrets, key: VOICE_CONTROL_SECRET } }
             - name: API_INTERNAL_URL
-              value: "http://api:8080/api/v1"
+              value: 'http://api:8080/api/v1'
             # --- Çok-makine cascade (FAZ C) ---
             - name: VOICE_CLUSTER_ENABLED
-              value: "true"
+              value: 'true'
             - name: POD_NAME
               valueFrom: { fieldRef: { fieldPath: metadata.name } }
             - name: HOST_IP
               valueFrom: { fieldRef: { fieldPath: status.hostIP } }
             - name: VOICE_NODE_ID
-              value: "$(POD_NAME)"
+              value: '$(POD_NAME)'
             # Pipe transport'un DİĞER node'lardan erişilebilir IP'si. hostNetwork olduğu
             # için host IP'si doğru adres; 127.0.0.1 bırakılırsa node'lar birbirine
             # bağlanamaz ve cascade sessizce kurulamaz (kanal bölünür).
             - name: VOICE_PIPE_IP
-              value: "$(HOST_IP)"
+              value: '$(HOST_IP)'
             - name: VOICE_HTTP_URL
-              value: "http://$(HOST_IP):4444"
+              value: 'http://$(HOST_IP):4444'
             - name: VOICE_WS_URL
-              value: "ws://$(HOST_IP):4443"
+              value: 'ws://$(HOST_IP):4443'
             - name: VOICE_CLUSTER_SECRET
               valueFrom: { secretKeyRef: { name: concord-secrets, key: VOICE_CLUSTER_SECRET } }
             - name: REDIS_HOST
-              value: "redis"
+              value: 'redis'
             - name: REDIS_PORT
-              value: "6379"
+              value: '6379'
           resources:
             requests: { cpu: 500m, memory: 512Mi }
-            limits: { cpu: "4", memory: 2Gi }
+            limits: { cpu: '4', memory: 2Gi }
 ---
 apiVersion: v1
 kind: Service

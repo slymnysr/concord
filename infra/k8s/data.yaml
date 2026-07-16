@@ -32,16 +32,16 @@ spec:
           volumeMounts:
             - { name: data, mountPath: /var/lib/postgresql/data }
           readinessProbe:
-            exec: { command: ["pg_isready", "-U", "concord"] }
+            exec: { command: ['pg_isready', '-U', 'concord'] }
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:
             requests: { cpu: 200m, memory: 256Mi }
-            limits: { cpu: "2", memory: 2Gi }
+            limits: { cpu: '2', memory: 2Gi }
   volumeClaimTemplates:
     - metadata: { name: data }
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: ['ReadWriteOnce']
         resources: { requests: { storage: 20Gi } }
 ---
 apiVersion: v1
@@ -67,20 +67,20 @@ spec:
       containers:
         - name: redis
           image: redis:7-alpine
-          args: ["redis-server", "--appendonly", "yes"]
+          args: ['redis-server', '--appendonly', 'yes']
           ports: [{ name: redis, containerPort: 6379 }]
           volumeMounts: [{ name: data, mountPath: /data }]
           readinessProbe:
-            exec: { command: ["redis-cli", "ping"] }
+            exec: { command: ['redis-cli', 'ping'] }
             initialDelaySeconds: 3
             periodSeconds: 10
           resources:
             requests: { cpu: 100m, memory: 128Mi }
-            limits: { cpu: "1", memory: 1Gi }
+            limits: { cpu: '1', memory: 1Gi }
   volumeClaimTemplates:
     - metadata: { name: data }
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: ['ReadWriteOnce']
         resources: { requests: { storage: 5Gi } }
 ---
 apiVersion: v1
@@ -106,7 +106,7 @@ spec:
       containers:
         - name: minio
           image: minio/minio:latest
-          args: ["server", "/data", "--console-address", ":9001"]
+          args: ['server', '/data', '--console-address', ':9001']
           ports:
             - { name: s3, containerPort: 9000 }
             - { name: console, containerPort: 9001 }
@@ -122,11 +122,11 @@ spec:
             periodSeconds: 10
           resources:
             requests: { cpu: 100m, memory: 256Mi }
-            limits: { cpu: "1", memory: 1Gi }
+            limits: { cpu: '1', memory: 1Gi }
   volumeClaimTemplates:
     - metadata: { name: data }
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: ['ReadWriteOnce']
         resources: { requests: { storage: 50Gi } }
 ---
 apiVersion: v1
@@ -156,14 +156,14 @@ spec:
           image: clamav/clamav:latest
           ports: [{ name: clamd, containerPort: 3310 }]
           readinessProbe:
-            exec: { command: ["sh", "-c", "clamdscan --ping 1"] }
+            exec: { command: ['sh', '-c', 'clamdscan --ping 1'] }
             # İlk imza veritabanı indirmesi uzun sürer → cömert start period
             initialDelaySeconds: 120
             periodSeconds: 30
             failureThreshold: 10
           resources:
-            requests: { cpu: 200m, memory: 1Gi }   # ClamAV imza DB'si RAM'de tutulur
-            limits: { cpu: "1", memory: 2Gi }
+            requests: { cpu: 200m, memory: 1Gi } # ClamAV imza DB'si RAM'de tutulur
+            limits: { cpu: '1', memory: 2Gi }
 ---
 apiVersion: v1
 kind: Service

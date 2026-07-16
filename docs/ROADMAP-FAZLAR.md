@@ -1,6 +1,7 @@
 # Concord — Bağımsız Faz Planı (eşzamanlı çoklu-AI)
 
 ## TEMEL İLKE
+
 **Bölme birimi = üst-dizin (servis).** Her faz TAM BİR dizini sahiplenir; dizinler
 kesişmez → iki AI asla aynı dosyaya yazamaz (matematiksel garanti). Fazlar arası bağ
 varsa **dosya değil, SÖZLEŞME** (API kontratı) üzerinden olur; her AI kendi dizininde kalır.
@@ -9,6 +10,7 @@ varsa **dosya değil, SÖZLEŞME** (API kontratı) üzerinden olur; her AI kendi
 > bağımsız olamaz. O yüzden `apps/api`'nin TAMAMI tek AI'a gider.
 
 ## DOKTRİN (her fazda geçerli)
+
 1. Doğru çözümü İLK seferde yap; ilk zorlukta kötü 2. seçeneğe kaçma (ScyllaDB anti-deseni yasak).
 2. Stub/TODO/"şimdilik" yasak — başlattığın işi bitir.
 3. **Kendi dizininin DIŞINA çıkma.** Başka bölgeye dokunman gerekiyorsa → o iş senin değil,
@@ -19,23 +21,25 @@ varsa **dosya değil, SÖZLEŞME** (API kontratı) üzerinden olur; her AI kendi
 
 ## FAZLAR — hepsi AYNI ANDA, farklı AI'lara verilebilir (kesişen dosya YOK)
 
-| Faz | Dizin (sahiplendiği bölge) | Dil |
-|-----|----------------------------|-----|
-| **FAZ A** | `apps/api/` | Go |
-| **FAZ B** | `apps/web/` | React/TS |
-| **FAZ C** | `apps/voice/` | Node/mediasoup |
-| **FAZ D** | `apps/gateway/` | Elixir |
-| **FAZ E** | `apps/mobile/` | Expo/RN |
-| **FAZ F** | `infra/` + her app'in `Dockerfile`'ı | Docker/k8s |
-| **FAZ G** | `.github/` + `e2e/` | CI/Playwright |
+| Faz       | Dizin (sahiplendiği bölge)           | Dil            |
+| --------- | ------------------------------------ | -------------- |
+| **FAZ A** | `apps/api/`                          | Go             |
+| **FAZ B** | `apps/web/`                          | React/TS       |
+| **FAZ C** | `apps/voice/`                        | Node/mediasoup |
+| **FAZ D** | `apps/gateway/`                      | Elixir         |
+| **FAZ E** | `apps/mobile/`                       | Expo/RN        |
+| **FAZ F** | `infra/` + her app'in `Dockerfile`'ı | Docker/k8s     |
+| **FAZ G** | `.github/` + `e2e/`                  | CI/Playwright  |
 
 Bu 7 dizin ayrıktır → **7 AI aynı anda, sıfır çakışma.**
 
 ---
 
 ## FAZ A — Backend Çekirdek & Özellikler (`apps/api/`)
+
 **Sahiplenir:** `apps/api/**` (router, handlers, repo, middleware, storage, config, migrations)
 **Yapılacaklar (denetimden):**
+
 - **Rate limiting** — Redis token-bucket (per-IP + per-user), auth/upload sıkı. _Yapma: in-memory map._
 - **Prometheus `/metrics`** + RED middleware (istek/süre/hata).
 - **Prod secret zorlaması** — `config.go`: prod'da dev-default secret ise başlatmayı FAIL et.
@@ -44,20 +48,23 @@ Bu 7 dizin ayrıktır → **7 AI aynı anda, sıfır çakışma.**
 - **Arama** — Meilisearch/Typesense; mesaj yazımında index'le; alaka sıralaması. _Yapma: ILIKE'ta bırakma._
 - **Reactions N+1** — mesaj listesi tek istekte reaction getirir (embed veya batch endpoint).
 - **ID-serialization** — zaten temiz (string); teyit et.
-**Sözleşme (dışarıya):** FAZ B'nin çağıracağı endpoint şekilleri (medya/arama/reactions-batch) —
-bu dosyada `## API-KONTRAT` başlığı altında yayınla ki FAZ B ona kodlasın.
-**Bağımlılık:** FAZ F sağlar → Meilisearch/ClamAV adresleri (env). **Test:** handler + rate-limit(2-instance) + medya(kötü dosya reddi) + arama(yaz→ara).
+  **Sözleşme (dışarıya):** FAZ B'nin çağıracağı endpoint şekilleri (medya/arama/reactions-batch) —
+  bu dosyada `## API-KONTRAT` başlığı altında yayınla ki FAZ B ona kodlasın.
+  **Bağımlılık:** FAZ F sağlar → Meilisearch/ClamAV adresleri (env). **Test:** handler + rate-limit(2-instance) + medya(kötü dosya reddi) + arama(yaz→ara).
 
 ## FAZ B — Web (`apps/web/`)
+
 **Sahiplenir:** `apps/web/**` (`api.ts`, `store.ts`, tüm `components/`)
 **Yapılacaklar:**
+
 - **Tanrı-bileşen refaktörü** — `ServerSettingsModal`(2515) + `UserSettingsModal`(1905) sekme-başına böl (>600 satır kalmasın).
 - **Reactions N+1 (web tarafı)** — FAZ A'nın batch/embed endpoint'ini kullan (`MessageList`).
 - **Yeni endpoint tüketimi** — medya thumbnail'leri, arama UI'ı (FAZ A kontratına göre).
 - **i18n tamamlama** — kalan ~40 bileşeni `t()` ile sar.
-**Sözleşme (dışarıdan):** FAZ A'nın `## API-KONTRAT`'ını tüketir. **Test:** bileşen davranışı korunur (E2E ayar akışları).
+  **Sözleşme (dışarıdan):** FAZ A'nın `## API-KONTRAT`'ını tüketir. **Test:** bileşen davranışı korunur (E2E ayar akışları).
 
 ## FAZ C — Ses Ölçekleme (`apps/voice/`) ✅ TAMAM
+
 **Sahiplenir:** `apps/voice/**`
 **Durum:** çok-makine cascade çalışıyor; 2 AYRI node process'iyle KANITLANDI
 (`pnpm --filter @concord/voice test:cascade`): A'daki peer produce etti → küme olayı yayıldı →
@@ -80,6 +87,7 @@ bakmak aynı kanalı node'lara dağıtır → her yayın için pipe, bant geniş
 yerel peer'ları dönmek sözleşmeyi sessizce bozardı (istemci A'ya sorar, B'dekileri göremez).
 
 **FAZ C'nin bulduğu 2 gerçek bug:**
+
 1. **SFU seçici yanlış porta yönlendiriyordu:** uzak node'un adresini yerel porttan
    türetiyordu (`ws://<uzak-host>:<YEREL port>`). Tüm node'lar aynı portu kullanırsa tesadüfen
    çalışır. Artık her node KENDİ wsUrl'ini duyuruyor.
@@ -94,6 +102,7 @@ hayalet kalır), replicas 2, `VOICE_PIPE_IP=$(HOST_IP)` (127.0.0.1 kalırsa node
 bağlanamaz), `VOICE_CLUSTER_SECRET` (pipe uçları kimliksiz kalırsa yabancı RTP çekebilir).
 
 ## FAZ D — Gateway Kümeleme (`apps/gateway/`) ✅ TAMAM
+
 **Sahiplenir:** `apps/gateway/**`
 **Durum:** libcluster + dağıtık Phoenix.Presence çalışıyor; 2 node'la KANITLANDI
 (gw1 ↔ gw2 kümelendi, gw1'de track edilen kullanıcı gw2'den okundu). 14 ExUnit testi
@@ -105,6 +114,7 @@ keşif), `none`. Varsayılan artık sessizce gossip DEĞİL: hiçbir node bulama
 sanılıyordu → k8s ortamıysa kubernetes, CLUSTER_HOSTS varsa epmd, yoksa kapalı.
 
 **FAZ D'nin bulduğu 3 gerçek bug:**
+
 1. **Çift yayın (kümeleme açılınca patlardı):** RedisBridge her node'da çalışıp aynı Redis
    pattern'ine abone; `Endpoint.broadcast!` ise olayı PubSub ile TÜM node'lara dağıtıyordu →
    her istemci mesajı N kez alırdı (küme içi trafik N²). Doğrusu `local_broadcast`:
@@ -123,13 +133,16 @@ döndürdüğü için keşifte kullanılamaz), `RELEASE_NODE=gateway@$(POD_IP)`,
 düğmesi izlenimi veriyorlardı; Redis ayarı configMap'ten REDIS_HOST/PORT ile geliyor).
 
 ## FAZ E — Mobil (`apps/mobile/`)
+
 **Sahiplenir:** `apps/mobile/**`
 **Yapılacaklar:** cihaz testi bug'ları, **EAS build** (native ses/kamera/push), offline sağlamlık, **FCM push** entegrasyonu. _Yapma: "Expo Go'da çalışıyor" deyip native'i atlama._
 **Sözleşme (dışarıdan):** backend API kontratı sabit. **Test:** EAS dev client'ta FEATURES.md listesi.
 
 ## FAZ F — Dağıtım & Gözlemlenebilirlik & Altyapı (`infra/` + Dockerfile'lar)
+
 **Sahiplenir:** `infra/**`, `apps/{gateway,voice,web}/Dockerfile` (yeni), `docker-compose.yml`
 **Yapılacaklar:**
+
 - `gateway/voice/web` için prod **Dockerfile** (şu an sadece api var).
 - **Prometheus + Grafana** (FAZ A'nın `/metrics`'ini tüketir) + dashboard'lar.
 - **k8s** manifest'leri (tüm servisler).
@@ -139,6 +152,7 @@ düğmesi izlenimi veriyorlardı; Redis ayarı configMap'ten REDIS_HOST/PORT ile
 - Prod secret yönetimi (vault/env).
 
 > ### ✅ MEDYA WIRING'İ TAMAM (F → A koordinasyonu kapandı)
+>
 > FAZ A'nın medya kütüphanesi (`internal/media`) hazırdı ama webhook wiring'i bilerek F'e
 > bırakılmıştı (gerçek MinIO/ClamAV olmadan doğrulanamazdı). F altyapıyı kurunca yazıldı ve
 > **gerçek MinIO + gerçek ClamAV'a karşı uçtan uca doğrulandı:**
@@ -159,8 +173,10 @@ düğmesi izlenimi veriyorlardı; Redis ayarı configMap'ten REDIS_HOST/PORT ile
 **Sözleşme (dışarıya):** FAZ A/C/D'ye servis adresleri (env). **Bağımlılık:** Grafana←FAZ A metrics (mantıksal, dosya değil).
 
 ## FAZ G — Test & CI (`.github/` + `e2e/`) ✅ TAMAM
+
 **Sahiplenir:** `.github/workflows/**`, `e2e/`
 **Durum:** 18 E2E testi yeşil; CI job'ları: web, api, gateway, e2e, mobile, voice, lint-format.
+
 - Kapsam: giriş/kayıt, mesaj CRUD, **realtime çift-yönlü** (iki tarayıcı bağlamı — tek yönlü
   test bu bug'ı kaçırıyordu), ses presence adı + Snowflake string ID, scroll (metin **ve** ses
   kanalı, kanalın kendi sohbeti doldurularak), kanal CRUD + yetki, güvenlik başlıkları,
@@ -177,16 +193,20 @@ düğmesi izlenimi veriyorlardı; Redis ayarı configMap'ten REDIS_HOST/PORT ile
 ---
 
 ## ÇAPRAZ-BÖLGE SÖZLEŞMELERİ (dosya değil, anlaşma)
+
 Bir özellik iki bölgeye yayılıyorsa (ör. arama = FAZ A endpoint + FAZ B UI), iki AI **kontrat**
 üzerinden buluşur, kendi dizininde kalır:
+
 - **A ↔ B:** FAZ A `apps/api/docs/API-KONTRAT.md`'e yeni endpoint şekillerini yazar; FAZ B ona kodlar.
 - **F → A/C/D:** FAZ F servis adreslerini env olarak sağlar (Meilisearch/ClamAV/Prometheus).
 - **Sabit kontratlar:** Redis olay şeması (D), `/presence {id,name}[]` (C), ID'ler string (hepsi).
 
 ## GARANTİ
+
 7 fazın dizinleri ayrık üst-dizinler → **hiçbir iki AI aynı dosyaya yazamaz.** Özellik-düzeyi
 bağ yalnızca kontrat üzerinden; kod bloğu düzeyinde sıfır karışma.
 
 ## TIER 4 (gelecek, kendi bölge-planını ister)
+
 E2E şifreli DM, AI katmanı, plugin SDK, federasyon, mesaj-ölçek (Scylla'nın doğru zamanı),
 admin panel. Her biri ilgili dizin(ler)e düşer; başlarken aynı bölge-izolasyon analizini yap.

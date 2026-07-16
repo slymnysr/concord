@@ -14,12 +14,15 @@ import { getRoom, rooms } from './room.js';
 
 const log = pino({ name: 'voice/cascade', level: 'info' });
 
-type NewProducerNotifier = (channelId: string, payload: {
-  producerId: string;
-  userId: string;
-  kind: msTypes.MediaKind;
-  appData?: Record<string, unknown>;
-}) => void;
+type NewProducerNotifier = (
+  channelId: string,
+  payload: {
+    producerId: string;
+    userId: string;
+    kind: msTypes.MediaKind;
+    appData?: Record<string, unknown>;
+  },
+) => void;
 
 let notify: NewProducerNotifier = () => {};
 
@@ -85,7 +88,8 @@ export async function syncExistingRemoteProducers(channelId: string): Promise<vo
       const list = await fetchRemoteProducers(remote.httpUrl, channelId);
       for (const p of list) {
         const producer = await pipeInRemoteProducer(channelId, remote, p.producerId, p.userId);
-        if (producer) notify(channelId, { producerId: p.producerId, userId: p.userId, kind: p.kind });
+        if (producer)
+          notify(channelId, { producerId: p.producerId, userId: p.userId, kind: p.kind });
       }
     } catch (e) {
       log.warn({ err: String(e), remoteNodeId: remote.id }, 'uzak producer listesi alınamadı');
@@ -95,10 +99,13 @@ export async function syncExistingRemoteProducers(channelId: string): Promise<vo
 
 async function fetchRemoteProducers(httpUrl: string, channelId: string) {
   const { config } = await import('./config.js');
-  const res = await fetch(`${httpUrl}/internal/producers?channel=${encodeURIComponent(channelId)}`, {
-    headers: { 'x-voice-cluster-secret': config.cluster.secret },
-    signal: AbortSignal.timeout(5_000),
-  });
+  const res = await fetch(
+    `${httpUrl}/internal/producers?channel=${encodeURIComponent(channelId)}`,
+    {
+      headers: { 'x-voice-cluster-secret': config.cluster.secret },
+      signal: AbortSignal.timeout(5_000),
+    },
+  );
   if (!res.ok) throw new Error(`producers → ${res.status}`);
   return (await res.json()) as { producerId: string; userId: string; kind: msTypes.MediaKind }[];
 }

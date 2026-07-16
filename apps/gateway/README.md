@@ -25,14 +25,14 @@ mix phx.server
 ## Bağlantı testi
 
 ```javascript
-import { Socket } from "phoenix";
+import { Socket } from 'phoenix';
 
-const socket = new Socket("ws://localhost:4000/socket", {
-  params: { token: "dev_user123" }  // Faz 1'de gerçek JWT
+const socket = new Socket('ws://localhost:4000/socket', {
+  params: { token: 'dev_user123' }, // Faz 1'de gerçek JWT
 });
 socket.connect();
 
-const channel = socket.channel("guild:test", {});
-channel.join().receive("ok", () => console.log("Joined"));
-channel.push("ping").receive("ok", (r) => console.log(r));
+const channel = socket.channel('guild:test', {});
+channel.join().receive('ok', () => console.log('Joined'));
+channel.push('ping').receive('ok', (r) => console.log(r));
 ```

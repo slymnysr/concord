@@ -7,8 +7,14 @@ import { ScreenHeader, Empty, ui } from '../ui';
 
 export function SavedMessagesScreen({ onBack }: { onBack: () => void }) {
   const [items, setItems] = useState<SavedMessage[]>([]);
-  const load = () => api.savedMessages.list().then(setItems).catch(() => {});
-  useEffect(() => { load(); }, []);
+  const load = () =>
+    api.savedMessages
+      .list()
+      .then(setItems)
+      .catch(() => {});
+  useEffect(() => {
+    load();
+  }, []);
 
   return (
     <View style={ui.screen}>
@@ -24,7 +30,14 @@ export function SavedMessagesScreen({ onBack }: { onBack: () => void }) {
               <Text style={s.content}>{item.content}</Text>
               <Text style={s.time}>{new Date(item.saved_at).toLocaleString('tr-TR')}</Text>
             </View>
-            <TouchableOpacity onPress={() => api.savedMessages.unsave(item.message_id).then(load).catch(() => {})}>
+            <TouchableOpacity
+              onPress={() =>
+                api.savedMessages
+                  .unsave(item.message_id)
+                  .then(load)
+                  .catch(() => {})
+              }
+            >
               <Text style={s.remove}>Kaldır</Text>
             </TouchableOpacity>
           </View>
@@ -35,7 +48,15 @@ export function SavedMessagesScreen({ onBack }: { onBack: () => void }) {
 }
 
 const s = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
   author: { color: colors.brand, fontSize: 13, fontWeight: '700' },
   content: { color: colors.ink, fontSize: 15, marginTop: 2 },
   time: { color: colors.inkTertiary, fontSize: 12, marginTop: 4 },

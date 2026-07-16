@@ -32,7 +32,10 @@ export function ScheduleMessageModal({ channelId, initialContent, onClose, onSch
   const [existing, setExisting] = useState<APIScheduledMessage[]>([]);
 
   function loadExisting() {
-    api.scheduledMessages.list(channelId).then(setExisting).catch(() => {});
+    api.scheduledMessages
+      .list(channelId)
+      .then(setExisting)
+      .catch(() => {});
   }
   useEffect(loadExisting, [channelId]);
 
@@ -67,7 +70,10 @@ export function ScheduleMessageModal({ channelId, initialContent, onClose, onSch
   }
 
   return (
-    <div className="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
       <div
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-md bg-surface-1 border border-line rounded-2xl shadow-2xl flex flex-col max-h-[85vh]"
@@ -92,7 +98,9 @@ export function ScheduleMessageModal({ channelId, initialContent, onClose, onSch
           />
 
           <div>
-            <label className="text-xs font-semibold uppercase text-ink-tertiary">{t('sched.when')}</label>
+            <label className="text-xs font-semibold uppercase text-ink-tertiary">
+              {t('sched.when')}
+            </label>
             <div className="flex flex-wrap gap-1.5 mt-1.5 mb-2">
               {QUICK.map((q) => (
                 <button
@@ -116,15 +124,28 @@ export function ScheduleMessageModal({ channelId, initialContent, onClose, onSch
 
           {existing.length > 0 && (
             <div>
-              <label className="text-xs font-semibold uppercase text-ink-tertiary">{t('sched.inChannel')}</label>
+              <label className="text-xs font-semibold uppercase text-ink-tertiary">
+                {t('sched.inChannel')}
+              </label>
               <ul className="mt-1.5 space-y-1">
                 {existing.map((m) => (
-                  <li key={m.id} className="flex items-center gap-2 bg-surface-2 rounded-lg px-3 py-2 text-sm">
+                  <li
+                    key={m.id}
+                    className="flex items-center gap-2 bg-surface-2 rounded-lg px-3 py-2 text-sm"
+                  >
                     <span className="flex-1 min-w-0 truncate text-ink-secondary">{m.content}</span>
                     <span className="text-[11px] text-ink-tertiary shrink-0">
-                      {new Date(m.scheduled_for).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      {new Date(m.scheduled_for).toLocaleString('tr-TR', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </span>
-                    <button onClick={() => cancel(m.id)} className="text-ink-tertiary hover:text-accent-500 shrink-0">
+                    <button
+                      onClick={() => cancel(m.id)}
+                      className="text-ink-tertiary hover:text-accent-500 shrink-0"
+                    >
                       <Trash2 size={14} />
                     </button>
                   </li>
@@ -135,7 +156,10 @@ export function ScheduleMessageModal({ channelId, initialContent, onClose, onSch
         </div>
 
         <div className="px-5 py-4 border-t border-line flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-ink-secondary hover:text-ink-primary text-sm">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-ink-secondary hover:text-ink-primary text-sm"
+          >
             Kapat
           </button>
           <button

@@ -14,15 +14,28 @@ import { v4 as uuid } from 'uuid';
 import pino from 'pino';
 import { config } from './config.js';
 import { cluster } from './cluster.js';
-import { initCascade, setNewProducerNotifier, syncExistingRemoteProducers, onChannelEmpty } from './cascade.js';
+import {
+  initCascade,
+  setNewProducerNotifier,
+  syncExistingRemoteProducers,
+  onChannelEmpty,
+} from './cascade.js';
 import { pipedProducersFor, handlePrepare, handleConsume } from './pipe.js';
-import { rooms, getRoom, listPeerIds, getVoiceState, setVoiceState, applyVoiceStateToPeer } from './room.js';
+import {
+  rooms,
+  getRoom,
+  listPeerIds,
+  getVoiceState,
+  setVoiceState,
+  applyVoiceStateToPeer,
+} from './room.js';
 
 const log = pino({ name: 'voice/signaling', level: 'info' });
 
 // API'den kalıcı server-mute/deaf durumunu çekmek için (voice server restart durabilitesi)
 const API_INTERNAL_URL = process.env.API_INTERNAL_URL ?? 'http://localhost:8080/api/v1';
-const VOICE_CONTROL_SECRET = process.env.VOICE_CONTROL_SECRET ?? 'dev_voice_control_secret_change_me';
+const VOICE_CONTROL_SECRET =
+  process.env.VOICE_CONTROL_SECRET ?? 'dev_voice_control_secret_change_me';
 
 // Kanal join politikası: kullanıcı limiti + ses bitrate'i + limit muafiyeti (API'den)
 async function fetchJoinPolicy(
@@ -65,7 +78,11 @@ export function broadcastToChannel(channelId: string, m: { type: string; payload
   for (const client of wssRef.clients) {
     const c = client as AuthedSocket;
     if (c.readyState === WebSocket.OPEN && c.channelId === channelId) {
-      try { c.send(JSON.stringify(m)); } catch { /* yoksay */ }
+      try {
+        c.send(JSON.stringify(m));
+      } catch {
+        /* yoksay */
+      }
     }
   }
 }
@@ -77,7 +94,12 @@ interface Message {
   replyTo?: string;
 }
 
-type AuthedSocket = WebSocket & { userId?: string; userName?: string; channelId?: string; socketId?: string };
+type AuthedSocket = WebSocket & {
+  userId?: string;
+  userName?: string;
+  channelId?: string;
+  socketId?: string;
+};
 
 export function startSignaling() {
   // Cascade uzak bir producer'ı pipe'ladığında yerel peer'lara haber vermeli.
@@ -100,7 +122,11 @@ export function startSignaling() {
     }
 
     try {
-      const decoded = jwt.verify(token, config.jwtSecret) as { uid?: string | number; sub?: string; name?: string };
+      const decoded = jwt.verify(token, config.jwtSecret) as {
+        uid?: string | number;
+        sub?: string;
+        name?: string;
+      };
       // sub (JWT'de string) tercih edilir; uid JS'te sayı olarak gelirse Snowflake
       // ID'si 2^53 sınırını aşıp hassasiyet kaybeder (…792 → …790). sub kayıpsızdır.
       ws.userId = String(decoded.sub ?? decoded.uid ?? '');
@@ -209,7 +235,12 @@ async function handleMessage(ws: AuthedSocket, wss: WebSocketServer, msg: Messag
       // node'daki kimseyi duymaz (yalnızca katılımdan SONRAKİ yayınları alır).
       for (const { producer, userId } of pipedProducersFor(ws.channelId)) {
         if (userId === ws.userId) continue;
-        existing.push({ producerId: producer.id, userId, kind: producer.kind, appData: producer.appData });
+        existing.push({
+          producerId: producer.id,
+          userId,
+          kind: producer.kind,
+          appData: producer.appData,
+        });
       }
       send(ws, {
         type: 'joined',
@@ -354,7 +385,10 @@ async function handleMessage(ws: AuthedSocket, wss: WebSocketServer, msg: Messag
       const raised = !!msg.payload?.raised;
       if (raised) room.stageHands.add(ws.userId);
       else room.stageHands.delete(ws.userId);
-      broadcast(wss, ws.channelId, '', { type: 'stageHand', payload: { userId: ws.userId, raised } });
+      broadcast(wss, ws.channelId, '', {
+        type: 'stageHand',
+        payload: { userId: ws.userId, raised },
+      });
       return;
     }
 
@@ -364,9 +398,14 @@ async function handleMessage(ws: AuthedSocket, wss: WebSocketServer, msg: Messag
       const targetId = String(msg.payload?.userId ?? '');
       const isSpeaker = !!msg.payload?.isSpeaker;
       if (!targetId) return;
-      if (isSpeaker) { room.stageSpeakers.add(targetId); room.stageHands.delete(targetId); }
-      else room.stageSpeakers.delete(targetId);
-      broadcast(wss, ws.channelId, '', { type: 'stageSpeaker', payload: { userId: targetId, isSpeaker } });
+      if (isSpeaker) {
+        room.stageSpeakers.add(targetId);
+        room.stageHands.delete(targetId);
+      } else room.stageSpeakers.delete(targetId);
+      broadcast(wss, ws.channelId, '', {
+        type: 'stageSpeaker',
+        payload: { userId: targetId, isSpeaker },
+      });
       return;
     }
 
@@ -377,7 +416,11 @@ async function handleMessage(ws: AuthedSocket, wss: WebSocketServer, msg: Messag
     }
 
     default:
-      send(ws, { type: 'error', replyTo: msg.id, payload: { message: 'unknown type ' + msg.type } });
+      send(ws, {
+        type: 'error',
+        replyTo: msg.id,
+        payload: { message: 'unknown type ' + msg.type },
+      });
   }
 }
 

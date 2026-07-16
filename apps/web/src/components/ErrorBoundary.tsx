@@ -27,7 +27,11 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error(`[ErrorBoundary${this.props.scope ? `:${this.props.scope}` : ''}]`, error, info.componentStack);
+    console.error(
+      `[ErrorBoundary${this.props.scope ? `:${this.props.scope}` : ''}]`,
+      error,
+      info.componentStack,
+    );
   }
 
   reset = () => {
@@ -49,7 +53,9 @@ export class ErrorBoundary extends Component<Props, State> {
           </div>
           <h2 className="text-lg font-bold mb-1">{t('error.title')}</h2>
           <p className="text-sm text-ink-secondary mb-3">
-            {this.props.scope ? t('error.inScope', { scope: this.props.scope }) : t('error.unexpected')}
+            {this.props.scope
+              ? t('error.inScope', { scope: this.props.scope })
+              : t('error.unexpected')}
           </p>
           <pre className="text-left text-xs bg-surface-2 border border-line rounded-lg p-3 mb-4 overflow-auto max-h-40 text-accent-400 whitespace-pre-wrap">
             {error.message}

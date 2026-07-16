@@ -18,7 +18,8 @@ initDesktopBridge();
 document.documentElement.dataset.density = localStorage.getItem('concord_density') ?? 'cozy';
 document.documentElement.dataset.theme = localStorage.getItem('concord_theme') ?? 'dark';
 const savedZoom = localStorage.getItem('concord_zoom');
-if (savedZoom && savedZoom !== '100') (document.documentElement.style as any).zoom = String(parseInt(savedZoom, 10) / 100);
+if (savedZoom && savedZoom !== '100')
+  (document.documentElement.style as any).zoom = String(parseInt(savedZoom, 10) / 100);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

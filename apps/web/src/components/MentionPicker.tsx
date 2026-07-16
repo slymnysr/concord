@@ -13,22 +13,34 @@ interface Props {
 
 export function MentionPicker({ type, query, onPick, onClose }: Props) {
   const guildId = useAppSelector((s) => s.guilds.selectedId);
-  const members = useAppSelector((s) => (guildId ? s.members.byGuild[guildId] ?? [] : []));
-  const channels = useAppSelector((s) => (guildId ? s.channels.byGuild[guildId] ?? [] : []));
+  const members = useAppSelector((s) => (guildId ? (s.members.byGuild[guildId] ?? []) : []));
+  const channels = useAppSelector((s) => (guildId ? (s.channels.byGuild[guildId] ?? []) : []));
   const [emojis, setEmojis] = useState<Awaited<ReturnType<typeof api.emojis.list>>>([]);
   const [commands, setCommands] = useState<Awaited<ReturnType<typeof api.commands.list>>>([]);
 
   useEffect(() => {
     if (!guildId) return;
-    if (type === ':') api.emojis.list(guildId).then(setEmojis).catch(() => {});
-    if (type === '/') api.commands.list(guildId).then(setCommands).catch(() => {});
+    if (type === ':')
+      api.emojis
+        .list(guildId)
+        .then(setEmojis)
+        .catch(() => {});
+    if (type === '/')
+      api.commands
+        .list(guildId)
+        .then(setCommands)
+        .catch(() => {});
   }, [type, guildId]);
 
   const items = useMemo(() => {
     const q = query.toLowerCase();
     if (type === '@') {
       const u = members
-        .filter((m) => (m.nickname ?? m.display_name).toLowerCase().includes(q) || m.username.toLowerCase().includes(q))
+        .filter(
+          (m) =>
+            (m.nickname ?? m.display_name).toLowerCase().includes(q) ||
+            m.username.toLowerCase().includes(q),
+        )
         .slice(0, 8);
       return u.map((m) => ({
         key: m.user_id,
@@ -52,7 +64,9 @@ export function MentionPicker({ type, query, onPick, onClose }: Props) {
     if (type === '/') {
       const matches = commands.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 10);
       return matches.map((c) => {
-        const hint = (c.options ?? []).map((o) => (o.required ? `<${o.name}>` : `[${o.name}]`)).join(' ');
+        const hint = (c.options ?? [])
+          .map((o) => (o.required ? `<${o.name}>` : `[${o.name}]`))
+          .join(' ');
         return {
           key: c.id,
           label: '/' + c.name + (hint ? ' ' + hint : ''),
@@ -127,7 +141,11 @@ export function MentionPicker({ type, query, onPick, onClose }: Props) {
                   {it.label.slice(0, 1).toUpperCase()}
                 </div>
               ) : type === ':' && (it as any).imageUrl ? (
-                <img src={(it as any).imageUrl} alt="" className="w-6 h-6 object-contain shrink-0" />
+                <img
+                  src={(it as any).imageUrl}
+                  alt=""
+                  className="w-6 h-6 object-contain shrink-0"
+                />
               ) : type === '/' ? (
                 <Slash size={14} className="text-ink-tertiary shrink-0" />
               ) : (

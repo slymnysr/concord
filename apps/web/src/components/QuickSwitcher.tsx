@@ -36,13 +36,23 @@ export function QuickSwitcher({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    api.dms.list().then(setDms).catch(() => {});
+    api.dms
+      .list()
+      .then(setDms)
+      .catch(() => {});
   }, []);
 
   const items = useMemo<Item[]>(() => {
     const out: Item[] = [];
     for (const g of guilds) {
-      out.push({ key: 'g' + g.id, kind: 'guild', label: g.name, sub: t('quick.server'), guildId: g.id, color: g.icon_color });
+      out.push({
+        key: 'g' + g.id,
+        kind: 'guild',
+        label: g.name,
+        sub: t('quick.server'),
+        guildId: g.id,
+        color: g.icon_color,
+      });
     }
     for (const [gid, list] of Object.entries(byGuild)) {
       const gname = guilds.find((g) => g.id === gid)?.name ?? '';
@@ -64,8 +74,14 @@ export function QuickSwitcher({ onClose }: { onClose: () => void }) {
       const name =
         dm.type === 'group_dm'
           ? dm.name || t('quick.group')
-          : users[other ?? '']?.display_name ?? dm.name ?? t('quick.dm');
-      out.push({ key: 'd' + dm.id, kind: 'dm', label: name, sub: t('quick.directMessage'), channelId: dm.id });
+          : (users[other ?? '']?.display_name ?? dm.name ?? t('quick.dm'));
+      out.push({
+        key: 'd' + dm.id,
+        kind: 'dm',
+        label: name,
+        sub: t('quick.directMessage'),
+        channelId: dm.id,
+      });
     }
     // Mevcut sunucunun kanalları ve DM'ler öne gelsin
     out.sort((a, b) => {
@@ -118,7 +134,10 @@ export function QuickSwitcher({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[70] bg-black/60 flex items-start justify-center pt-24" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[70] bg-black/60 flex items-start justify-center pt-24"
+      onClick={onClose}
+    >
       <div
         ref={ref}
         onClick={(e) => e.stopPropagation()}
@@ -134,7 +153,9 @@ export function QuickSwitcher({ onClose }: { onClose: () => void }) {
         />
         <ul className="max-h-80 overflow-y-auto py-1">
           {filtered.length === 0 ? (
-            <li className="px-4 py-6 text-center text-sm text-ink-tertiary">{t('common.noResults')}</li>
+            <li className="px-4 py-6 text-center text-sm text-ink-tertiary">
+              {t('common.noResults')}
+            </li>
           ) : (
             filtered.map((it, i) => (
               <li key={it.key}>
@@ -160,8 +181,12 @@ export function QuickSwitcher({ onClose }: { onClose: () => void }) {
                   ) : (
                     <Hash size={16} className="text-ink-tertiary shrink-0" />
                   )}
-                  <span className="flex-1 min-w-0 truncate text-sm text-ink-primary">{it.label}</span>
-                  {it.sub && <span className="text-[11px] text-ink-tertiary shrink-0">{it.sub}</span>}
+                  <span className="flex-1 min-w-0 truncate text-sm text-ink-primary">
+                    {it.label}
+                  </span>
+                  {it.sub && (
+                    <span className="text-[11px] text-ink-tertiary shrink-0">{it.sub}</span>
+                  )}
                 </button>
               </li>
             ))

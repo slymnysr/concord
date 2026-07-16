@@ -2,23 +2,25 @@
 
 ## Çalışan Servisler
 
-| Servis | Port | Durum |
-|--------|------|-------|
-| Gateway (Elixir/Phoenix) | 4000 | ✓ |
-| API (Go/chi) | 8080 | ✓ |
-| Web (React/Vite) | 3000 | ✓ |
-| Voice (Node/mediasoup) | 4443 (WS), 4444 (HTTP) | ✓ |
-| PostgreSQL | 5433 | ✓ (9 migration) |
-| Redis | 6379 | ✓ |
-| ScyllaDB | 9042 | ✓ |
-| MinIO | 9000/9001 | ✓ |
+| Servis                   | Port                   | Durum           |
+| ------------------------ | ---------------------- | --------------- |
+| Gateway (Elixir/Phoenix) | 4000                   | ✓               |
+| API (Go/chi)             | 8080                   | ✓               |
+| Web (React/Vite)         | 3000                   | ✓               |
+| Voice (Node/mediasoup)   | 4443 (WS), 4444 (HTTP) | ✓               |
+| PostgreSQL               | 5433                   | ✓ (9 migration) |
+| Redis                    | 6379                   | ✓               |
+| ScyllaDB                 | 9042                   | ✓               |
+| MinIO                    | 9000/9001              | ✓               |
 
 ## Tamamlanan Fazlar
 
 **Faz 0 — İskele**
+
 - Turborepo monorepo, Docker compose, CI/CD
 
 **Faz 1 — MVP Chat**
+
 - Auth (register/login/refresh/me + JWT + Argon2id)
 - Snowflake ID üretici (Go)
 - Guild/channel/message CRUD
@@ -27,6 +29,7 @@
 - Frontend: AuthPage, ServerRail, ChannelList, MessageList, MessageInput, MemberList
 
 **Faz 1.x — Yönetim**
+
 - Davet seçenekleri (max-use, expire) + UI
 - Rol sistemi + 41 permission bitmask
 - Permission middleware (RequirePerm + ManageRoles vs.)
@@ -35,6 +38,7 @@
 - ServerSettingsModal (4 sekme: Genel, Roller, Üyeler, Banlanmış)
 
 **Faz 2 — Voice**
+
 - mediasoup voice servisi (Node.js)
 - WebRTC signaling (WebSocket)
 - Web voice client (mediasoup-client)
@@ -43,18 +47,21 @@
 - Modern UI: video grid + mikrofon/kamera/ekran/leave butonları
 
 **Faz 3 — Direct Messages**
+
 - DM kanalları (channels.type='dm') + dm_participants tablosu
 - DM açma + listeleme endpoint'leri
 - Friendship sistemi (request/accept/remove)
 - AddFriendModal UI
 
 **Faz 4 — Dosya + Reaksiyonlar**
+
 - MinIO entegrasyonu (S3 uyumlu)
 - Presigned URL ile direkt upload
 - Mesajda attachment desteği (image/video/file preview)
 - Reactions: add/remove + emoji picker
 
 **Faz 5 — Etkileşim**
+
 - @mentions parse + bildirim oluşturma
 - Notifications endpoint + bell UI
 - Mesaj edit + delete (backend + UI: hover menü, inline edit)

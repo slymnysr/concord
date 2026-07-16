@@ -97,7 +97,10 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
   }
 
   useEffect(() => {
-    api.users.user(userId).then(setUser).catch(() => setUser(null));
+    api.users
+      .user(userId)
+      .then(setUser)
+      .catch(() => setUser(null));
   }, [userId]);
 
   useEffect(() => {
@@ -233,7 +236,8 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
             <button
               ref={triggerRef}
               onClick={openMenu}
-              title={t('common.more')} aria-label={t('common.more')}
+              title={t('common.more')}
+              aria-label={t('common.more')}
               className="w-8 h-8 rounded-full flex items-center justify-center bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm"
             >
               <MoreHorizontal size={16} />
@@ -255,7 +259,9 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
                   <div
                     className={
                       'w-full px-3 py-2 flex items-center justify-between cursor-default ' +
-                      (inviteOpen ? 'bg-surface-3 text-ink-primary' : 'text-ink-primary hover:bg-surface-3')
+                      (inviteOpen
+                        ? 'bg-surface-3 text-ink-primary'
+                        : 'text-ink-primary hover:bg-surface-3')
                     }
                   >
                     <span className="flex items-center gap-2">
@@ -266,7 +272,9 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
                   {inviteOpen && (
                     <div className="absolute right-full top-0 mr-1 w-52 max-h-60 overflow-y-auto bg-surface-2 border border-line rounded-xl shadow-2xl py-1.5">
                       {myGuilds.length === 0 ? (
-                        <p className="px-3 py-2 text-xs text-ink-tertiary">{t('guild.noneOwned')}</p>
+                        <p className="px-3 py-2 text-xs text-ink-tertiary">
+                          {t('guild.noneOwned')}
+                        </p>
                       ) : (
                         <>
                           {visibleGuilds.map((g) => (
@@ -297,7 +305,12 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
                 <button
                   onClick={() => {
                     dispatch(toggleIgnore(user.id));
-                    dispatch(addToast({ kind: 'info', message: isIgnored ? t('user.unignored') : t('user.ignored') }));
+                    dispatch(
+                      addToast({
+                        kind: 'info',
+                        message: isIgnored ? t('user.unignored') : t('user.ignored'),
+                      }),
+                    );
                     setMenuOpen(false);
                   }}
                   className="w-full px-3 py-2 flex items-center gap-2 text-ink-primary hover:bg-surface-3"
@@ -318,7 +331,9 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
                       await api.users.report(user.id, reason);
                       dispatch(addToast({ kind: 'success', message: t('report.received') }));
                     } catch (e: any) {
-                      dispatch(addToast({ kind: 'error', message: e?.message || t('report.failed') }));
+                      dispatch(
+                        addToast({ kind: 'error', message: e?.message || t('report.failed') }),
+                      );
                     }
                   }}
                   className="w-full px-3 py-2 flex items-center gap-2 text-accent-400 hover:bg-accent-500/10"
@@ -339,7 +354,11 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
             style={{ backgroundColor: user.avatar_color }}
           >
             {user.avatar_url ? (
-              <img src={user.avatar_url} alt={user.display_name} className="w-full h-full object-cover" />
+              <img
+                src={user.avatar_url}
+                alt={user.display_name}
+                className="w-full h-full object-cover"
+              />
             ) : (
               user.display_name.slice(0, 1).toUpperCase()
             )}
@@ -382,7 +401,9 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
 
           {user.bio && (
             <Section title={t('profile.about')} aria-label={t('profile.about')}>
-              <p className="text-sm text-ink-primary leading-snug whitespace-pre-wrap">{user.bio}</p>
+              <p className="text-sm text-ink-primary leading-snug whitespace-pre-wrap">
+                {user.bio}
+              </p>
             </Section>
           )}
 
@@ -392,7 +413,10 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
             </div>
           )}
 
-          <Section title={t('profile.concordMembership')} aria-label={t('profile.concordMembership')}>
+          <Section
+            title={t('profile.concordMembership')}
+            aria-label={t('profile.concordMembership')}
+          >
             <p className="text-xs text-ink-secondary">
               {new Date(user.created_at).toLocaleDateString('tr-TR', {
                 day: 'numeric',
@@ -468,7 +492,10 @@ function UserNote({ userId }: { userId: string }) {
       }}
       onBlur={() => {
         if (saved) return;
-        api.users.setNote(userId, note).then(() => setSaved(true)).catch(() => {});
+        api.users
+          .setNote(userId, note)
+          .then(() => setSaved(true))
+          .catch(() => {});
       }}
       rows={2}
       placeholder={t('profile.notePlaceholder')}
@@ -486,7 +513,9 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
-  const [friends, setFriends] = useState<{ user_id: string; display_name: string; avatar_color: string; friendship: string }[]>([]);
+  const [friends, setFriends] = useState<
+    { user_id: string; display_name: string; avatar_color: string; friendship: string }[]
+  >([]);
 
   async function renameGroup() {
     const v = prompt('Grubun yeni adı:', groupName);
@@ -514,7 +543,10 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
   }
 
   useEffect(() => {
-    api.friends.list().then((l) => setFriends(l.filter((f) => f.friendship === 'accepted'))).catch(() => {});
+    api.friends
+      .list()
+      .then((l) => setFriends(l.filter((f) => f.friendship === 'accepted')))
+      .catch(() => {});
   }, []);
 
   async function addMember(userId: string) {
@@ -571,7 +603,8 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
           <button
             onClick={renameGroup}
             className="text-ink-tertiary hover:text-ink-primary"
-            title={t('dm.renameGroup')} aria-label={t('dm.renameGroup')}
+            title={t('dm.renameGroup')}
+            aria-label={t('dm.renameGroup')}
           >
             ✏️
           </button>
@@ -586,14 +619,21 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
           <p className="px-2 py-3 text-sm text-ink-tertiary">{t('common.loading')}</p>
         ) : (
           members.map((u) => (
-            <div key={u.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-surface-2">
+            <div
+              key={u.id}
+              className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-surface-2"
+            >
               <div className="relative shrink-0">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold overflow-hidden"
                   style={{ backgroundColor: u.avatar_color }}
                 >
                   {u.avatar_url ? (
-                    <img src={u.avatar_url} alt={u.display_name} className="w-full h-full object-cover" />
+                    <img
+                      src={u.avatar_url}
+                      alt={u.display_name}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     u.display_name.slice(0, 1).toUpperCase()
                   )}
@@ -608,13 +648,18 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
               <span className="text-sm text-ink-primary truncate flex-1">
                 {u.display_name}
                 {u.id === me?.id && <span className="text-ink-tertiary text-xs"> (sen)</span>}
-                {u.id === ownerId && <span className="ml-1 text-[10px]" title="Grup kurucusu">👑</span>}
+                {u.id === ownerId && (
+                  <span className="ml-1 text-[10px]" title="Grup kurucusu">
+                    👑
+                  </span>
+                )}
               </span>
               {ownerId === me?.id && u.id !== me?.id && (
                 <button
                   onClick={() => removeMember(u.id, u.display_name)}
                   className="shrink-0 w-6 h-6 rounded hover:bg-accent-500/15 text-ink-tertiary hover:text-accent-500 flex items-center justify-center text-xs"
-                  title={t('dm.removeFromGroup')} aria-label={u.display_name + ' kullanıcısını gruptan çıkar'}
+                  title={t('dm.removeFromGroup')}
+                  aria-label={u.display_name + ' kullanıcısını gruptan çıkar'}
                 >
                   ✕
                 </button>
@@ -643,7 +688,10 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
                     onClick={() => addMember(f.user_id)}
                     className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-3 text-left"
                   >
-                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: f.avatar_color }}>
+                    <span
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                      style={{ backgroundColor: f.avatar_color }}
+                    >
                       {f.display_name.slice(0, 1).toUpperCase()}
                     </span>
                     <span className="text-sm text-ink-primary truncate">{f.display_name}</span>

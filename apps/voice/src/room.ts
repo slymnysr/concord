@@ -7,13 +7,13 @@ import pino from 'pino';
 const log = pino({ name: 'voice/room', level: 'info' });
 
 export interface Peer {
-  id: string;          // user_id (snowflake string)
-  name?: string;       // görünen ad — presence'ta doğrudan gösterim için
-  socketId: string;    // websocket bağlantısı kimliği
+  id: string; // user_id (snowflake string)
+  name?: string; // görünen ad — presence'ta doğrudan gösterim için
+  socketId: string; // websocket bağlantısı kimliği
   sendTransport?: msTypes.WebRtcTransport;
   recvTransport?: msTypes.WebRtcTransport;
-  producers: Map<string, msTypes.Producer>;   // producerId -> producer
-  consumers: Map<string, msTypes.Consumer>;   // consumerId -> consumer
+  producers: Map<string, msTypes.Producer>; // producerId -> producer
+  consumers: Map<string, msTypes.Consumer>; // consumerId -> consumer
 }
 
 export class Room {
@@ -21,7 +21,7 @@ export class Room {
   peers = new Map<string, Peer>();
   // Sahne (stage) durumu
   stageSpeakers = new Set<string>(); // konuşmacı userId'leri
-  stageHands = new Set<string>();    // el kaldıranlar
+  stageHands = new Set<string>(); // el kaldıranlar
 
   constructor(channelId: string) {
     this.channelId = channelId;
@@ -134,7 +134,10 @@ export function applyVoiceStateToPeer(userId: string): void {
 }
 
 // Mod komutu: durumu kaydet + bağlıysa anında uygula
-export function setVoiceState(userId: string, partial: { mute?: boolean; deafen?: boolean }): { mute: boolean; deafen: boolean } {
+export function setVoiceState(
+  userId: string,
+  partial: { mute?: boolean; deafen?: boolean },
+): { mute: boolean; deafen: boolean } {
   const cur = getVoiceState(userId);
   const next = { mute: partial.mute ?? cur.mute, deafen: partial.deafen ?? cur.deafen };
   voiceStates.set(userId, next);

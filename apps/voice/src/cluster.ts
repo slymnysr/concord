@@ -37,7 +37,14 @@ const NODE_TTL_MS = 15_000;
 const HEARTBEAT_MS = 5_000;
 
 export type ClusterEvent =
-  | { type: 'producer:created'; channelId: string; nodeId: string; producerId: string; userId: string; kind: 'audio' | 'video' }
+  | {
+      type: 'producer:created';
+      channelId: string;
+      nodeId: string;
+      producerId: string;
+      userId: string;
+      kind: 'audio' | 'video';
+    }
   | { type: 'producer:closed'; channelId: string; nodeId: string; producerId: string }
   | { type: 'peer:left'; channelId: string; nodeId: string; userId: string };
 
@@ -58,8 +65,14 @@ export class VoiceCluster {
       log.info('küme KAPALI (tek node) — VOICE_CLUSTER_ENABLED=true ile açılır');
       return;
     }
-    this.pub = new Redis(config.cluster.redisUrl, { lazyConnect: true, maxRetriesPerRequest: null });
-    this.sub = new Redis(config.cluster.redisUrl, { lazyConnect: true, maxRetriesPerRequest: null });
+    this.pub = new Redis(config.cluster.redisUrl, {
+      lazyConnect: true,
+      maxRetriesPerRequest: null,
+    });
+    this.sub = new Redis(config.cluster.redisUrl, {
+      lazyConnect: true,
+      maxRetriesPerRequest: null,
+    });
     await this.pub.connect();
     await this.sub.connect();
 

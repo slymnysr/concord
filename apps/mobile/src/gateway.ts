@@ -13,8 +13,15 @@ const listeners = new Map<string, Set<Handler>>();
 
 export type ConnState = 'connected' | 'connecting' | 'disconnected';
 const connListeners = new Set<(s: ConnState) => void>();
-export function onConnection(cb: (s: ConnState) => void) { connListeners.add(cb); return () => { connListeners.delete(cb); }; }
-function emitConn(s: ConnState) { for (const cb of connListeners) cb(s); }
+export function onConnection(cb: (s: ConnState) => void) {
+  connListeners.add(cb);
+  return () => {
+    connListeners.delete(cb);
+  };
+}
+function emitConn(s: ConnState) {
+  for (const cb of connListeners) cb(s);
+}
 
 export function connectGateway(): Socket | null {
   const token = getAccessToken();
@@ -41,22 +48,41 @@ export function disconnectGateway() {
 
 function addListener(topic: string, h: Handler): () => void {
   let set = listeners.get(topic);
-  if (!set) { set = new Set(); listeners.set(topic, set); }
+  if (!set) {
+    set = new Set();
+    listeners.set(topic, set);
+  }
   set.add(h);
-  return () => { set?.delete(h); };
+  return () => {
+    set?.delete(h);
+  };
 }
 function fanout(topic: string, ev: string, payload: any) {
   for (const h of listeners.get(topic) ?? []) h(ev, payload);
 }
 
 const GUILD_EVENTS = [
-  'MESSAGE_CREATE', 'MESSAGE_UPDATE', 'MESSAGE_DELETE', 'TYPING_START',
-  'REACTION_ADD', 'REACTION_REMOVE', 'CHANNEL_CREATE', 'CHANNEL_UPDATE',
-  'CHANNEL_DELETE', 'PRESENCE_UPDATE',
+  'MESSAGE_CREATE',
+  'MESSAGE_UPDATE',
+  'MESSAGE_DELETE',
+  'TYPING_START',
+  'REACTION_ADD',
+  'REACTION_REMOVE',
+  'CHANNEL_CREATE',
+  'CHANNEL_UPDATE',
+  'CHANNEL_DELETE',
+  'PRESENCE_UPDATE',
 ];
 const USER_EVENTS = [
-  'MESSAGE_CREATE', 'MESSAGE_UPDATE', 'MESSAGE_DELETE', 'NOTIFICATION',
-  'CHANNEL_CREATE', 'CHANNEL_UPDATE', 'TYPING_START', 'REACTION_ADD', 'REACTION_REMOVE',
+  'MESSAGE_CREATE',
+  'MESSAGE_UPDATE',
+  'MESSAGE_DELETE',
+  'NOTIFICATION',
+  'CHANNEL_CREATE',
+  'CHANNEL_UPDATE',
+  'TYPING_START',
+  'REACTION_ADD',
+  'REACTION_REMOVE',
 ];
 
 export function joinGuild(guildId: string, onEvent: Handler): () => void {

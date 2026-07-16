@@ -45,7 +45,9 @@ export function ConnectionsTab() {
         load();
         dispatch(addToast({ kind: 'success', message: t('conn.added') }));
       })
-      .catch((e: any) => dispatch(addToast({ kind: 'error', message: e?.message || t('common.addFailed') })))
+      .catch((e: any) =>
+        dispatch(addToast({ kind: 'error', message: e?.message || t('common.addFailed') })),
+      )
       .finally(() => setBusy(false));
   };
 

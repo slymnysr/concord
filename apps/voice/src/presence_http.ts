@@ -35,11 +35,17 @@ export function startHTTP() {
         return res.end(JSON.stringify({ error: 'forbidden' }));
       }
       let body = '';
-      req.on('data', (chunk) => { body += chunk; if (body.length > 10000) req.destroy(); });
+      req.on('data', (chunk) => {
+        body += chunk;
+        if (body.length > 10000) req.destroy();
+      });
       req.on('end', () => {
         try {
           const { user_id, mute, deafen, channel_id } = JSON.parse(body || '{}');
-          if (!user_id) { res.statusCode = 400; return res.end(JSON.stringify({ error: 'user_id gerekli' })); }
+          if (!user_id) {
+            res.statusCode = 400;
+            return res.end(JSON.stringify({ error: 'user_id gerekli' }));
+          }
           const next = setVoiceState(String(user_id), {
             mute: typeof mute === 'boolean' ? mute : undefined,
             deafen: typeof deafen === 'boolean' ? deafen : undefined,
@@ -184,7 +190,9 @@ function findLocalProducer(channelId: string, producerId: string) {
 }
 
 /** Kümedeki TÜM node'lardan peer listelerini topla (sözleşme: {id,name}[]). */
-async function aggregatePresence(channels: string[]): Promise<Record<string, { id: string; name: string }[]>> {
+async function aggregatePresence(
+  channels: string[],
+): Promise<Record<string, { id: string; name: string }[]>> {
   const out: Record<string, { id: string; name: string }[]> = {};
   for (const c of channels) out[c] = listPeers(c);
   if (!cluster.enabled || channels.length === 0) return out;
@@ -192,10 +200,13 @@ async function aggregatePresence(channels: string[]): Promise<Record<string, { i
   const nodes = (await cluster.liveNodes()).filter((n) => n.id !== cluster.nodeId);
   const results = await Promise.allSettled(
     nodes.map(async (n) => {
-      const r = await fetch(`${n.httpUrl}/internal/peers?channels=${encodeURIComponent(channels.join(','))}`, {
-        headers: { 'x-voice-cluster-secret': config.cluster.secret },
-        signal: AbortSignal.timeout(3_000),
-      });
+      const r = await fetch(
+        `${n.httpUrl}/internal/peers?channels=${encodeURIComponent(channels.join(','))}`,
+        {
+          headers: { 'x-voice-cluster-secret': config.cluster.secret },
+          signal: AbortSignal.timeout(3_000),
+        },
+      );
       if (!r.ok) throw new Error(`${n.id} → ${r.status}`);
       return (await r.json()) as Record<string, { id: string; name: string }[]>;
     }),
@@ -215,7 +226,9 @@ async function aggregatePresence(channels: string[]): Promise<Record<string, { i
 }
 
 /** SFU seçici — kanalı zaten barındıran node önceliklidir, yoksa en az yüklü. */
-async function selectNode(channelId: string): Promise<{ nodeId: string; wsUrl: string; reason: string }> {
+async function selectNode(
+  channelId: string,
+): Promise<{ nodeId: string; wsUrl: string; reason: string }> {
   const self = { nodeId: cluster.nodeId, wsUrl: config.cluster.wsUrl, reason: 'tek-node' };
   if (!cluster.enabled) return self;
 

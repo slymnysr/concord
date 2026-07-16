@@ -25,7 +25,7 @@ export function AddFriendModal() {
   const me = useAppSelector((s) => s.auth.user);
 
   async function refresh() {
-    const r = (await api as any).request?.('/friends') as any;
+    const r = ((await api) as any).request?.('/friends') as any;
     // basit: doğrudan fetch et
     try {
       const res = await fetch(httpUrl('/api/v1/friends'), {

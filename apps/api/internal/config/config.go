@@ -30,6 +30,12 @@ type Config struct {
 	// MinIO bucket-notification webhook'unu koruyan secret. BOŞSA webhook KAPALIDIR
 	// (kimliksiz açık bırakmak, herkesin işleme tetiklemesi demek olurdu).
 	MediaEventSecret string
+	// Push bildirimi. VAPID anahtarları boşsa WEB push kapalıdır (payload şifrelemesi
+	// anahtarsız yapılamaz); Expo push anahtar istemez (EAS tarafında yapılandırılır).
+	ExpoAccessToken string
+	VAPIDPublicKey  string
+	VAPIDPrivateKey string
+	VAPIDSubject    string
 	// Rate limit (istek/dakika, PER-IP kaba tavan). Asıl brute-force savunması hesap kapsamlıdır
 	// (handlers/auth.go: maxFailPerEmailIP/Email/IP) — bu çit yalnızca kaba kötüye kullanımı keser
 	// ve paylaşımlı çıkış IP'lerini (operatör CGNAT'ı) boğmayacak kadar gevşek tutulur.
@@ -63,6 +69,10 @@ func Load() *Config {
 		AllowedOrigins:      splitCSV(getEnv("ALLOWED_ORIGINS", "http://localhost:3000")),
 		VoiceControlSecret:  getEnv("VOICE_CONTROL_SECRET", devVoiceSecret),
 		MediaEventSecret:    getEnv("MEDIA_EVENT_SECRET", ""),
+		ExpoAccessToken:     getEnv("EXPO_ACCESS_TOKEN", ""),
+		VAPIDPublicKey:      getEnv("VAPID_PUBLIC_KEY", ""),
+		VAPIDPrivateKey:     getEnv("VAPID_PRIVATE_KEY", ""),
+		VAPIDSubject:        getEnv("VAPID_SUBJECT", "mailto:admin@concord.local"),
 		AuthRateLimitPerMin: parseIntDefault(getEnv("AUTH_RATE_LIMIT_PER_MIN", "60"), 60),
 		APIRateLimitPerMin:  parseIntDefault(getEnv("API_RATE_LIMIT_PER_MIN", "600"), 600),
 		GitHubClientID:      getEnv("GITHUB_CLIENT_ID", ""),

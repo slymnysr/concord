@@ -39,7 +39,13 @@ export function ConnectionChips({ connections }: { connections?: APIConnection[]
             >
               <span aria-hidden>{meta.icon}</span>
               <span className="font-medium text-ink-primary">{c.name}</span>
-              {c.verified && <BadgeCheck size={12} className="text-brand-400" aria-label={t('conn.verifiedLabel')} />}
+              {c.verified && (
+                <BadgeCheck
+                  size={12}
+                  className="text-brand-400"
+                  aria-label={t('conn.verifiedLabel')}
+                />
+              )}
             </span>
           );
         })}

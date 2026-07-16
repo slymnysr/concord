@@ -34,11 +34,14 @@ export default function App() {
   const [me, setMe] = useState<User | null>(null);
   const [stack, setStack] = useState<Screen[]>([{ kind: 'home' }]);
 
-  const nav: Nav = useMemo(() => ({
-    push: (sc) => setStack((s) => [...s, sc]),
-    pop: () => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)),
-    reset: (sc) => setStack([sc]),
-  }), []);
+  const nav: Nav = useMemo(
+    () => ({
+      push: (sc) => setStack((s) => [...s, sc]),
+      pop: () => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)),
+      reset: (sc) => setStack([sc]),
+    }),
+    [],
+  );
 
   // Açılış: kayıtlı sunucu + token varsa otomatik giriş
   useEffect(() => {
@@ -46,7 +49,11 @@ export default function App() {
       await loadHost();
       await loadTokens();
       await loadNotifPref();
-      try { const u = await api.me(); setMe(u); registerForPush(); } catch {}
+      try {
+        const u = await api.me();
+        setMe(u);
+        registerForPush();
+      } catch {}
       setBooting(false);
     })();
   }, []);
@@ -54,7 +61,10 @@ export default function App() {
   // Android geri tuşu: yığında geri git
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (stack.length > 1) { nav.pop(); return true; }
+      if (stack.length > 1) {
+        nav.pop();
+        return true;
+      }
       return false;
     });
     return () => sub.remove();
@@ -67,7 +77,11 @@ export default function App() {
     setMe(null);
   }, []);
 
-  const onLogin = useCallback((u: User) => { setStack([{ kind: 'home' }]); setMe(u); registerForPush(); }, []);
+  const onLogin = useCallback((u: User) => {
+    setStack([{ kind: 'home' }]);
+    setMe(u);
+    registerForPush();
+  }, []);
 
   const top = stack[stack.length - 1];
   const activeRef = useRef<string | null>(null);
@@ -85,7 +99,11 @@ export default function App() {
       } else if (ev === 'MESSAGE_CREATE') {
         const msg = payload?.message;
         if (msg && msg.channel_id !== activeRef.current && String(msg.author_id) !== me.id) {
-          showToast('Yeni mesaj', { sub: msg.content, onPress: () => nav.push({ kind: 'chat', channel: { id: msg.channel_id, name: 'Mesaj' } }) });
+          showToast('Yeni mesaj', {
+            sub: msg.content,
+            onPress: () =>
+              nav.push({ kind: 'chat', channel: { id: msg.channel_id, name: 'Mesaj' } }),
+          });
           notifyLocal('Yeni mesaj', msg.content);
         }
       }
@@ -99,41 +117,70 @@ export default function App() {
         <StatusBar style="light" />
         {me ? <ConnectionBanner /> : null}
         <View style={s.body}>
-        {booting ? (
-          <View style={s.center}><ActivityIndicator color={colors.brand} size="large" /></View>
-        ) : !me ? (
-          <LoginScreen onLogin={onLogin} />
-        ) : top.kind === 'chat' ? (
-          <ChatScreen channel={top.channel} me={me} nav={nav} onBack={nav.pop} />
-        ) : top.kind === 'forum' ? (
-          <ForumScreen channel={top.channel} nav={nav} onBack={nav.pop} />
-        ) : top.kind === 'userSettings' ? (
-          <UserSettingsScreen me={me} setMe={setMe} nav={nav} onLogout={logout} onBack={nav.pop} />
-        ) : top.kind === 'developer' ? (
-          <DeveloperScreen onBack={nav.pop} />
-        ) : top.kind === 'friends' ? (
-          <FriendsScreen me={me} nav={nav} onBack={nav.pop} />
-        ) : top.kind === 'members' ? (
-          <MembersScreen guildId={top.guildId} guildName={top.guildName} me={me} nav={nav} onBack={nav.pop} />
-        ) : top.kind === 'serverSettings' ? (
-          <ServerSettingsScreen guildId={top.guildId} guildName={top.guildName} nav={nav} onBack={nav.pop} />
-        ) : top.kind === 'serverContent' ? (
-          <ServerContentScreen guildId={top.guildId} guildName={top.guildName} onBack={nav.pop} />
-        ) : top.kind === 'channelSettings' ? (
-          <ChannelSettingsScreen channelId={top.channelId} channelName={top.channelName} guildId={top.guildId} onBack={nav.pop} />
-        ) : top.kind === 'savedMessages' ? (
-          <SavedMessagesScreen onBack={nav.pop} />
-        ) : top.kind === 'quickSwitch' ? (
-          <QuickSwitcherScreen nav={nav} onBack={nav.pop} />
-        ) : top.kind === 'discover' ? (
-          <DiscoverScreen nav={nav} onBack={nav.pop} />
-        ) : top.kind === 'notifications' ? (
-          <NotificationsScreen onBack={nav.pop} />
-        ) : top.kind === 'search' ? (
-          <SearchScreen guildId={top.guildId} channelId={top.channelId} nav={nav} onBack={nav.pop} />
-        ) : (
-          <HomeScreen me={me} nav={nav} onLogout={logout} />
-        )}
+          {booting ? (
+            <View style={s.center}>
+              <ActivityIndicator color={colors.brand} size="large" />
+            </View>
+          ) : !me ? (
+            <LoginScreen onLogin={onLogin} />
+          ) : top.kind === 'chat' ? (
+            <ChatScreen channel={top.channel} me={me} nav={nav} onBack={nav.pop} />
+          ) : top.kind === 'forum' ? (
+            <ForumScreen channel={top.channel} nav={nav} onBack={nav.pop} />
+          ) : top.kind === 'userSettings' ? (
+            <UserSettingsScreen
+              me={me}
+              setMe={setMe}
+              nav={nav}
+              onLogout={logout}
+              onBack={nav.pop}
+            />
+          ) : top.kind === 'developer' ? (
+            <DeveloperScreen onBack={nav.pop} />
+          ) : top.kind === 'friends' ? (
+            <FriendsScreen me={me} nav={nav} onBack={nav.pop} />
+          ) : top.kind === 'members' ? (
+            <MembersScreen
+              guildId={top.guildId}
+              guildName={top.guildName}
+              me={me}
+              nav={nav}
+              onBack={nav.pop}
+            />
+          ) : top.kind === 'serverSettings' ? (
+            <ServerSettingsScreen
+              guildId={top.guildId}
+              guildName={top.guildName}
+              nav={nav}
+              onBack={nav.pop}
+            />
+          ) : top.kind === 'serverContent' ? (
+            <ServerContentScreen guildId={top.guildId} guildName={top.guildName} onBack={nav.pop} />
+          ) : top.kind === 'channelSettings' ? (
+            <ChannelSettingsScreen
+              channelId={top.channelId}
+              channelName={top.channelName}
+              guildId={top.guildId}
+              onBack={nav.pop}
+            />
+          ) : top.kind === 'savedMessages' ? (
+            <SavedMessagesScreen onBack={nav.pop} />
+          ) : top.kind === 'quickSwitch' ? (
+            <QuickSwitcherScreen nav={nav} onBack={nav.pop} />
+          ) : top.kind === 'discover' ? (
+            <DiscoverScreen nav={nav} onBack={nav.pop} />
+          ) : top.kind === 'notifications' ? (
+            <NotificationsScreen onBack={nav.pop} />
+          ) : top.kind === 'search' ? (
+            <SearchScreen
+              guildId={top.guildId}
+              channelId={top.channelId}
+              nav={nav}
+              onBack={nav.pop}
+            />
+          ) : (
+            <HomeScreen me={me} nav={nav} onLogout={logout} />
+          )}
         </View>
         {me ? <VoiceBar /> : null}
         <ToastHost />

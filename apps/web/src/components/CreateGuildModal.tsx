@@ -34,11 +34,36 @@ interface Template {
 
 const TEMPLATES: Template[] = [
   { key: 'gaming', label: 'Oyun', icon: <Gamepad2 size={18} />, suggestedName: 'Oyun Topluluğu' },
-  { key: 'friends', label: 'Arkadaşlar', icon: <Users size={18} />, suggestedName: 'Arkadaş Grubu' },
-  { key: 'study', label: 'Çalışma Grubu', icon: <BookOpen size={18} />, suggestedName: 'Çalışma Grubu' },
-  { key: 'school', label: 'Okul Kulübü', icon: <GraduationCap size={18} />, suggestedName: 'Okul Kulübü' },
-  { key: 'local', label: 'Yerel Topluluk', icon: <MapPin size={18} />, suggestedName: 'Yerel Topluluk' },
-  { key: 'artists', label: 'Sanatçılar ve Zanaatkarlar', icon: <Palette size={18} />, suggestedName: 'Sanat Topluluğu' },
+  {
+    key: 'friends',
+    label: 'Arkadaşlar',
+    icon: <Users size={18} />,
+    suggestedName: 'Arkadaş Grubu',
+  },
+  {
+    key: 'study',
+    label: 'Çalışma Grubu',
+    icon: <BookOpen size={18} />,
+    suggestedName: 'Çalışma Grubu',
+  },
+  {
+    key: 'school',
+    label: 'Okul Kulübü',
+    icon: <GraduationCap size={18} />,
+    suggestedName: 'Okul Kulübü',
+  },
+  {
+    key: 'local',
+    label: 'Yerel Topluluk',
+    icon: <MapPin size={18} />,
+    suggestedName: 'Yerel Topluluk',
+  },
+  {
+    key: 'artists',
+    label: 'Sanatçılar ve Zanaatkarlar',
+    icon: <Palette size={18} />,
+    suggestedName: 'Sanat Topluluğu',
+  },
 ];
 
 export function CreateGuildModal() {
@@ -59,7 +84,9 @@ export function CreateGuildModal() {
   function normalizeCode(input: string): string {
     const m = input
       .trim()
-      .match(/(?:(?:concord\.com|localhost(?::\d+)?|127\.0\.0\.1(?::\d+)?)\/(?:invite|davet)\/)?([a-z0-9]{4,16})/i);
+      .match(
+        /(?:(?:concord\.com|localhost(?::\d+)?|127\.0\.0\.1(?::\d+)?)\/(?:invite|davet)\/)?([a-z0-9]{4,16})/i,
+      );
     return m?.[1] ?? '';
   }
 
@@ -141,7 +168,9 @@ export function CreateGuildModal() {
           <span className="w-10 h-10 rounded-xl bg-brand-500/15 text-brand-500 flex items-center justify-center shrink-0">
             <Sparkles size={20} />
           </span>
-          <span className="flex-1 text-left font-semibold text-ink-primary">{t('guild.createMyself')}</span>
+          <span className="flex-1 text-left font-semibold text-ink-primary">
+            {t('guild.createMyself')}
+          </span>
           <ChevronRight size={18} className="text-ink-tertiary" />
         </button>
 
@@ -163,7 +192,9 @@ export function CreateGuildModal() {
               <span className="w-9 h-9 rounded-lg bg-surface-3 text-ink-secondary flex items-center justify-center shrink-0">
                 {t.icon}
               </span>
-              <span className="flex-1 text-left text-sm font-medium text-ink-primary">{t.label}</span>
+              <span className="flex-1 text-left text-sm font-medium text-ink-primary">
+                {t.label}
+              </span>
               <ChevronRight size={16} className="text-ink-tertiary" />
             </button>
           ))}
@@ -211,7 +242,9 @@ export function CreateGuildModal() {
           <span className="w-10 h-10 rounded-xl bg-brand-500/15 text-brand-500 flex items-center justify-center shrink-0">
             <Users size={20} />
           </span>
-          <span className="flex-1 text-left font-semibold text-ink-primary">{t('guild.forFriends')}</span>
+          <span className="flex-1 text-left font-semibold text-ink-primary">
+            {t('guild.forFriends')}
+          </span>
           <ChevronRight size={18} className="text-ink-tertiary" />
         </button>
         <button
@@ -221,12 +254,17 @@ export function CreateGuildModal() {
           <span className="w-10 h-10 rounded-xl bg-accent-500/15 text-accent-500 flex items-center justify-center shrink-0">
             <BookOpen size={20} />
           </span>
-          <span className="flex-1 text-left font-semibold text-ink-primary">{t('guild.forClub')}</span>
+          <span className="flex-1 text-left font-semibold text-ink-primary">
+            {t('guild.forClub')}
+          </span>
           <ChevronRight size={18} className="text-ink-tertiary" />
         </button>
         <div className="mt-5 text-center text-sm text-ink-secondary">
           Emin değil misin?{' '}
-          <button onClick={() => setStep('create')} className="text-brand-400 hover:underline font-medium">
+          <button
+            onClick={() => setStep('create')}
+            className="text-brand-400 hover:underline font-medium"
+          >
             Bu soruyu şimdilik geçebilirsin
           </button>
         </div>
@@ -247,7 +285,9 @@ export function CreateGuildModal() {
         >
           <ArrowLeft size={16} /> Geri
         </button>
-        <h2 className="text-xl font-bold text-ink-primary text-center mb-1">{t('guild.customize')}</h2>
+        <h2 className="text-xl font-bold text-ink-primary text-center mb-1">
+          {t('guild.customize')}
+        </h2>
         <p className="text-sm text-ink-secondary text-center mb-5">
           Yeni sunucuna bir kişilik kat. İstediğin zaman değiştirebilirsin.
         </p>
@@ -272,7 +312,9 @@ export function CreateGuildModal() {
           </label>
         </div>
 
-        <label className="block text-sm font-semibold text-ink-primary mb-1.5">{t('guild.nameLabel')}</label>
+        <label className="block text-sm font-semibold text-ink-primary mb-1.5">
+          {t('guild.nameLabel')}
+        </label>
         <input
           autoFocus
           value={name}
@@ -310,7 +352,9 @@ export function CreateGuildModal() {
       <p className="text-sm text-ink-secondary mb-5">
         Aşağıya bir davet bağlantısı girerek mevcut bir sunucuya katıl.
       </p>
-      <label className="block text-sm font-semibold text-ink-primary mb-1.5">{t('guild.inviteLink')}</label>
+      <label className="block text-sm font-semibold text-ink-primary mb-1.5">
+        {t('guild.inviteLink')}
+      </label>
       <input
         autoFocus
         value={inviteInput}

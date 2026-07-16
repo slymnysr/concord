@@ -34,8 +34,7 @@ export function OverviewTab({ guildId }: { guildId: string }) {
   }
   async function deleteGuild() {
     if (!guild) return;
-    if (!confirm(t('guild.deleteConfirm', { name: guild.name })))
-      return;
+    if (!confirm(t('guild.deleteConfirm', { name: guild.name }))) return;
     try {
       await api.guilds.deleteGuild(guild.id);
       await dispatch(fetchGuilds());
@@ -135,7 +134,10 @@ export function OverviewTab({ guildId }: { guildId: string }) {
           </div>
         </div>
         <Row label={t('guild.serverId')} value={guild.id} mono />
-        <Row label={t('guild.createdAt')} value={new Date(guild.created_at).toLocaleString('tr-TR')} />
+        <Row
+          label={t('guild.createdAt')}
+          value={new Date(guild.created_at).toLocaleString('tr-TR')}
+        />
         <div className="pt-3 border-t border-line">
           <div className="text-sm font-semibold text-ink-primary mb-1.5">{t('guild.banner')}</div>
           <label

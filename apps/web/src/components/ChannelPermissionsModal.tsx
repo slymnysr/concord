@@ -9,28 +9,29 @@ interface Props {
 }
 
 // Discord paritesi permission bitleri (perms.go ile bire bir)
-const PERMS: { key: string; bit: bigint; label: string; section: 'general' | 'text' | 'voice' }[] = [
-  { key: 'view', bit: 1n << 10n, label: t('perm.viewChannel'), section: 'general' },
-  { key: 'invite', bit: 1n << 0n, label: t('perm.createInvite'), section: 'general' },
-  { key: 'manage_channel', bit: 1n << 4n, label: t('perm.manageChannel'), section: 'general' },
-  { key: 'manage_roles', bit: 1n << 28n, label: t('perm.managePerms'), section: 'general' },
+const PERMS: { key: string; bit: bigint; label: string; section: 'general' | 'text' | 'voice' }[] =
+  [
+    { key: 'view', bit: 1n << 10n, label: t('perm.viewChannel'), section: 'general' },
+    { key: 'invite', bit: 1n << 0n, label: t('perm.createInvite'), section: 'general' },
+    { key: 'manage_channel', bit: 1n << 4n, label: t('perm.manageChannel'), section: 'general' },
+    { key: 'manage_roles', bit: 1n << 28n, label: t('perm.managePerms'), section: 'general' },
 
-  { key: 'send', bit: 1n << 11n, label: t('perm.sendMessages'), section: 'text' },
-  { key: 'embed', bit: 1n << 14n, label: t('perm.embedLinks'), section: 'text' },
-  { key: 'attach', bit: 1n << 15n, label: t('perm.attachFiles'), section: 'text' },
-  { key: 'add_reactions', bit: 1n << 6n, label: t('perm.addReactions'), section: 'text' },
-  { key: 'mention_everyone', bit: 1n << 17n, label: '@everyone Bahset', section: 'text' },
-  { key: 'manage_msgs', bit: 1n << 13n, label: t('perm.manageMessages'), section: 'text' },
-  { key: 'read_history', bit: 1n << 16n, label: t('perm.readHistory'), section: 'text' },
+    { key: 'send', bit: 1n << 11n, label: t('perm.sendMessages'), section: 'text' },
+    { key: 'embed', bit: 1n << 14n, label: t('perm.embedLinks'), section: 'text' },
+    { key: 'attach', bit: 1n << 15n, label: t('perm.attachFiles'), section: 'text' },
+    { key: 'add_reactions', bit: 1n << 6n, label: t('perm.addReactions'), section: 'text' },
+    { key: 'mention_everyone', bit: 1n << 17n, label: '@everyone Bahset', section: 'text' },
+    { key: 'manage_msgs', bit: 1n << 13n, label: t('perm.manageMessages'), section: 'text' },
+    { key: 'read_history', bit: 1n << 16n, label: t('perm.readHistory'), section: 'text' },
 
-  { key: 'connect', bit: 1n << 20n, label: t('perm.connect'), section: 'voice' },
-  { key: 'speak', bit: 1n << 21n, label: t('perm.speak'), section: 'voice' },
-  { key: 'video', bit: 1n << 9n, label: t('perm.video'), section: 'voice' },
-  { key: 'mute_members', bit: 1n << 22n, label: t('perm.muteMembers'), section: 'voice' },
-  { key: 'deafen_members', bit: 1n << 23n, label: t('perm.deafenMembers'), section: 'voice' },
-  { key: 'move_members', bit: 1n << 24n, label: t('perm.moveMembers'), section: 'voice' },
-  { key: 'priority_speaker', bit: 1n << 8n, label: t('perm.prioritySpeaker'), section: 'voice' },
-];
+    { key: 'connect', bit: 1n << 20n, label: t('perm.connect'), section: 'voice' },
+    { key: 'speak', bit: 1n << 21n, label: t('perm.speak'), section: 'voice' },
+    { key: 'video', bit: 1n << 9n, label: t('perm.video'), section: 'voice' },
+    { key: 'mute_members', bit: 1n << 22n, label: t('perm.muteMembers'), section: 'voice' },
+    { key: 'deafen_members', bit: 1n << 23n, label: t('perm.deafenMembers'), section: 'voice' },
+    { key: 'move_members', bit: 1n << 24n, label: t('perm.moveMembers'), section: 'voice' },
+    { key: 'priority_speaker', bit: 1n << 8n, label: t('perm.prioritySpeaker'), section: 'voice' },
+  ];
 
 type Tri = 'inherit' | 'allow' | 'deny';
 type Target = { type: 'role' | 'user'; id: string };
@@ -139,7 +140,10 @@ export function ChannelPermissionsModal({ channel }: Props) {
     setPickerOpen(false);
     // Override boş başlatılır — kullanıcı bir izni allow/deny yapınca yazılacak
     if (!overrides.find((o) => o.target_type === t.type && o.target_id === t.id)) {
-      setOverrides((xs) => [...xs, { target_type: t.type, target_id: t.id, allow: '0', deny: '0' }]);
+      setOverrides((xs) => [
+        ...xs,
+        { target_type: t.type, target_id: t.id, allow: '0', deny: '0' },
+      ]);
     }
   }
 
@@ -166,8 +170,10 @@ export function ChannelPermissionsModal({ channel }: Props) {
       ? [{ type: 'role' as const, id: roles.find((r) => r.is_everyone)!.id }]
       : []),
     ...overrides
-      .filter((o) => !(o.target_type === 'role' && roles.find((r) => r.id === o.target_id)?.is_everyone))
-      .map((o) => ({ type: o.target_type, id: o.target_id } as Target)),
+      .filter(
+        (o) => !(o.target_type === 'role' && roles.find((r) => r.id === o.target_id)?.is_everyone),
+      )
+      .map((o) => ({ type: o.target_type, id: o.target_id }) as Target),
   ];
 
   const sections: { label: string; section: 'general' | 'text' | 'voice' }[] = [
@@ -193,13 +199,13 @@ export function ChannelPermissionsModal({ channel }: Props) {
                 onClick={() => setSelected(t)}
                 className={
                   'w-full px-3 py-1.5 text-left flex items-center gap-2 transition-colors ' +
-                  (active ? 'bg-brand-500/10 text-ink-primary' : 'text-ink-secondary hover:bg-surface-2')
+                  (active
+                    ? 'bg-brand-500/10 text-ink-primary'
+                    : 'text-ink-secondary hover:bg-surface-2')
                 }
               >
                 <span
-                  className={
-                    'w-2.5 h-2.5 rounded-full shrink-0 ' + (t.type === 'role' ? '' : '')
-                  }
+                  className={'w-2.5 h-2.5 rounded-full shrink-0 ' + (t.type === 'role' ? '' : '')}
                   style={{ backgroundColor: targetColor(t) }}
                 />
                 <span className="text-sm truncate font-medium">{targetLabel(t)}</span>
@@ -251,11 +257,7 @@ export function ChannelPermissionsModal({ channel }: Props) {
                         className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-surface-2"
                       >
                         <span className="text-sm text-ink-primary">{p.label}</span>
-                        <TriToggle
-                          value={cur}
-                          disabled={busy}
-                          onChange={(v) => setTri(p.bit, v)}
-                        />
+                        <TriToggle value={cur} disabled={busy} onChange={(v) => setTri(p.bit, v)} />
                       </li>
                     );
                   })}
@@ -347,17 +349,23 @@ function TargetPicker({
   const filteredMembers = members.filter(
     (m) =>
       !existingSet.has(`user-${m.user_id}`) &&
-      ((m.nickname ?? m.display_name).toLowerCase().includes(q.toLowerCase())),
+      (m.nickname ?? m.display_name).toLowerCase().includes(q.toLowerCase()),
   );
 
   return (
-    <div className="absolute inset-0 z-10 bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+    <div
+      className="absolute inset-0 z-10 bg-black/60 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
       <div
         onClick={(e) => e.stopPropagation()}
         className="bg-surface-1 border border-line rounded-xl shadow-2xl w-full max-w-md max-h-[400px] flex flex-col overflow-hidden"
       >
         <div className="p-3 border-b border-line relative">
-          <Search size={14} className="absolute left-5 top-1/2 -translate-y-1/2 text-ink-tertiary" />
+          <Search
+            size={14}
+            className="absolute left-5 top-1/2 -translate-y-1/2 text-ink-tertiary"
+          />
           <input
             autoFocus
             value={q}

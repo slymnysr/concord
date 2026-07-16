@@ -49,11 +49,16 @@ export function VoiceStatusBar() {
   const guild = useAppSelector((s) => s.guilds.list.find((g) => g.id === guildId));
 
   // Kendi sunucu-susturma/sağırlaştırma durumum (mod tarafından) — buton kilidi + gösterge
-  const [serverState, setServerState] = useState(() => (me ? voice.getServerVoice(me.id) : { mute: false, deafen: false }));
+  const [serverState, setServerState] = useState(() =>
+    me ? voice.getServerVoice(me.id) : { mute: false, deafen: false },
+  );
   useEffect(() => {
     if (!me) return;
     setServerState(voice.getServerVoice(me.id));
-    const onVs = (ev: any) => { if (String(ev.userId) === me.id) setServerState({ mute: ev.serverMute, deafen: ev.serverDeaf }); };
+    const onVs = (ev: any) => {
+      if (String(ev.userId) === me.id)
+        setServerState({ mute: ev.serverMute, deafen: ev.serverDeaf });
+    };
     voice.on('voiceState:changed', onVs);
     return () => voice.off('voiceState:changed', onVs);
   }, [me?.id]);
@@ -78,10 +83,19 @@ export function VoiceStatusBar() {
     <div className="bg-surface-2 border-t border-line px-3 py-2 flex items-center gap-2">
       <SignalBars />
       <div className="flex-1 min-w-0">
-        <div className={'text-[12px] font-semibold flex items-center gap-1 ' + (srvMute || srvDeaf ? 'text-accent-500' : 'text-status-online')}>
+        <div
+          className={
+            'text-[12px] font-semibold flex items-center gap-1 ' +
+            (srvMute || srvDeaf ? 'text-accent-500' : 'text-status-online')
+          }
+        >
           <Volume2 size={12} className="shrink-0" />
           <span className="truncate">
-            {srvDeaf ? t('voice.serverDeafenedYou') : srvMute ? t('voice.serverMutedYou') : t('voice.connected')}
+            {srvDeaf
+              ? t('voice.serverDeafenedYou')
+              : srvMute
+                ? t('voice.serverMutedYou')
+                : t('voice.connected')}
           </span>
         </div>
         <div className="text-[10px] text-ink-tertiary truncate">
@@ -92,7 +106,13 @@ export function VoiceStatusBar() {
       <button
         onClick={toggleMic}
         disabled={srvMute || srvDeaf}
-        title={srvMute || srvDeaf ? 'Sunucu tarafından susturuldun — kendin açamazsın' : micOn ? t('voice.micOff') : t('voice.micOn')}
+        title={
+          srvMute || srvDeaf
+            ? 'Sunucu tarafından susturuldun — kendin açamazsın'
+            : micOn
+              ? t('voice.micOff')
+              : t('voice.micOn')
+        }
         className={
           'w-7 h-7 rounded-md flex items-center justify-center transition-colors shrink-0 ' +
           (srvMute || srvDeaf
@@ -105,13 +125,23 @@ export function VoiceStatusBar() {
         {micOn && !srvMute && !srvDeaf ? <Mic size={14} /> : <MicOff size={14} />}
       </button>
       <button
-        onClick={() => { if (!srvDeaf) voice.setDeafened(!deafened); }}
+        onClick={() => {
+          if (!srvDeaf) voice.setDeafened(!deafened);
+        }}
         disabled={srvDeaf}
-        title={srvDeaf ? t('voice.serverDeafenedByMod') : deafened ? t('voice.undeafen') : t('voice.deafen')}
+        title={
+          srvDeaf
+            ? t('voice.serverDeafenedByMod')
+            : deafened
+              ? t('voice.undeafen')
+              : t('voice.deafen')
+        }
         className={
           'w-7 h-7 rounded-md flex items-center justify-center transition-colors shrink-0 ' +
           (deafened || srvDeaf
-            ? 'bg-accent-500/' + (srvDeaf ? '25 cursor-not-allowed' : '15 hover:bg-accent-500/25') + ' text-accent-500'
+            ? 'bg-accent-500/' +
+              (srvDeaf ? '25 cursor-not-allowed' : '15 hover:bg-accent-500/25') +
+              ' text-accent-500'
             : 'text-ink-secondary hover:bg-surface-3 hover:text-ink-primary')
         }
       >
@@ -119,7 +149,8 @@ export function VoiceStatusBar() {
       </button>
       <button
         onClick={leave}
-        title={t('voice.leave')} aria-label={t('voice.leave')}
+        title={t('voice.leave')}
+        aria-label={t('voice.leave')}
         className="w-7 h-7 rounded-md text-ink-secondary hover:bg-accent-500 hover:text-white flex items-center justify-center transition-colors shrink-0"
       >
         <PhoneOff size={14} />
@@ -144,7 +175,13 @@ function SignalBars() {
   }, []);
 
   const color =
-    rtt === null ? 'bg-ink-tertiary/40' : rtt <= 80 ? 'bg-status-online' : rtt <= 200 ? 'bg-status-idle' : 'bg-status-dnd';
+    rtt === null
+      ? 'bg-ink-tertiary/40'
+      : rtt <= 80
+        ? 'bg-status-online'
+        : rtt <= 200
+          ? 'bg-status-idle'
+          : 'bg-status-dnd';
   const active = rtt === null ? 0 : rtt <= 80 ? 3 : rtt <= 200 ? 2 : 1;
 
   return (

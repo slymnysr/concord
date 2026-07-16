@@ -26,8 +26,8 @@
    └───────┘  └──────┘
 ```
 
-> **Doğruluk notu (2026-07):** Diyagram önceden API↔Gateway arasını *gRPC*, mesajları da
-> *ScyllaDB* gösteriyordu — ikisi de gerçeği yansıtmıyordu. Gerçek: iletişim **Redis PubSub**
+> **Doğruluk notu (2026-07):** Diyagram önceden API↔Gateway arasını _gRPC_, mesajları da
+> _ScyllaDB_ gösteriyordu — ikisi de gerçeği yansıtmıyordu. Gerçek: iletişim **Redis PubSub**
 > (`concord:guild:*` kanalları, `RedisBridge`), mesajlar **PostgreSQL**'de (`messages` tablosu,
 > `search_vector` ile FTS). ScyllaDB provisyonlanmış ama hiç kullanılmıyordu → **kaldırıldı**.
 > Mesaj-ölçek gerçek ihtiyaç olunca planlı bir faz olarak ele alınacak (bkz. `ROADMAP-FAZLAR.md` TIER 4).
@@ -35,6 +35,7 @@
 ## Servisler ve Sorumluluklar
 
 ### Gateway (Phoenix)
+
 - WebSocket bağlantı yönetimi (milyonlarca eşzamanlı)
 - Authentication (JWT doğrulama)
 - Channel join/leave (guild, dm, user kanalları)
@@ -43,6 +44,7 @@
 - Mesaj yayını (PubSub üzerinden API'den gelen olayları istemcilere ulaştırır)
 
 ### API (Go)
+
 - Kullanıcı kaydı, giriş, JWT üretimi
 - Guild/Channel/Role CRUD
 - Mesaj yazma (PostgreSQL'e yazar, ardından Redis PubSub'a yayar)
@@ -51,6 +53,7 @@
 - Moderasyon endpoint'leri
 
 ### Voice (Node.js + mediasoup)
+
 - WebRTC SFU (Selective Forwarding Unit)
 - Audio producer/consumer
 - Video + ekran paylaşımı
@@ -68,6 +71,7 @@
 ## Snowflake ID
 
 Discord-stili 64-bit ID:
+
 ```
 | 42 bit timestamp (ms since epoch) | 5 bit worker_id | 5 bit process_id | 12 bit sequence |
 ```

@@ -1,6 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { httpUrl } from '../serverConfig';
-import { Paperclip, Send, X, FileIcon, Smile, AtSign, Sticker, Mic, Square, BarChart3, Clock, LayoutTemplate } from 'lucide-react';
+import {
+  Paperclip,
+  Send,
+  X,
+  FileIcon,
+  Smile,
+  AtSign,
+  Sticker,
+  Mic,
+  Square,
+  BarChart3,
+  Clock,
+  LayoutTemplate,
+} from 'lucide-react';
 import { CreatePollModal } from './CreatePollModal';
 import { ScheduleMessageModal } from './ScheduleMessageModal';
 import { GifPicker } from './GifPicker';
@@ -51,7 +64,11 @@ export function MessageInput() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordingStartRef = useRef<number>(0);
   const [recordingDur, setRecordingDur] = useState(0);
-  const [mention, setMention] = useState<{ type: '@' | '#' | ':' | '/'; q: string; start: number } | null>(null);
+  const [mention, setMention] = useState<{
+    type: '@' | '#' | ':' | '/';
+    q: string;
+    start: number;
+  } | null>(null);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [replyPing, setReplyPing] = useState(true);
   const [nowTick, setNowTick] = useState(Date.now());
@@ -81,7 +98,9 @@ export function MessageInput() {
   );
   const replyAuthorUser = useAppSelector((s) => (replyAuthor ? s.users.byId[replyAuthor] : null));
   // Her yeni yanıtta ping varsayılan olarak açık başlasın (Discord davranışı)
-  useEffect(() => { if (replyTo) setReplyPing(true); }, [replyTo]);
+  useEffect(() => {
+    if (replyTo) setReplyPing(true);
+  }, [replyTo]);
 
   useEffect(() => {
     setValue('');
@@ -91,20 +110,38 @@ export function MessageInput() {
 
   // Bu kanaldaki bekleyen zamanlanmış mesaj sayısı (saat butonu rozeti)
   function refreshSchedCount() {
-    if (!channelId) { setSchedCount(0); return; }
-    api.scheduledMessages.list(channelId).then((l) => setSchedCount(l.length)).catch(() => setSchedCount(0));
+    if (!channelId) {
+      setSchedCount(0);
+      return;
+    }
+    api.scheduledMessages
+      .list(channelId)
+      .then((l) => setSchedCount(l.length))
+      .catch(() => setSchedCount(0));
   }
   useEffect(refreshSchedCount, [channelId]);
 
   useEffect(() => {
-    if (!guildId) { setStickers([]); return; }
+    if (!guildId) {
+      setStickers([]);
+      return;
+    }
     // Hem picker hem yazarken-öneri için sunucu sticker'larını yükle
-    api.stickers.list(guildId).then(setStickers).catch(() => {});
+    api.stickers
+      .list(guildId)
+      .then(setStickers)
+      .catch(() => {});
   }, [guildId]);
 
   useEffect(() => {
-    if (!guildId) { setCommands([]); return; }
-    api.commands.list(guildId).then(setCommands).catch(() => setCommands([]));
+    if (!guildId) {
+      setCommands([]);
+      return;
+    }
+    api.commands
+      .list(guildId)
+      .then(setCommands)
+      .catch(() => setCommands([]));
   }, [guildId]);
 
   // Profil kartından "Bahset" → kullanıcıyı composer'a ekle
@@ -126,7 +163,11 @@ export function MessageInput() {
       const msg = await api.channels.sendMessage(channelId, ' ', [
         { url, filename: name + '.png', content_type: 'image/png', size_bytes: 0 },
       ]);
-      dispatch({ type: 'messages/send/fulfilled', payload: msg, meta: { arg: { channelId, content: ' ' } } });
+      dispatch({
+        type: 'messages/send/fulfilled',
+        payload: msg,
+        meta: { arg: { channelId, content: ' ' } },
+      });
     } catch (e) {
       console.warn('sticker send', e);
     }
@@ -186,7 +227,12 @@ export function MessageInput() {
       await uploadFile(txtFile);
       // Yükleme tamamlanınca kullanıcı "Gönder"e tekrar basar; ya da otomatik gönderim için
       // dosya state'e eklendi, içerik temizlendi. Kullanıcıya bilgi ver.
-      dispatch(addToast({ kind: 'success', message: 'Uzun metin .txt dosyasına çevrildi — göndermek için tekrar gönder' }));
+      dispatch(
+        addToast({
+          kind: 'success',
+          message: 'Uzun metin .txt dosyasına çevrildi — göndermek için tekrar gönder',
+        }),
+      );
       return;
     }
 
@@ -206,39 +252,44 @@ export function MessageInput() {
       if (!v) return;
       // makro normal mesaj olarak gönderilir (slash kontrolünü atla)
     } else {
-    // Slash command algıla: /komut [arg1 arg2 ...] formatı
-    const slashMatch = v.match(/^\/([a-z0-9_-]+)(?:\s+([\s\S]+))?$/i);
-    if (slashMatch) {
-      const cmdName = slashMatch[1].toLowerCase();
-      const rest = (slashMatch[2] ?? '').trim();
-      const cmd = commands.find((c) => c.name.toLowerCase() === cmdName);
-      if (cmd) {
-        // Pozisyonel argümanları opsiyon isimlerine eşle (son opsiyon kalanı alır)
-        const args: Record<string, string> = {};
-        const opts = cmd.options ?? [];
-        if (opts.length > 0 && rest) {
-          const parts = rest.split(/\s+/);
-          opts.forEach((o, i) => {
-            if (i === opts.length - 1) args[o.name] = parts.slice(i).join(' ');
-            else args[o.name] = parts[i] ?? '';
-          });
-        }
-        // Zorunlu argüman eksikse uyar, normal mesaj olarak gönderme
-        const missing = opts.find((o) => o.required && !args[o.name]?.trim());
-        if (missing) {
-          dispatch(addToast({ kind: 'error', message: t('cmd.argRequired', { cmd: cmdName, arg: missing.name }) }));
-          return;
-        }
-        try {
-          await api.commands.run(channelId, cmdName, args);
-          setValue('');
-          return;
-        } catch {
-          /* hata → normal mesaj olarak devam etme, sessiz geç */
-          return;
+      // Slash command algıla: /komut [arg1 arg2 ...] formatı
+      const slashMatch = v.match(/^\/([a-z0-9_-]+)(?:\s+([\s\S]+))?$/i);
+      if (slashMatch) {
+        const cmdName = slashMatch[1].toLowerCase();
+        const rest = (slashMatch[2] ?? '').trim();
+        const cmd = commands.find((c) => c.name.toLowerCase() === cmdName);
+        if (cmd) {
+          // Pozisyonel argümanları opsiyon isimlerine eşle (son opsiyon kalanı alır)
+          const args: Record<string, string> = {};
+          const opts = cmd.options ?? [];
+          if (opts.length > 0 && rest) {
+            const parts = rest.split(/\s+/);
+            opts.forEach((o, i) => {
+              if (i === opts.length - 1) args[o.name] = parts.slice(i).join(' ');
+              else args[o.name] = parts[i] ?? '';
+            });
+          }
+          // Zorunlu argüman eksikse uyar, normal mesaj olarak gönderme
+          const missing = opts.find((o) => o.required && !args[o.name]?.trim());
+          if (missing) {
+            dispatch(
+              addToast({
+                kind: 'error',
+                message: t('cmd.argRequired', { cmd: cmdName, arg: missing.name }),
+              }),
+            );
+            return;
+          }
+          try {
+            await api.commands.run(channelId, cmdName, args);
+            setValue('');
+            return;
+          } catch {
+            /* hata → normal mesaj olarak devam etme, sessiz geç */
+            return;
+          }
         }
       }
-    }
     }
 
     setSending(true);
@@ -248,7 +299,8 @@ export function MessageInput() {
     try {
       const attachments = okFiles.map((f) => ({
         url: f.publicUrl!,
-        filename: f.spoiler && !/^SPOILER_/i.test(f.file.name) ? `SPOILER_${f.file.name}` : f.file.name,
+        filename:
+          f.spoiler && !/^SPOILER_/i.test(f.file.name) ? `SPOILER_${f.file.name}` : f.file.name,
         content_type: f.file.type,
         size_bytes: f.file.size,
       }));
@@ -266,7 +318,11 @@ export function MessageInput() {
         }),
       }).then((r) => r.json());
       if (msg && msg.id) {
-        dispatch({ type: 'messages/send/fulfilled', payload: msg, meta: { arg: { channelId, content: v } } });
+        dispatch({
+          type: 'messages/send/fulfilled',
+          payload: msg,
+          meta: { arg: { channelId, content: v } },
+        });
         const rl = channel && 'rate_limit_sec' in channel ? channel.rate_limit_sec : 0;
         if (rl) setCooldownUntil(Date.now() + rl * 1000);
       }
@@ -336,18 +392,14 @@ export function MessageInput() {
         const file = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' });
         const pending = await uploadFile(file);
         if (pending.publicUrl && channelId) {
-          await api.channels.sendMessage(
-            channelId,
-            ' ',
-            [
-              {
-                url: pending.publicUrl,
-                filename: file.name,
-                content_type: file.type,
-                size_bytes: file.size,
-              },
-            ],
-          );
+          await api.channels.sendMessage(channelId, ' ', [
+            {
+              url: pending.publicUrl,
+              filename: file.name,
+              content_type: file.type,
+              size_bytes: file.size,
+            },
+          ]);
           setFiles((fs) => fs.filter((f) => f.id !== pending.id));
         }
       };
@@ -438,17 +490,28 @@ export function MessageInput() {
         <ScheduleMessageModal
           channelId={channelId}
           initialContent={value}
-          onClose={() => { setScheduleOpen(false); refreshSchedCount(); }}
-          onScheduled={() => { setValue(''); refreshSchedCount(); }}
+          onClose={() => {
+            setScheduleOpen(false);
+            refreshSchedCount();
+          }}
+          onScheduled={() => {
+            setValue('');
+            refreshSchedCount();
+          }}
         />
       )}
       {stickerSuggestions.length > 0 && (
         <div className="mb-2 bg-surface-1 border border-line rounded-xl p-2 flex items-center gap-2 overflow-x-auto">
-          <span className="text-[10px] uppercase font-bold text-ink-tertiary shrink-0 px-1">{t('msg.sticker')}</span>
+          <span className="text-[10px] uppercase font-bold text-ink-tertiary shrink-0 px-1">
+            {t('msg.sticker')}
+          </span>
           {stickerSuggestions.map((s) => (
             <button
               key={s.id}
-              onClick={() => { sendSticker(s.url, s.name); setValue(''); }}
+              onClick={() => {
+                sendSticker(s.url, s.name);
+                setValue('');
+              }}
               title={s.name}
               className="shrink-0 w-12 h-12 rounded-lg bg-surface-2 hover:bg-surface-3 hover:ring-2 hover:ring-brand-500 p-1 flex items-center justify-center transition"
             >
@@ -508,7 +571,11 @@ export function MessageInput() {
                 key={f.id}
                 file={f}
                 onRemove={() => removeFile(f.id)}
-                onToggleSpoiler={() => setFiles((fs) => fs.map((x) => (x.id === f.id ? { ...x, spoiler: !x.spoiler } : x)))}
+                onToggleSpoiler={() =>
+                  setFiles((fs) =>
+                    fs.map((x) => (x.id === f.id ? { ...x, spoiler: !x.spoiler } : x)),
+                  )
+                }
               />
             ))}
           </div>
@@ -526,7 +593,8 @@ export function MessageInput() {
             type="button"
             onClick={() => fileInput.current?.click()}
             className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0"
-            title={t('msg.attachFile')} aria-label={t('msg.attachFile')}
+            title={t('msg.attachFile')}
+            aria-label={t('msg.attachFile')}
           >
             <Paperclip size={20} />
           </button>
@@ -553,7 +621,9 @@ export function MessageInput() {
               // ↑ boş kutuda → son kendi mesajını düzenle (Discord paritesi)
               if (e.key === 'ArrowUp' && !value && !mention && lastOwnMsgId) {
                 e.preventDefault();
-                window.dispatchEvent(new CustomEvent('concord:edit-message', { detail: { id: lastOwnMsgId } }));
+                window.dispatchEvent(
+                  new CustomEvent('concord:edit-message', { detail: { id: lastOwnMsgId } }),
+                );
               }
             }}
             placeholder={
@@ -581,7 +651,8 @@ export function MessageInput() {
               }
             }}
             className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0"
-            title={t('msg.mentionSomeone')} aria-label="Birini bahset"
+            title={t('msg.mentionSomeone')}
+            aria-label="Birini bahset"
           >
             <AtSign size={18} />
           </button>
@@ -589,7 +660,8 @@ export function MessageInput() {
             type="button"
             onClick={() => setPollOpen(true)}
             className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0"
-            title={t('msg.createPoll')} aria-label={t('msg.createPoll')}
+            title={t('msg.createPoll')}
+            aria-label={t('msg.createPoll')}
           >
             <BarChart3 size={19} />
           </button>
@@ -597,7 +669,8 @@ export function MessageInput() {
             type="button"
             onClick={() => setEmbedOpen(true)}
             className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0"
-            title={t('msg.createEmbed')} aria-label={t('msg.createEmbed')}
+            title={t('msg.createEmbed')}
+            aria-label={t('msg.createEmbed')}
           >
             <LayoutTemplate size={19} />
           </button>
@@ -619,7 +692,8 @@ export function MessageInput() {
               type="button"
               onClick={() => setGifOpen((v) => !v)}
               className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0 font-bold text-[11px] border border-current rounded px-1 leading-tight"
-              title="GIF" aria-label="GIF"
+              title="GIF"
+              aria-label="GIF"
             >
               GIF
             </button>
@@ -637,7 +711,8 @@ export function MessageInput() {
               type="button"
               onClick={() => setStickerOpen((v) => !v)}
               className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0"
-              title="Sticker" aria-label="Sticker"
+              title="Sticker"
+              aria-label="Sticker"
             >
               <Sticker size={20} />
             </button>
@@ -678,7 +753,8 @@ export function MessageInput() {
               type="button"
               onClick={() => setEmojiOpen((v) => !v)}
               className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0"
-              title="Emoji" aria-label="Emoji"
+              title="Emoji"
+              aria-label="Emoji"
             >
               <Smile size={20} />
             </button>
@@ -702,48 +778,82 @@ export function MessageInput() {
               type="button"
               onClick={stopRecording}
               className="h-9 px-3 rounded-xl bg-accent-500 hover:bg-accent-600 text-white flex items-center gap-2 transition-colors shrink-0 animate-pulse"
-              title={t('msg.stopRecord')} aria-label={t('msg.stopRecord')}
+              title={t('msg.stopRecord')}
+              aria-label={t('msg.stopRecord')}
             >
               <Square size={14} />
-              <span className="text-xs font-mono">{Math.floor(recordingDur / 60)}:{String(recordingDur % 60).padStart(2, '0')}</span>
+              <span className="text-xs font-mono">
+                {Math.floor(recordingDur / 60)}:{String(recordingDur % 60).padStart(2, '0')}
+              </span>
             </button>
           ) : (
             <button
               type="button"
               onClick={startRecording}
               className="text-ink-secondary hover:text-brand-500 transition-colors shrink-0"
-              title="Sesli mesaj" aria-label="Sesli mesaj"
+              title="Sesli mesaj"
+              aria-label="Sesli mesaj"
             >
               <Mic size={20} />
             </button>
           )}
           <button
             onClick={submit}
-            disabled={(!value.trim() && files.length === 0) || sending || cooldownLeft > 0 || files.some((f) => f.uploading)}
+            disabled={
+              (!value.trim() && files.length === 0) ||
+              sending ||
+              cooldownLeft > 0 ||
+              files.some((f) => f.uploading)
+            }
             className="w-9 h-9 rounded-xl bg-brand-500 disabled:bg-surface-3 disabled:text-ink-tertiary text-white flex items-center justify-center hover:bg-brand-400 disabled:hover:bg-surface-3 transition-colors shrink-0"
-            title={t('common.send')} aria-label={t('common.send')}
+            title={t('common.send')}
+            aria-label={t('common.send')}
           >
-            {cooldownLeft > 0 ? <span className="text-[11px] font-bold">{cooldownLeft}</span> : <Send size={16} strokeWidth={2.5} />}
+            {cooldownLeft > 0 ? (
+              <span className="text-[11px] font-bold">{cooldownLeft}</span>
+            ) : (
+              <Send size={16} strokeWidth={2.5} />
+            )}
           </button>
         </div>
       </div>
       <div className="text-[11px] text-ink-tertiary mt-2 px-1 flex items-center">
         {value.length > 1500 && (
-          <span className={'mr-2 font-semibold ' + (value.length > 2000 ? 'text-accent-500' : 'text-ink-secondary')}>
+          <span
+            className={
+              'mr-2 font-semibold ' +
+              (value.length > 2000 ? 'text-accent-500' : 'text-ink-secondary')
+            }
+          >
             {value.length}/2000
           </span>
         )}
-        <kbd className="px-1.5 py-0.5 bg-surface-2 rounded text-[10px] text-ink-secondary mr-1">Enter</kbd>
+        <kbd className="px-1.5 py-0.5 bg-surface-2 rounded text-[10px] text-ink-secondary mr-1">
+          Enter
+        </kbd>
         gönder ·
-        <kbd className="px-1.5 py-0.5 bg-surface-2 rounded text-[10px] text-ink-secondary mx-1">Shift</kbd>+
-        <kbd className="px-1.5 py-0.5 bg-surface-2 rounded text-[10px] text-ink-secondary mx-1">Enter</kbd>
+        <kbd className="px-1.5 py-0.5 bg-surface-2 rounded text-[10px] text-ink-secondary mx-1">
+          Shift
+        </kbd>
+        +
+        <kbd className="px-1.5 py-0.5 bg-surface-2 rounded text-[10px] text-ink-secondary mx-1">
+          Enter
+        </kbd>
         yeni satır · sürükle bırak ile dosya ekle
       </div>
     </div>
   );
 }
 
-function FilePreview({ file, onRemove, onToggleSpoiler }: { file: PendingFile; onRemove: () => void; onToggleSpoiler?: () => void }) {
+function FilePreview({
+  file,
+  onRemove,
+  onToggleSpoiler,
+}: {
+  file: PendingFile;
+  onRemove: () => void;
+  onToggleSpoiler?: () => void;
+}) {
   const isImage = file.file.type.startsWith('image/');
   const preview = isImage ? URL.createObjectURL(file.file) : null;
   return (
@@ -752,7 +862,12 @@ function FilePreview({ file, onRemove, onToggleSpoiler }: { file: PendingFile; o
         {onToggleSpoiler && (
           <button
             onClick={onToggleSpoiler}
-            className={'w-5 h-5 rounded-full flex items-center justify-center text-[10px] ' + (file.spoiler ? 'bg-brand-500 text-white' : 'bg-surface-1 text-ink-secondary border border-line')}
+            className={
+              'w-5 h-5 rounded-full flex items-center justify-center text-[10px] ' +
+              (file.spoiler
+                ? 'bg-brand-500 text-white'
+                : 'bg-surface-1 text-ink-secondary border border-line')
+            }
             title={file.spoiler ? 'Spoiler işaretini kaldır' : 'Spoiler olarak işaretle'}
           >
             {file.spoiler ? '🙈' : '👁'}
@@ -761,15 +876,24 @@ function FilePreview({ file, onRemove, onToggleSpoiler }: { file: PendingFile; o
         <button
           onClick={onRemove}
           className="w-5 h-5 rounded-full bg-accent-500 text-white flex items-center justify-center"
-          title={t('common.remove')} aria-label={t('common.remove')}
+          title={t('common.remove')}
+          aria-label={t('common.remove')}
         >
           <X size={12} />
         </button>
       </div>
       {preview ? (
         <div className="relative">
-          <img src={preview} alt={file.file.name} className={'w-32 h-32 object-cover rounded ' + (file.spoiler ? 'blur-md' : '')} />
-          {file.spoiler && <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold uppercase text-white tracking-wider">{t('msg.spoiler')}</span>}
+          <img
+            src={preview}
+            alt={file.file.name}
+            className={'w-32 h-32 object-cover rounded ' + (file.spoiler ? 'blur-md' : '')}
+          />
+          {file.spoiler && (
+            <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold uppercase text-white tracking-wider">
+              {t('msg.spoiler')}
+            </span>
+          )}
         </div>
       ) : (
         <div className="w-32 h-32 flex flex-col items-center justify-center text-ink-secondary">
@@ -778,7 +902,11 @@ function FilePreview({ file, onRemove, onToggleSpoiler }: { file: PendingFile; o
         </div>
       )}
       <div className="text-[10px] text-ink-tertiary mt-1 truncate">
-        {file.uploading ? 'Yükleniyor...' : file.error ? `Hata: ${file.error}` : `${formatSize(file.file.size)}`}
+        {file.uploading
+          ? 'Yükleniyor...'
+          : file.error
+            ? `Hata: ${file.error}`
+            : `${formatSize(file.file.size)}`}
       </div>
     </div>
   );

@@ -8,14 +8,14 @@ metadata:
   name: concord
   namespace: concord
   annotations:
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"   # WS uzun ömürlü
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-body-size: "100m"      # upload presign limiti ile uyumlu
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600' # WS uzun ömürlü
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-body-size: '100m' # upload presign limiti ile uyumlu
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: nginx
   tls:
-    - hosts: ["concord.example.com"]
+    - hosts: ['concord.example.com']
       secretName: concord-tls
   rules:
     - host: concord.example.com

@@ -28,7 +28,8 @@ export function DiscoverSidebar() {
         </div>
         {/* İleride: kategoriler, favoriler, vb. */}
         <p className="px-2 pt-3 text-[11px] text-ink-tertiary leading-relaxed">
-          Herkese açık toplulukları keşfet ve katıl. Yakında kategoriler ve önerilen sunucular eklenecek.
+          Herkese açık toplulukları keşfet ve katıl. Yakında kategoriler ve önerilen sunucular
+          eklenecek.
         </p>
       </div>
     </aside>
@@ -88,7 +89,10 @@ export function DiscoverContent() {
         <h1 className="text-3xl font-extrabold text-white">{t('discover.title')}</h1>
         <p className="text-white/80 mt-2">Herkese açık sunucuları bul ve sana uygun olana katıl.</p>
         <div className="relative max-w-md mx-auto mt-5">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-tertiary" />
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-tertiary"
+          />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -105,9 +109,7 @@ export function DiscoverContent() {
           <div className="text-center py-16">
             <Compass size={40} className="text-ink-tertiary mx-auto mb-3" />
             <p className="text-ink-secondary">
-              {guilds.length === 0
-                ? t('discover.none')
-                : t('discover.noMatch')}
+              {guilds.length === 0 ? t('discover.none') : t('discover.noMatch')}
             </p>
           </div>
         ) : (
@@ -117,7 +119,12 @@ export function DiscoverContent() {
                 key={g.id}
                 className="bg-surface-1 border border-line rounded-2xl overflow-hidden flex flex-col hover:border-brand-500/40 transition-colors"
               >
-                <div className="h-16" style={{ background: `linear-gradient(135deg, ${g.icon_color}, ${g.icon_color}80)` }} />
+                <div
+                  className="h-16"
+                  style={{
+                    background: `linear-gradient(135deg, ${g.icon_color}, ${g.icon_color}80)`,
+                  }}
+                />
                 <div className="px-4 pb-4 -mt-7 flex-1 flex flex-col">
                   <div
                     className="w-14 h-14 rounded-2xl ring-4 ring-surface-1 flex items-center justify-center text-white font-bold text-lg mb-2"

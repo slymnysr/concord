@@ -19,14 +19,14 @@ type insightPoint struct {
 }
 
 type insightsView struct {
-	MemberCount    int            `json:"member_count"`
-	NewMembers7d   int            `json:"new_members_7d"`
-	NewMembers30d  int            `json:"new_members_30d"`
-	Messages7d     int            `json:"messages_7d"`
-	Messages30d    int            `json:"messages_30d"`
-	TopChannels    []insightTop   `json:"top_channels"`
-	TopMembers     []insightTop   `json:"top_members"`
-	MemberGrowth   []insightPoint `json:"member_growth"`   // son 14 gün, günlük yeni üye
+	MemberCount     int            `json:"member_count"`
+	NewMembers7d    int            `json:"new_members_7d"`
+	NewMembers30d   int            `json:"new_members_30d"`
+	Messages7d      int            `json:"messages_7d"`
+	Messages30d     int            `json:"messages_30d"`
+	TopChannels     []insightTop   `json:"top_channels"`
+	TopMembers      []insightTop   `json:"top_members"`
+	MemberGrowth    []insightPoint `json:"member_growth"`    // son 14 gün, günlük yeni üye
 	MessageActivity []insightPoint `json:"message_activity"` // son 14 gün, günlük mesaj
 }
 

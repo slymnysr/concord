@@ -7,22 +7,47 @@ import { api, type Message, type Channel } from '../api';
 import type { Nav } from '../nav';
 import { ScreenHeader, Empty, ui } from '../ui';
 
-export function SearchScreen({ guildId, channelId, nav, onBack }: { guildId?: string; channelId?: string; nav: Nav; onBack: () => void }) {
+export function SearchScreen({
+  guildId,
+  channelId,
+  nav,
+  onBack,
+}: {
+  guildId?: string;
+  channelId?: string;
+  nav: Nav;
+  onBack: () => void;
+}) {
   const [q, setQ] = useState('');
   const [results, setResults] = useState<Array<{ message: Message; channel: Channel }>>([]);
   const [searched, setSearched] = useState(false);
   const [pinned, setPinned] = useState(false);
   const [has, setHas] = useState<string[]>([]);
-  const toggleHas = (h: string) => setHas((p) => (p.includes(h) ? p.filter((x) => x !== h) : [...p, h]));
+  const toggleHas = (h: string) =>
+    setHas((p) => (p.includes(h) ? p.filter((x) => x !== h) : [...p, h]));
   const [history, setHistory] = useState<string[]>([]);
-  useEffect(() => { AsyncStorage.getItem('concord_search_history').then((v) => { if (v) try { setHistory(JSON.parse(v)); } catch {} }).catch(() => {}); }, []);
+  useEffect(() => {
+    AsyncStorage.getItem('concord_search_history')
+      .then((v) => {
+        if (v)
+          try {
+            setHistory(JSON.parse(v));
+          } catch {}
+      })
+      .catch(() => {});
+  }, []);
 
   async function search(query?: string) {
     const term = (query ?? q).trim();
     if (!term) return;
     setQ(term);
-    try { setResults(await api.search.messages(term, { guildId, channelId, pinned, has, limit: 50 })); setSearched(true); }
-    catch { setResults([]); setSearched(true); }
+    try {
+      setResults(await api.search.messages(term, { guildId, channelId, pinned, has, limit: 50 }));
+      setSearched(true);
+    } catch {
+      setResults([]);
+      setSearched(true);
+    }
     const next = [term, ...history.filter((x) => x !== term)].slice(0, 8);
     setHistory(next);
     AsyncStorage.setItem('concord_search_history', JSON.stringify(next)).catch(() => {});
@@ -42,7 +67,9 @@ export function SearchScreen({ guildId, channelId, nav, onBack }: { guildId?: st
           returnKeyType="search"
           onSubmitEditing={() => search()}
         />
-        <TouchableOpacity style={s.btn} onPress={() => search()}><Text style={ui.btnText}>Ara</Text></TouchableOpacity>
+        <TouchableOpacity style={s.btn} onPress={() => search()}>
+          <Text style={ui.btnText}>Ara</Text>
+        </TouchableOpacity>
       </View>
       <View style={s.chips}>
         <Chip label="📌 Sabit" active={pinned} onPress={() => setPinned(!pinned)} />
@@ -68,10 +95,22 @@ export function SearchScreen({ guildId, channelId, nav, onBack }: { guildId?: st
         renderItem={({ item }) => (
           <TouchableOpacity
             style={s.row}
-            onPress={() => nav.push({ kind: 'chat', channel: { id: item.channel.id, name: item.channel.name, guildId: item.channel.guild_id, focusMessageId: item.message.id } })}
+            onPress={() =>
+              nav.push({
+                kind: 'chat',
+                channel: {
+                  id: item.channel.id,
+                  name: item.channel.name,
+                  guildId: item.channel.guild_id,
+                  focusMessageId: item.message.id,
+                },
+              })
+            }
           >
             <Text style={s.ch}>#{item.channel.name}</Text>
-            <Text style={s.content} numberOfLines={2}>{item.message.content}</Text>
+            <Text style={s.content} numberOfLines={2}>
+              {item.message.content}
+            </Text>
             <Text style={s.time}>{new Date(item.message.created_at).toLocaleString('tr-TR')}</Text>
           </TouchableOpacity>
         )}
@@ -90,14 +129,43 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 
 const s = StyleSheet.create({
   searchRow: { flexDirection: 'row', gap: 8, padding: 12 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 12, paddingBottom: 10 },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+  },
   history: { paddingTop: 4 },
-  historyTitle: { color: colors.inkTertiary, fontSize: 11, fontWeight: '800', paddingHorizontal: 14, marginBottom: 6 },
-  chip: { backgroundColor: colors.surface2, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: colors.line },
+  historyTitle: {
+    color: colors.inkTertiary,
+    fontSize: 11,
+    fontWeight: '800',
+    paddingHorizontal: 14,
+    marginBottom: 6,
+  },
+  chip: {
+    backgroundColor: colors.surface2,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
   chipActive: { borderColor: colors.brand, backgroundColor: colors.brand + '22' },
   chipText: { color: colors.inkSecondary, fontWeight: '700', fontSize: 13 },
-  btn: { backgroundColor: colors.brand, borderRadius: 12, paddingHorizontal: 18, justifyContent: 'center' },
-  row: { paddingHorizontal: 16, paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  btn: {
+    backgroundColor: colors.brand,
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    justifyContent: 'center',
+  },
+  row: {
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
   ch: { color: colors.brand, fontSize: 13, fontWeight: '700' },
   content: { color: colors.ink, fontSize: 15, marginTop: 3 },
   time: { color: colors.inkTertiary, fontSize: 12, marginTop: 3 },

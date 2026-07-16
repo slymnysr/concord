@@ -4,6 +4,7 @@ Discord paritesi + paritenin ötesinde yenilikler. Her şey `tsc` temiz + `expo 
 **gerçek cihaz/backend testi yapılmadı** — bu liste test kontrol listesidir.
 
 ## Kimlik & Hesap
+
 - [ ] Sunucu adresli giriş / kayıt
 - [ ] Şifremi unuttum + kod ile sıfırlama
 - [ ] 2FA'lı giriş (totp kodu)
@@ -14,6 +15,7 @@ Discord paritesi + paritenin ötesinde yenilikler. Her şey `tsc` temiz + `expo 
 - [ ] Bot geliştirici paneli (uygulama oluştur/token/sil)
 
 ## Sunucu & Kanal
+
 - [ ] Sunucu rayı + **klasörler** (uzun-bas: klasöre taşı), kanal/DM listesi, okunmamış göstergeleri
 - [ ] Sunucu oluştur / davetle katıl / keşfet
 - [ ] Sunucu ayarları: ikon yükleme, ad/açıklama, roller, davetler, yasaklar, AutoMod, denetim kaydı, sunucuya özel profil
@@ -24,6 +26,7 @@ Discord paritesi + paritenin ötesinde yenilikler. Her şey `tsc` temiz + `expo 
 - [ ] Forum/thread görünümü, sohbetten thread başlat
 
 ## Sohbet
+
 - [ ] Gönder, yanıtla, tepki (+ tam emoji seçici + **son kullanılanlar**), düzenle, sabitle, kaydet, hatırlat, sil
 - [ ] **İlet (forward)**, **çevir (→TR)**, düzenleme geçmişi, tepki verenler
 - [ ] Dosya/görsel/**GIF**/**sesli mesaj** gönder; embed/link önizleme; anket oluştur/oy ver
@@ -35,21 +38,25 @@ Discord paritesi + paritenin ötesinde yenilikler. Her şey `tsc` temiz + `expo 
 - [ ] Kanal bildirim seviyesi (tümü/bahsetmeler/sessiz)
 
 ## DM & Arkadaşlar
+
 - [ ] Arkadaş ekle/kabul/sil/engelle (+ sürükle-yenile), yeni DM, **grup DM** (kişi ekle/çıkar)
 
 ## Bildirim & Sistem
+
 - [ ] **Anlık bildirim (Firebase'siz)** + uygulama-içi toast (DM/bahsetme)
 - [ ] **Bağlantı/yeniden-bağlanma çubuğu** + yeniden bağlanınca tazeleme
 - [ ] **Hızlı geçiş (quick switcher)** — tüm kanal/DM'lerde anında zıplama
 - [ ] **Dokunsal geri bildirim (haptics)**
 - [ ] Bildirim merkezi, kaydedilenler, hatırlatıcılar, klasörler
 
-## Sesli / Görüntülü  (yalnız EAS dev client / native build'de)
+## Sesli / Görüntülü (yalnız EAS dev client / native build'de)
+
 - [ ] Sesli kanala katıl, mic/sağırlaştır, ses çubuğu
 - [ ] **Görüntülü görüşme** (kamera) + video ızgarası (VoiceRoom)
 - [ ] **Ekran paylaşımı** (Android)
 - [ ] **Sahne (stage)**: el kaldır, konuşmacı yap
 
 ## Çalıştırma
+
 Hızlı (ses hariç): `cd apps/mobile && pnpm start --tunnel` + Expo Go.
 Ses dahil: `npx eas-cli login && eas init && eas build -p android --profile development` → APK kur → `pnpm start --dev-client --tunnel`. Detay: `BUILD.md`.

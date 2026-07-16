@@ -2,7 +2,8 @@
 // Web'de boş bırakılır → same-origin relative path'ler (dev'de Vite proxy, prod'da nginx).
 // Masaüstü (Tauri) paketinde frontend tauri://localhost'tan servis edildiği için relative
 // path'ler sunucuya ulaşamaz; bağlanılacak Concord sunucusunun origin'i burada tutulur.
-const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('concord_server_base') : null;
+const stored =
+  typeof localStorage !== 'undefined' ? localStorage.getItem('concord_server_base') : null;
 
 export const SERVER_BASE: string =
   ((import.meta as any).env?.VITE_SERVER_BASE as string | undefined) ?? stored ?? '';

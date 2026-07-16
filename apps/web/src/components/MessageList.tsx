@@ -1,5 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { Hash, Smile, Pencil, Trash2, Check, X, Pin, MessagesSquare, Reply, Share2, ChevronDown, BarChart3 } from 'lucide-react';
+import {
+  Hash,
+  Smile,
+  Pencil,
+  Trash2,
+  Check,
+  X,
+  Pin,
+  MessagesSquare,
+  Reply,
+  Share2,
+  ChevronDown,
+  BarChart3,
+} from 'lucide-react';
 import { EmojiPicker } from './EmojiPicker';
 import { ForwardModal } from './ForwardModal';
 import { getLocale, t } from '../i18n';
@@ -20,7 +33,16 @@ import {
   loadOlderMessages,
   selectChannel,
 } from '../store';
-import { api, type APIReaction, type APIAttachment, type APIUser, type APIInvitePreview, type APIPoll, type APIPollAnswer, type RichEmbed } from '../api';
+import {
+  api,
+  type APIReaction,
+  type APIAttachment,
+  type APIUser,
+  type APIInvitePreview,
+  type APIPoll,
+  type APIPollAnswer,
+  type RichEmbed,
+} from '../api';
 import { Markdown } from '../markdown';
 
 const QUICK_EMOJIS = ['👍', '❤️', '😂', '🎉', '😮', '😢', '🔥', '👀'];
@@ -31,18 +53,34 @@ export function MessageList() {
   const mode = useAppSelector((s) => s.ui.mode);
   const channel = useAppSelector((s) =>
     mode === 'dm' && channelId
-      ? { id: channelId, name: 'DM', type: 'text' as const, guild_id: '', position: 0, nsfw: false, rate_limit_sec: 0, created_at: '' }
+      ? {
+          id: channelId,
+          name: 'DM',
+          type: 'text' as const,
+          guild_id: '',
+          position: 0,
+          nsfw: false,
+          rate_limit_sec: 0,
+          created_at: '',
+        }
       : guildId && channelId
         ? s.channels.byGuild[guildId]?.find((c) => c.id === channelId)
         : null,
   );
-  const rawList = useAppSelector((s) => (channelId ? s.messages.byChannel[channelId] ?? [] : []));
+  const rawList = useAppSelector((s) => (channelId ? (s.messages.byChannel[channelId] ?? []) : []));
   const initialLoading = useAppSelector(
-    (s) => !!channelId && s.messages.loadingChannel === channelId && !(s.messages.byChannel[channelId]?.length),
+    (s) =>
+      !!channelId &&
+      s.messages.loadingChannel === channelId &&
+      !s.messages.byChannel[channelId]?.length,
   );
-  const channelReadState = useAppSelector((s) => (channelId ? s.readStates.byChannel[channelId] : null));
+  const channelReadState = useAppSelector((s) =>
+    channelId ? s.readStates.byChannel[channelId] : null,
+  );
   const ignoredUsers = useAppSelector((s) => s.ui.ignoredUsers);
-  const list = ignoredUsers.length ? rawList.filter((m) => !ignoredUsers.includes(m.author_id)) : rawList;
+  const list = ignoredUsers.length
+    ? rawList.filter((m) => !ignoredUsers.includes(m.author_id))
+    : rawList;
   const users = useAppSelector((s) => s.users.byId);
   const me = useAppSelector((s) => s.auth.user);
   const dispatch = useAppDispatch();
@@ -55,7 +93,10 @@ export function MessageList() {
 
   useEffect(() => {
     if (!channelId) return;
-    api.channels.pins(channelId).then((p) => setPinnedIds(new Set(p.map((m) => m.id)))).catch(() => {});
+    api.channels
+      .pins(channelId)
+      .then((p) => setPinnedIds(new Set(p.map((m) => m.id))))
+      .catch(() => {});
   }, [channelId]);
 
   async function onScroll(e: React.UIEvent<HTMLDivElement>) {
@@ -69,7 +110,8 @@ export function MessageList() {
       if (oldest) {
         await dispatch(loadOlderMessages(channelId, oldest));
         requestAnimationFrame(() => {
-          if (scrollRef.current) scrollRef.current.scrollTop += scrollRef.current.scrollHeight - prevH;
+          if (scrollRef.current)
+            scrollRef.current.scrollTop += scrollRef.current.scrollHeight - prevH;
         });
       }
       loadingOlder.current = false;
@@ -97,7 +139,9 @@ export function MessageList() {
           return;
         }
         // Yüklü değil → eski mesajları getir ve tekrar dene
-        const oldest = (scrollRef.current?.querySelector('li[id^="msg-"]') as HTMLElement | null)?.id?.slice(4);
+        const oldest = (
+          scrollRef.current?.querySelector('li[id^="msg-"]') as HTMLElement | null
+        )?.id?.slice(4);
         if (oldest && channelId) {
           await dispatch(loadOlderMessages(channelId, oldest));
           await new Promise((r) => setTimeout(r, 150));
@@ -160,16 +204,16 @@ export function MessageList() {
 
   if (!channel) {
     return (
-      <div className="flex-1 flex items-center justify-center text-ink-tertiary">
-        Bir kanal seç
-      </div>
+      <div className="flex-1 flex items-center justify-center text-ink-tertiary">Bir kanal seç</div>
     );
   }
 
   if (channel.nsfw && channelId && !nsfwOk.has(channelId)) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-3">
-        <div className="w-14 h-14 rounded-2xl bg-accent-500/15 text-accent-500 flex items-center justify-center text-2xl">🔞</div>
+        <div className="w-14 h-14 rounded-2xl bg-accent-500/15 text-accent-500 flex items-center justify-center text-2xl">
+          🔞
+        </div>
         <h2 className="text-xl font-bold text-ink-primary">{t('msg.nsfwChannel')}</h2>
         <p className="text-sm text-ink-secondary max-w-sm">
           Bu kanal hassas içerik barındırabilir. Devam etmek için 18 yaşından büyük olduğunu onayla.
@@ -187,14 +231,30 @@ export function MessageList() {
   // İlk yükleme + cache boş → Discord tarzı iskelet; cache varsa anında eski liste görünür
   if (initialLoading) {
     return (
-      <div className="flex-1 overflow-hidden px-6 py-4" aria-label={t('msg.loadingMessages')} aria-busy="true">
+      <div
+        className="flex-1 overflow-hidden px-6 py-4"
+        aria-label={t('msg.loadingMessages')}
+        aria-busy="true"
+      >
         {[72, 40, 88, 56, 64, 32, 80, 48].map((w, i) => (
-          <div key={i} className="flex gap-3 mb-6 animate-pulse" style={{ animationDelay: `${i * 80}ms` }}>
+          <div
+            key={i}
+            className="flex gap-3 mb-6 animate-pulse"
+            style={{ animationDelay: `${i * 80}ms` }}
+          >
             <div className="w-10 h-10 rounded-full bg-surface-2 shrink-0" />
             <div className="flex-1 min-w-0">
-              <div className="h-3.5 rounded bg-surface-2 mb-2" style={{ width: `${90 + (i % 3) * 30}px` }} />
+              <div
+                className="h-3.5 rounded bg-surface-2 mb-2"
+                style={{ width: `${90 + (i % 3) * 30}px` }}
+              />
               <div className="h-3 rounded bg-surface-2/70" style={{ width: `${w}%` }} />
-              {i % 3 === 0 && <div className="h-3 rounded bg-surface-2/70 mt-1.5" style={{ width: `${Math.max(20, w - 30)}%` }} />}
+              {i % 3 === 0 && (
+                <div
+                  className="h-3 rounded bg-surface-2/70 mt-1.5"
+                  style={{ width: `${Math.max(20, w - 30)}%` }}
+                />
+              )}
             </div>
           </div>
         ))}
@@ -204,108 +264,117 @@ export function MessageList() {
 
   return (
     <div className="relative flex-1 flex flex-col min-h-0">
-    {channelId && <ForumBackBar channelId={channelId} />}
-    <div
-      ref={scrollRef}
-      onScroll={onScroll}
-      className="flex-1 overflow-y-auto px-6 py-4"
-    >
-      {olderLoading && (
-        <div className="text-center text-xs text-ink-tertiary py-2 animate-pulse">{t('msg.loadingOlder')}</div>
-      )}
-      {channel.type !== 'voice' && (
-        <div className="mb-6 pb-6 border-b border-line">
-          <div className="w-14 h-14 rounded-2xl bg-brand-500/15 text-brand-500 flex items-center justify-center mb-3">
-            <Hash size={28} strokeWidth={2.5} />
+      {channelId && <ForumBackBar channelId={channelId} />}
+      <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto px-6 py-4">
+        {olderLoading && (
+          <div className="text-center text-xs text-ink-tertiary py-2 animate-pulse">
+            {t('msg.loadingOlder')}
           </div>
-          <h1 className="text-2xl font-bold text-ink-primary tracking-tight">#{channel.name}</h1>
-          <p className="text-ink-secondary text-sm mt-1">
-            Bu, <span className="text-ink-primary font-medium">#{channel.name}</span> kanalının başlangıcı.
-          </p>
-        </div>
-      )}
+        )}
+        {channel.type !== 'voice' && (
+          <div className="mb-6 pb-6 border-b border-line">
+            <div className="w-14 h-14 rounded-2xl bg-brand-500/15 text-brand-500 flex items-center justify-center mb-3">
+              <Hash size={28} strokeWidth={2.5} />
+            </div>
+            <h1 className="text-2xl font-bold text-ink-primary tracking-tight">#{channel.name}</h1>
+            <p className="text-ink-secondary text-sm mt-1">
+              Bu, <span className="text-ink-primary font-medium">#{channel.name}</span> kanalının
+              başlangıcı.
+            </p>
+          </div>
+        )}
 
-      {list.length === 0 && (
-        <div className="text-center text-ink-tertiary py-16">
-          <p className="text-sm">{t('msg.empty')}</p>
-        </div>
-      )}
+        {list.length === 0 && (
+          <div className="text-center text-ink-tertiary py-16">
+            <p className="text-sm">{t('msg.empty')}</p>
+          </div>
+        )}
 
-      <TypingIndicator />
-      <UnreadDivider list={list} />
-      <ul className="space-y-3">
-        {list.map((m, i) => {
-          const prev = list[i - 1];
-          const author = users[m.author_id] ?? (m.author_id === me?.id ? me : null);
-          const prevTs = prev ? new Date(prev.created_at).getTime() : 0;
-          const curTs = new Date(m.created_at).getTime();
-          const grouped = !!prev && prev.author_id === m.author_id && curTs - prevTs < 5 * 60 * 1000;
-          // Yeni gün başladıysa tarih ayracı göster
-          const showDateDivider =
-            !prev || new Date(prev.created_at).toDateString() !== new Date(m.created_at).toDateString();
-          // Sistem mesajı (örn. "X sunucuya katıldı") — ortalanmış, sade satır
-          if ((m as any).system) {
+        <TypingIndicator />
+        <UnreadDivider list={list} />
+        <ul className="space-y-3">
+          {list.map((m, i) => {
+            const prev = list[i - 1];
+            const author = users[m.author_id] ?? (m.author_id === me?.id ? me : null);
+            const prevTs = prev ? new Date(prev.created_at).getTime() : 0;
+            const curTs = new Date(m.created_at).getTime();
+            const grouped =
+              !!prev && prev.author_id === m.author_id && curTs - prevTs < 5 * 60 * 1000;
+            // Yeni gün başladıysa tarih ayracı göster
+            const showDateDivider =
+              !prev ||
+              new Date(prev.created_at).toDateString() !== new Date(m.created_at).toDateString();
+            // Sistem mesajı (örn. "X sunucuya katıldı") — ortalanmış, sade satır
+            if ((m as any).system) {
+              return (
+                <div key={m.id}>
+                  {showDateDivider && <DateDivider date={new Date(m.created_at)} />}
+                  <div className="px-4 py-1.5 flex items-center gap-2 text-sm text-ink-tertiary">
+                    <span className="text-status-online" aria-hidden>
+                      →
+                    </span>
+                    <span>
+                      {m.content}
+                      <span className="ml-2 text-[10px]">
+                        {new Date(m.created_at).toLocaleTimeString('tr-TR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              );
+            }
             return (
               <div key={m.id}>
                 {showDateDivider && <DateDivider date={new Date(m.created_at)} />}
-                <div className="px-4 py-1.5 flex items-center gap-2 text-sm text-ink-tertiary">
-                  <span className="text-status-online" aria-hidden>→</span>
-                  <span>
-                    {m.content}
-                    <span className="ml-2 text-[10px]">
-                      {new Date(m.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </span>
-                </div>
+                <MessageItem
+                  messageId={m.id}
+                  authorId={m.author_id}
+                  authorName={m.webhook_username || author?.display_name || '...'}
+                  authorColor={author?.avatar_color ?? '#6B7280'}
+                  authorAvatar={m.webhook_avatar || author?.avatar_url}
+                  isBot={!!author?.bot}
+                  isWebhook={!!m.webhook_username}
+                  ts={curTs}
+                  editedAt={m.edited_at}
+                  content={m.content}
+                  attachments={m.attachments ?? []}
+                  embeds={m.embeds ?? []}
+                  grouped={grouped && !showDateDivider}
+                  repliedToId={m.replied_to_id}
+                  forwarded={!!(m as any).forwarded_from_message_id}
+                  pinned={pinnedIds.has(m.id)}
+                  publishedAt={m.published_at}
+                  isAnnouncement={channel?.type === 'announcement'}
+                />
               </div>
             );
-          }
-          return (
-            <div key={m.id}>
-              {showDateDivider && <DateDivider date={new Date(m.created_at)} />}
-              <MessageItem
-                messageId={m.id}
-                authorId={m.author_id}
-                authorName={m.webhook_username || author?.display_name || '...'}
-                authorColor={author?.avatar_color ?? '#6B7280'}
-                authorAvatar={m.webhook_avatar || author?.avatar_url}
-                isBot={!!author?.bot}
-                isWebhook={!!m.webhook_username}
-                ts={curTs}
-                editedAt={m.edited_at}
-                content={m.content}
-                attachments={m.attachments ?? []}
-                embeds={m.embeds ?? []}
-                grouped={grouped && !showDateDivider}
-                repliedToId={m.replied_to_id}
-                forwarded={!!(m as any).forwarded_from_message_id}
-                pinned={pinnedIds.has(m.id)}
-                publishedAt={m.published_at}
-                isAnnouncement={channel?.type === 'announcement'}
-              />
-            </div>
-          );
-        })}
-      </ul>
-    </div>
-    {channelReadState?.last_message_id && list.some((m) => m.id > channelReadState.last_message_id!) && (
-      <button
-        onClick={() => {
-          document.getElementById('concord-unread-divider')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }}
-        className="absolute top-2 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full bg-accent-500 hover:brightness-110 text-white text-xs font-semibold shadow-lg flex items-center gap-1.5"
-      >
-        ↓ Yeni mesajlar — atla
-      </button>
-    )}
-    {!atBottom && (
-      <button
-        onClick={scrollToBottom}
-        className="absolute bottom-4 right-6 z-10 px-3 py-1.5 rounded-full bg-brand-500 hover:bg-brand-400 text-white text-xs font-semibold shadow-lg flex items-center gap-1.5"
-      >
-        <ChevronDown size={14} /> En alta atla
-      </button>
-    )}
+          })}
+        </ul>
+      </div>
+      {channelReadState?.last_message_id &&
+        list.some((m) => m.id > channelReadState.last_message_id!) && (
+          <button
+            onClick={() => {
+              document
+                .getElementById('concord-unread-divider')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+            className="absolute top-2 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full bg-accent-500 hover:brightness-110 text-white text-xs font-semibold shadow-lg flex items-center gap-1.5"
+          >
+            ↓ Yeni mesajlar — atla
+          </button>
+        )}
+      {!atBottom && (
+        <button
+          onClick={scrollToBottom}
+          className="absolute bottom-4 right-6 z-10 px-3 py-1.5 rounded-full bg-brand-500 hover:bg-brand-400 text-white text-xs font-semibold shadow-lg flex items-center gap-1.5"
+        >
+          <ChevronDown size={14} /> En alta atla
+        </button>
+      )}
     </div>
   );
 }
@@ -324,7 +393,11 @@ function ForumBackBar({ channelId }: { channelId: string }) {
     <button
       onClick={() => {
         dispatch(selectChannel(ret!.forumId));
-        try { sessionStorage.removeItem('concord_forum_return'); } catch { /* yoksay */ }
+        try {
+          sessionStorage.removeItem('concord_forum_return');
+        } catch {
+          /* yoksay */
+        }
       }}
       className="shrink-0 flex items-center gap-1.5 px-4 py-2 border-b border-line bg-surface-1 text-sm text-ink-secondary hover:text-ink-primary"
     >
@@ -349,7 +422,9 @@ function DateDivider({ date }: { date: Date }) {
   return (
     <div className="flex items-center gap-3 my-4">
       <div className="flex-1 h-px bg-line" />
-      <span className="text-[10px] font-bold uppercase text-ink-tertiary tracking-wider">{label}</span>
+      <span className="text-[10px] font-bold uppercase text-ink-tertiary tracking-wider">
+        {label}
+      </span>
       <div className="flex-1 h-px bg-line" />
     </div>
   );
@@ -357,15 +432,17 @@ function DateDivider({ date }: { date: Date }) {
 
 function UnreadDivider({ list }: { list: any[] }) {
   const channelId = useAppSelector((s) => s.channels.selectedId);
-  const readState = useAppSelector((s) =>
-    channelId ? s.readStates.byChannel[channelId] : null,
-  );
+  const readState = useAppSelector((s) => (channelId ? s.readStates.byChannel[channelId] : null));
   if (!readState?.last_message_id) return null;
   const firstUnreadIdx = list.findIndex((m) => m.id > readState.last_message_id!);
   if (firstUnreadIdx <= 0) return null;
   const m = list[firstUnreadIdx];
   return (
-    <div id="concord-unread-divider" className="flex items-center gap-2 my-3" data-message-id={m.id}>
+    <div
+      id="concord-unread-divider"
+      className="flex items-center gap-2 my-3"
+      data-message-id={m.id}
+    >
       <div className="flex-1 h-px bg-accent-500/60" />
       <span className="text-[10px] font-bold text-accent-500 uppercase tracking-wider">
         Yeni mesajlar
@@ -379,7 +456,7 @@ function TypingIndicator() {
   const channelId = useAppSelector((s) => s.channels.selectedId);
   const me = useAppSelector((s) => s.auth.user);
   const users = useAppSelector((s) => s.users.byId);
-  const typing = useAppSelector((s) => (channelId ? s.typing.byChannel[channelId] ?? [] : []));
+  const typing = useAppSelector((s) => (channelId ? (s.typing.byChannel[channelId] ?? []) : []));
 
   const others = typing.filter((t) => t.userId !== me?.id);
   if (others.length === 0) return null;
@@ -408,9 +485,18 @@ function TypingIndicator() {
           })}
         </span>
         <span className="flex gap-0.5">
-          <span className="w-1 h-1 bg-ink-tertiary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-1 h-1 bg-ink-tertiary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-1 h-1 bg-ink-tertiary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          <span
+            className="w-1 h-1 bg-ink-tertiary rounded-full animate-bounce"
+            style={{ animationDelay: '0ms' }}
+          />
+          <span
+            className="w-1 h-1 bg-ink-tertiary rounded-full animate-bounce"
+            style={{ animationDelay: '150ms' }}
+          />
+          <span
+            className="w-1 h-1 bg-ink-tertiary rounded-full animate-bounce"
+            style={{ animationDelay: '300ms' }}
+          />
         </span>
         {names} {others.length > 1 ? 'yazıyorlar...' : 'yazıyor...'}
       </span>
@@ -480,9 +566,7 @@ function MessageItem({
   const isMine = me?.id === authorId;
   // Bu mesaj beni mi bahsediyor? (doğrudan mention veya @everyone/@here)
   const mentionsMe =
-    !isMine &&
-    !!me &&
-    (content.includes(`<@${me.id}>`) || /@everyone\b|@here\b/.test(content));
+    !isMine && !!me && (content.includes(`<@${me.id}>`) || /@everyone\b|@here\b/.test(content));
 
   function copyToClipboard(text: string) {
     navigator.clipboard?.writeText(text).catch(() => {});
@@ -627,7 +711,11 @@ function MessageItem({
         <button
           type="button"
           onClick={() => {
-            window.dispatchEvent(new CustomEvent('concord:jump-to-message', { detail: { messageId: repliedTo.id, channelId } }));
+            window.dispatchEvent(
+              new CustomEvent('concord:jump-to-message', {
+                detail: { messageId: repliedTo.id, channelId },
+              }),
+            );
           }}
           className="flex items-center gap-1.5 text-xs text-ink-tertiary mb-1 pl-12 max-w-full hover:text-ink-secondary w-full text-left"
         >
@@ -645,348 +733,491 @@ function MessageItem({
         </button>
       )}
       <div className="flex gap-3">
-      {!grouped ? (
-        <button
-          onClick={(e) => {
-            const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-            dispatch(openProfileCard({ userId: authorId, anchorRect: rect }));
-          }}
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0 hover:ring-2 hover:ring-brand-500/50 transition overflow-hidden"
-          style={{ backgroundColor: authorAvatar ? undefined : authorColor }}
-          title={authorName}
-        >
-          {authorAvatar ? (
-            <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover" />
-          ) : (
-            authorName.slice(0, 1).toUpperCase()
-          )}
-        </button>
-      ) : (
-        <div
-          className="w-10 shrink-0 text-[10px] text-transparent group-hover:text-ink-tertiary text-right pr-2 leading-7 select-none"
-          title={new Date(ts).toLocaleString('tr-TR')}
-        >
-          {formatTime(ts)}
-        </div>
-      )}
-
-      <div className="flex-1 min-w-0">
-        {!grouped && (
-          <div className="flex items-baseline gap-2 mb-1">
-            <button
-              onClick={(e) => {
-                const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-                dispatch(openProfileCard({ userId: authorId, anchorRect: rect }));
-              }}
-              className="font-semibold text-ink-primary text-[15px] hover:underline"
-            >
-              {authorName}
-            </button>
-            {isWebhook ? (
-              <span className="bg-accent-500/15 text-accent-500 text-[10px] font-semibold px-1.5 py-0.5 rounded">
-                WEBHOOK
-              </span>
-            ) : isBot && (
-              <span className="bg-brand-500/15 text-brand-500 text-[10px] font-semibold px-1.5 py-0.5 rounded">
-                BOT
-              </span>
+        {!grouped ? (
+          <button
+            onClick={(e) => {
+              const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+              dispatch(openProfileCard({ userId: authorId, anchorRect: rect }));
+            }}
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0 hover:ring-2 hover:ring-brand-500/50 transition overflow-hidden"
+            style={{ backgroundColor: authorAvatar ? undefined : authorColor }}
+            title={authorName}
+          >
+            {authorAvatar ? (
+              <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover" />
+            ) : (
+              authorName.slice(0, 1).toUpperCase()
             )}
-            <span className="text-xs text-ink-tertiary">{formatFull(ts)}</span>
+          </button>
+        ) : (
+          <div
+            className="w-10 shrink-0 text-[10px] text-transparent group-hover:text-ink-tertiary text-right pr-2 leading-7 select-none"
+            title={new Date(ts).toLocaleString('tr-TR')}
+          >
+            {formatTime(ts)}
           </div>
         )}
-        {pinned && (
-          <div className="text-[11px] text-brand-400 flex items-center gap-1 mb-0.5">
-            <Pin size={11} /> Sabitlenmiş
-          </div>
-        )}
-        {forwarded && (
-          <div className="text-[11px] text-ink-tertiary flex items-center gap-1 mb-0.5">
-            <Share2 size={11} /> İletildi
-          </div>
-        )}
-        {editing ? (
-          <div className="flex items-center gap-2">
-            <textarea
-              autoFocus
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  saveEdit();
-                } else if (e.key === 'Escape') {
+
+        <div className="flex-1 min-w-0">
+          {!grouped && (
+            <div className="flex items-baseline gap-2 mb-1">
+              <button
+                onClick={(e) => {
+                  const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                  dispatch(openProfileCard({ userId: authorId, anchorRect: rect }));
+                }}
+                className="font-semibold text-ink-primary text-[15px] hover:underline"
+              >
+                {authorName}
+              </button>
+              {isWebhook ? (
+                <span className="bg-accent-500/15 text-accent-500 text-[10px] font-semibold px-1.5 py-0.5 rounded">
+                  WEBHOOK
+                </span>
+              ) : (
+                isBot && (
+                  <span className="bg-brand-500/15 text-brand-500 text-[10px] font-semibold px-1.5 py-0.5 rounded">
+                    BOT
+                  </span>
+                )
+              )}
+              <span className="text-xs text-ink-tertiary">{formatFull(ts)}</span>
+            </div>
+          )}
+          {pinned && (
+            <div className="text-[11px] text-brand-400 flex items-center gap-1 mb-0.5">
+              <Pin size={11} /> Sabitlenmiş
+            </div>
+          )}
+          {forwarded && (
+            <div className="text-[11px] text-ink-tertiary flex items-center gap-1 mb-0.5">
+              <Share2 size={11} /> İletildi
+            </div>
+          )}
+          {editing ? (
+            <div className="flex items-center gap-2">
+              <textarea
+                autoFocus
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    saveEdit();
+                  } else if (e.key === 'Escape') {
+                    setEditing(false);
+                    setEditValue(content);
+                  }
+                }}
+                rows={1}
+                className="flex-1 bg-surface-2 border border-line rounded-lg px-3 py-1.5 text-ink-primary outline-none focus:border-brand-500/50 max-h-40 resize-none"
+              />
+              <button
+                onClick={saveEdit}
+                title={t('common.save')}
+                aria-label={t('common.save')}
+                className="w-7 h-7 rounded-md bg-brand-500 hover:bg-brand-400 text-white flex items-center justify-center"
+              >
+                <Check size={14} />
+              </button>
+              <button
+                onClick={() => {
                   setEditing(false);
                   setEditValue(content);
-                }
-              }}
-              rows={1}
-              className="flex-1 bg-surface-2 border border-line rounded-lg px-3 py-1.5 text-ink-primary outline-none focus:border-brand-500/50 max-h-40 resize-none"
-            />
-            <button
-              onClick={saveEdit}
-              title={t('common.save')} aria-label={t('common.save')}
-              className="w-7 h-7 rounded-md bg-brand-500 hover:bg-brand-400 text-white flex items-center justify-center"
-            >
-              <Check size={14} />
-            </button>
-            <button
-              onClick={() => {
-                setEditing(false);
-                setEditValue(content);
-              }}
-              title={t('common.cancel')} aria-label={t('common.cancel')}
-              className="w-7 h-7 rounded-md bg-surface-3 hover:bg-accent-500 hover:text-white text-ink-secondary flex items-center justify-center"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        ) : isInviteOnly(content) ? (
-          // İçerik yalnızca bir davet bağlantısıysa metin gösterme; aşağıda tek kart render edilir
-          editedAt ? (
-            <span className="text-[10px] text-ink-tertiary" title={new Date(editedAt).toLocaleString('tr-TR')}>
-              (düzenlendi)
-            </span>
-          ) : null
-        ) : (
-          <div className="text-ink-primary leading-relaxed break-words">
-            <Markdown content={content} />
-            {editedAt && <EditedLabel messageId={messageId} editedAt={editedAt} />}
-            {publishedAt && (
-              <span
-                className="ml-1.5 text-[9px] font-semibold uppercase tracking-wide bg-surface-3 text-ink-tertiary rounded px-1 py-px align-middle"
-                title={t('msg.publishedAt') + new Date(publishedAt).toLocaleString('tr-TR')}
+                }}
+                title={t('common.cancel')}
+                aria-label={t('common.cancel')}
+                className="w-7 h-7 rounded-md bg-surface-3 hover:bg-accent-500 hover:text-white text-ink-secondary flex items-center justify-center"
               >
-                📣 Yayınlandı
+                <X size={14} />
+              </button>
+            </div>
+          ) : isInviteOnly(content) ? (
+            // İçerik yalnızca bir davet bağlantısıysa metin gösterme; aşağıda tek kart render edilir
+            editedAt ? (
+              <span
+                className="text-[10px] text-ink-tertiary"
+                title={new Date(editedAt).toLocaleString('tr-TR')}
+              >
+                (düzenlendi)
               </span>
-            )}
-          </div>
-        )}
-        {attachments.length > 0 && (
-          <div
-            className={
-              'mt-2 gap-2 ' +
-              (attachments.filter((a) => (a.content_type ?? '').startsWith('image/')).length >= 2
-                ? 'grid grid-cols-2 max-w-md'
-                : 'flex flex-wrap')
-            }
-          >
-            {attachments.map((a) => (
-              <AttachmentView key={a.id} a={a} />
-            ))}
-          </div>
-        )}
-        {translated && (
-          <div className="mt-1 pl-2 border-l-2 border-brand-500/50 text-sm text-ink-secondary">
-            <span className="text-[10px] uppercase font-bold text-ink-tertiary mr-1.5">çeviri</span>
-            {translated}
-            <button onClick={() => setTranslated(null)} className="text-[10px] text-ink-tertiary hover:text-ink-primary ml-2">gizle</button>
-          </div>
-        )}
-        <InviteCard content={content} />
-        {embeds && embeds.length > 0 && <RichEmbeds embeds={embeds} />}
-        <EmbedsView messageId={messageId} content={content} />
-        {!content?.trim() && attachments.length === 0 && <PollView messageId={messageId} />}
-        {reactions.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1.5">
-            {[...reactions].sort((a, b) => b.count - a.count).map((r: APIReaction) => (
-              <ReactionChip key={r.emoji} messageId={messageId} reaction={r} onToggle={() => toggle(r.emoji)} />
-            ))}
-            <button
-              onClick={() => setPickerOpen((v) => !v)}
-              title={t('msg.addReaction')} aria-label={t('msg.addReaction')}
-              className="px-2 py-0.5 rounded-full text-xs border border-line bg-surface-2 text-ink-tertiary hover:bg-surface-3 hover:text-ink-primary flex items-center"
+            ) : null
+          ) : (
+            <div className="text-ink-primary leading-relaxed break-words">
+              <Markdown content={content} />
+              {editedAt && <EditedLabel messageId={messageId} editedAt={editedAt} />}
+              {publishedAt && (
+                <span
+                  className="ml-1.5 text-[9px] font-semibold uppercase tracking-wide bg-surface-3 text-ink-tertiary rounded px-1 py-px align-middle"
+                  title={t('msg.publishedAt') + new Date(publishedAt).toLocaleString('tr-TR')}
+                >
+                  📣 Yayınlandı
+                </span>
+              )}
+            </div>
+          )}
+          {attachments.length > 0 && (
+            <div
+              className={
+                'mt-2 gap-2 ' +
+                (attachments.filter((a) => (a.content_type ?? '').startsWith('image/')).length >= 2
+                  ? 'grid grid-cols-2 max-w-md'
+                  : 'flex flex-wrap')
+              }
             >
-              <Smile size={13} />
-            </button>
-          </div>
-        )}
-      </div>
+              {attachments.map((a) => (
+                <AttachmentView key={a.id} a={a} />
+              ))}
+            </div>
+          )}
+          {translated && (
+            <div className="mt-1 pl-2 border-l-2 border-brand-500/50 text-sm text-ink-secondary">
+              <span className="text-[10px] uppercase font-bold text-ink-tertiary mr-1.5">
+                çeviri
+              </span>
+              {translated}
+              <button
+                onClick={() => setTranslated(null)}
+                className="text-[10px] text-ink-tertiary hover:text-ink-primary ml-2"
+              >
+                gizle
+              </button>
+            </div>
+          )}
+          <InviteCard content={content} />
+          {embeds && embeds.length > 0 && <RichEmbeds embeds={embeds} />}
+          <EmbedsView messageId={messageId} content={content} />
+          {!content?.trim() && attachments.length === 0 && <PollView messageId={messageId} />}
+          {reactions.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {[...reactions]
+                .sort((a, b) => b.count - a.count)
+                .map((r: APIReaction) => (
+                  <ReactionChip
+                    key={r.emoji}
+                    messageId={messageId}
+                    reaction={r}
+                    onToggle={() => toggle(r.emoji)}
+                  />
+                ))}
+              <button
+                onClick={() => setPickerOpen((v) => !v)}
+                title={t('msg.addReaction')}
+                aria-label={t('msg.addReaction')}
+                className="px-2 py-0.5 rounded-full text-xs border border-line bg-surface-2 text-ink-tertiary hover:bg-surface-3 hover:text-ink-primary flex items-center"
+              >
+                <Smile size={13} />
+              </button>
+            </div>
+          )}
+        </div>
 
-      <div className="opacity-0 group-hover:opacity-100 absolute right-2 top-1 flex gap-0.5 bg-surface-2 border border-line rounded-md transition-opacity">
-        <button
-          onClick={() => setPickerOpen((v) => !v)}
-          className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-ink-primary rounded"
-          title={t('msg.addReaction')} aria-label={t('msg.addReaction')}
-        >
-          <Smile size={14} />
-        </button>
-        <button
-          onClick={() => dispatch(setReplyTo(messageId))}
-          className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
-          title={t('msg.reply')} aria-label={t('msg.reply')}
-        >
-          <Reply size={14} />
-        </button>
-        <button
-          onClick={togglePin}
-          className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
-          title={t('msg.pinToggle')} aria-label={t('msg.pinToggle')}
-        >
-          <Pin size={14} />
-        </button>
-        <button
-          onClick={startThread}
-          className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
-          title={t('msg.startThread')} aria-label={t('msg.startThread')}
-        >
-          <MessagesSquare size={14} />
-        </button>
-        <button
-          onClick={forwardMessage}
-          className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
-          title={t('msg.forward')} aria-label={t('msg.forward')}
-        >
-          <Share2 size={14} />
-        </button>
-        {isMine && (
+        <div className="opacity-0 group-hover:opacity-100 absolute right-2 top-1 flex gap-0.5 bg-surface-2 border border-line rounded-md transition-opacity">
           <button
-            onClick={() => setEditing(true)}
+            onClick={() => setPickerOpen((v) => !v)}
+            className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-ink-primary rounded"
+            title={t('msg.addReaction')}
+            aria-label={t('msg.addReaction')}
+          >
+            <Smile size={14} />
+          </button>
+          <button
+            onClick={() => dispatch(setReplyTo(messageId))}
             className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
-            title={t('common.edit')} aria-label={t('common.edit')}
+            title={t('msg.reply')}
+            aria-label={t('msg.reply')}
           >
-            <Pencil size={14} />
+            <Reply size={14} />
           </button>
-        )}
-        {isMine && (
           <button
-            onClick={doDelete}
-            className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-accent-500 rounded"
-            title={t('common.delete')} aria-label={t('common.delete')}
+            onClick={togglePin}
+            className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
+            title={t('msg.pinToggle')}
+            aria-label={t('msg.pinToggle')}
           >
-            <Trash2 size={14} />
+            <Pin size={14} />
           </button>
-        )}
-      </div>
-
-      {ctx && (
-        <div className="fixed inset-0 z-50" onClick={() => { setCtx(null); setRemindMode(false); }} onContextMenu={(e) => { e.preventDefault(); setCtx(null); setRemindMode(false); }}>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              left: Math.min(ctx.x, window.innerWidth - 230),
-              top: Math.min(ctx.y, window.innerHeight - 360),
-            }}
-            className="anim-pop-in absolute w-56 bg-surface-1 border border-line rounded-xl shadow-2xl p-1 ring-1 ring-white/5 text-sm"
+          <button
+            onClick={startThread}
+            className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
+            title={t('msg.startThread')}
+            aria-label={t('msg.startThread')}
           >
-            {remindMode ? (
-              <>
-                <div className="px-3 py-1.5 text-[11px] font-semibold uppercase text-ink-tertiary tracking-wider">{t('remind.when')}</div>
-                <MsgCtxItem label={t('remind.20min')} onClick={() => remind(20)} />
-                <MsgCtxItem label={t('remind.1hour')} onClick={() => remind(60)} />
-                <MsgCtxItem label={t('remind.3hours')} onClick={() => remind(180)} />
-                <MsgCtxItem label={t('remind.tomorrow')} onClick={() => remind(60 * 24)} />
-                <div className="my-1 h-px bg-line" />
-                <MsgCtxItem label={t('common.back')} onClick={() => setRemindMode(false)} />
-              </>
-            ) : (
-            <>
-            <MsgCtxItem label={t('msg.reply')} onClick={() => { dispatch(setReplyTo(messageId)); setCtx(null); }} />
-            <MsgCtxItem label={t('msg.addReaction')} onClick={() => { setCtx(null); setPickerOpen(true); }} />
-            <MsgCtxItem label={t('msg.pinToggleShort')} onClick={() => { togglePin(); setCtx(null); }} />
-            <MsgCtxItem label={t('msg.startThread')} onClick={() => { startThread(); setCtx(null); }} />
-            <MsgCtxItem label={t('msg.forward')} onClick={() => { forwardMessage(); setCtx(null); }} />
-            {isAnnouncement && !publishedAt && (
-              <MsgCtxItem
-                label={t('msg.publish')}
-                onClick={() => {
-                  if (channelId) {
-                    api.follows.crosspost(channelId, messageId)
-                      .then((r) => dispatch(addToast({ kind: 'success', message: t('msg.publishedTo', { n: r.delivered_to }) })))
-                      .catch((e: any) => dispatch(addToast({ kind: 'error', message: e?.message || t('msg.publishFailed') })));
-                  }
-                  setCtx(null);
-                }}
-              />
-            )}
-            {isMine && <MsgCtxItem label={t('common.edit')} onClick={() => { setEditing(true); setCtx(null); }} />}
-            <div className="my-1 h-px bg-line" />
-            {content && <MsgCtxItem label={t('msg.copyText')} onClick={() => copyToClipboard(content)} />}
-            {content && <MsgCtxItem label={t('msg.translate')} onClick={translateMessage} />}
-            <MsgCtxItem
-              label={t('msg.copyLink')}
-              onClick={() => copyToClipboard(`${location.origin}/channels/${channelId}/${messageId}`)}
-            />
-            <MsgCtxItem label={t('msg.copyId')} onClick={() => copyToClipboard(messageId)} />
-            <MsgCtxItem
-              label={t('msg.saveAction')}
-              onClick={() => {
-                api.savedMessages.save(messageId)
-                  .then(() => dispatch(addToast({ kind: 'success', message: t('msg.saved') })))
-                  .catch(() => dispatch(addToast({ kind: 'error', message: t('msg.saveFailed') })));
-                setCtx(null);
-              }}
-            />
-            <MsgCtxItem label={t('msg.viewProfile')} onClick={() => { dispatch(openProfileCard({ userId: authorId, anchorRect: null })); setCtx(null); }} />
-            {!isMine && <MsgCtxItem label={t('msg.mention')} onClick={() => { window.dispatchEvent(new CustomEvent('concord:mention-user', { detail: { id: authorId } })); setCtx(null); }} />}
-            <MsgCtxItem label={t('msg.remindMe')} onClick={() => setRemindMode(true)} />
-            {channelId && (
-              <MsgCtxItem
-                label={t('msg.markUnread')}
-                onClick={() => {
-                  dispatch(markChannelUnread(channelId, messageId));
-                  setCtx(null);
-                }}
-              />
-            )}
-            {isMine && (
-              <>
-                <div className="my-1 h-px bg-line" />
-                <MsgCtxItem label={t('msg.delete')} danger onClick={() => { doDelete(); setCtx(null); }} />
-              </>
-            )}
-            </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {forwardOpen && (
-        <ForwardModal content={content} messageId={messageId} onClose={() => setForwardOpen(false)} />
-      )}
-
-      {pickerOpen && (
-        <div className="absolute right-2 top-9 bg-surface-1 border border-line rounded-lg shadow-2xl p-1 flex gap-0.5 z-10 items-center">
-          {QUICK_EMOJIS.map((e) => (
+            <MessagesSquare size={14} />
+          </button>
+          <button
+            onClick={forwardMessage}
+            className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
+            title={t('msg.forward')}
+            aria-label={t('msg.forward')}
+          >
+            <Share2 size={14} />
+          </button>
+          {isMine && (
             <button
-              key={e}
-              onClick={() => {
-                toggle(e);
-                setPickerOpen(false);
-              }}
-              className="w-8 h-8 hover:bg-surface-2 rounded flex items-center justify-center text-lg"
+              onClick={() => setEditing(true)}
+              className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-brand-500 rounded"
+              title={t('common.edit')}
+              aria-label={t('common.edit')}
             >
-              {e}
+              <Pencil size={14} />
             </button>
-          ))}
-          <button
+          )}
+          {isMine && (
+            <button
+              onClick={doDelete}
+              className="hover:bg-surface-3 w-7 h-7 flex items-center justify-center text-ink-secondary hover:text-accent-500 rounded"
+              title={t('common.delete')}
+              aria-label={t('common.delete')}
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+
+        {ctx && (
+          <div
+            className="fixed inset-0 z-50"
             onClick={() => {
-              setPickerOpen(false);
-              setFullEmoji(true);
+              setCtx(null);
+              setRemindMode(false);
             }}
-            title={t('emoji.all')} aria-label={t('emoji.all')}
-            className="w-8 h-8 hover:bg-surface-2 rounded flex items-center justify-center text-ink-tertiary hover:text-ink-primary"
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setCtx(null);
+              setRemindMode(false);
+            }}
           >
-            <Smile size={16} />
-          </button>
-        </div>
-      )}
-      {fullEmoji && (
-        <div className="absolute right-2 top-9 z-20">
-          <EmojiPicker
-            onPick={(emoji) => {
-              toggle(emoji);
-              setFullEmoji(false);
-            }}
-            onClose={() => setFullEmoji(false)}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                left: Math.min(ctx.x, window.innerWidth - 230),
+                top: Math.min(ctx.y, window.innerHeight - 360),
+              }}
+              className="anim-pop-in absolute w-56 bg-surface-1 border border-line rounded-xl shadow-2xl p-1 ring-1 ring-white/5 text-sm"
+            >
+              {remindMode ? (
+                <>
+                  <div className="px-3 py-1.5 text-[11px] font-semibold uppercase text-ink-tertiary tracking-wider">
+                    {t('remind.when')}
+                  </div>
+                  <MsgCtxItem label={t('remind.20min')} onClick={() => remind(20)} />
+                  <MsgCtxItem label={t('remind.1hour')} onClick={() => remind(60)} />
+                  <MsgCtxItem label={t('remind.3hours')} onClick={() => remind(180)} />
+                  <MsgCtxItem label={t('remind.tomorrow')} onClick={() => remind(60 * 24)} />
+                  <div className="my-1 h-px bg-line" />
+                  <MsgCtxItem label={t('common.back')} onClick={() => setRemindMode(false)} />
+                </>
+              ) : (
+                <>
+                  <MsgCtxItem
+                    label={t('msg.reply')}
+                    onClick={() => {
+                      dispatch(setReplyTo(messageId));
+                      setCtx(null);
+                    }}
+                  />
+                  <MsgCtxItem
+                    label={t('msg.addReaction')}
+                    onClick={() => {
+                      setCtx(null);
+                      setPickerOpen(true);
+                    }}
+                  />
+                  <MsgCtxItem
+                    label={t('msg.pinToggleShort')}
+                    onClick={() => {
+                      togglePin();
+                      setCtx(null);
+                    }}
+                  />
+                  <MsgCtxItem
+                    label={t('msg.startThread')}
+                    onClick={() => {
+                      startThread();
+                      setCtx(null);
+                    }}
+                  />
+                  <MsgCtxItem
+                    label={t('msg.forward')}
+                    onClick={() => {
+                      forwardMessage();
+                      setCtx(null);
+                    }}
+                  />
+                  {isAnnouncement && !publishedAt && (
+                    <MsgCtxItem
+                      label={t('msg.publish')}
+                      onClick={() => {
+                        if (channelId) {
+                          api.follows
+                            .crosspost(channelId, messageId)
+                            .then((r) =>
+                              dispatch(
+                                addToast({
+                                  kind: 'success',
+                                  message: t('msg.publishedTo', { n: r.delivered_to }),
+                                }),
+                              ),
+                            )
+                            .catch((e: any) =>
+                              dispatch(
+                                addToast({
+                                  kind: 'error',
+                                  message: e?.message || t('msg.publishFailed'),
+                                }),
+                              ),
+                            );
+                        }
+                        setCtx(null);
+                      }}
+                    />
+                  )}
+                  {isMine && (
+                    <MsgCtxItem
+                      label={t('common.edit')}
+                      onClick={() => {
+                        setEditing(true);
+                        setCtx(null);
+                      }}
+                    />
+                  )}
+                  <div className="my-1 h-px bg-line" />
+                  {content && (
+                    <MsgCtxItem
+                      label={t('msg.copyText')}
+                      onClick={() => copyToClipboard(content)}
+                    />
+                  )}
+                  {content && <MsgCtxItem label={t('msg.translate')} onClick={translateMessage} />}
+                  <MsgCtxItem
+                    label={t('msg.copyLink')}
+                    onClick={() =>
+                      copyToClipboard(`${location.origin}/channels/${channelId}/${messageId}`)
+                    }
+                  />
+                  <MsgCtxItem label={t('msg.copyId')} onClick={() => copyToClipboard(messageId)} />
+                  <MsgCtxItem
+                    label={t('msg.saveAction')}
+                    onClick={() => {
+                      api.savedMessages
+                        .save(messageId)
+                        .then(() =>
+                          dispatch(addToast({ kind: 'success', message: t('msg.saved') })),
+                        )
+                        .catch(() =>
+                          dispatch(addToast({ kind: 'error', message: t('msg.saveFailed') })),
+                        );
+                      setCtx(null);
+                    }}
+                  />
+                  <MsgCtxItem
+                    label={t('msg.viewProfile')}
+                    onClick={() => {
+                      dispatch(openProfileCard({ userId: authorId, anchorRect: null }));
+                      setCtx(null);
+                    }}
+                  />
+                  {!isMine && (
+                    <MsgCtxItem
+                      label={t('msg.mention')}
+                      onClick={() => {
+                        window.dispatchEvent(
+                          new CustomEvent('concord:mention-user', { detail: { id: authorId } }),
+                        );
+                        setCtx(null);
+                      }}
+                    />
+                  )}
+                  <MsgCtxItem label={t('msg.remindMe')} onClick={() => setRemindMode(true)} />
+                  {channelId && (
+                    <MsgCtxItem
+                      label={t('msg.markUnread')}
+                      onClick={() => {
+                        dispatch(markChannelUnread(channelId, messageId));
+                        setCtx(null);
+                      }}
+                    />
+                  )}
+                  {isMine && (
+                    <>
+                      <div className="my-1 h-px bg-line" />
+                      <MsgCtxItem
+                        label={t('msg.delete')}
+                        danger
+                        onClick={() => {
+                          doDelete();
+                          setCtx(null);
+                        }}
+                      />
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {forwardOpen && (
+          <ForwardModal
+            content={content}
+            messageId={messageId}
+            onClose={() => setForwardOpen(false)}
           />
-        </div>
-      )}
+        )}
+
+        {pickerOpen && (
+          <div className="absolute right-2 top-9 bg-surface-1 border border-line rounded-lg shadow-2xl p-1 flex gap-0.5 z-10 items-center">
+            {QUICK_EMOJIS.map((e) => (
+              <button
+                key={e}
+                onClick={() => {
+                  toggle(e);
+                  setPickerOpen(false);
+                }}
+                className="w-8 h-8 hover:bg-surface-2 rounded flex items-center justify-center text-lg"
+              >
+                {e}
+              </button>
+            ))}
+            <button
+              onClick={() => {
+                setPickerOpen(false);
+                setFullEmoji(true);
+              }}
+              title={t('emoji.all')}
+              aria-label={t('emoji.all')}
+              className="w-8 h-8 hover:bg-surface-2 rounded flex items-center justify-center text-ink-tertiary hover:text-ink-primary"
+            >
+              <Smile size={16} />
+            </button>
+          </div>
+        )}
+        {fullEmoji && (
+          <div className="absolute right-2 top-9 z-20">
+            <EmojiPicker
+              onPick={(emoji) => {
+                toggle(emoji);
+                setFullEmoji(false);
+              }}
+              onClose={() => setFullEmoji(false)}
+            />
+          </div>
+        )}
       </div>
     </li>
   );
 }
 
-function ReactionChip({ messageId, reaction, onToggle }: { messageId: string; reaction: APIReaction; onToggle: () => void }) {
+function ReactionChip({
+  messageId,
+  reaction,
+  onToggle,
+}: {
+  messageId: string;
+  reaction: APIReaction;
+  onToggle: () => void;
+}) {
   const [names, setNames] = useState<string | null>(null);
   const [burst, setBurst] = useState(0); // patlama tetikleyici
   async function loadNames() {
@@ -1018,15 +1249,16 @@ function ReactionChip({ messageId, reaction, onToggle }: { messageId: string; re
           : 'bg-surface-2 border-line text-ink-secondary hover:bg-surface-3')
       }
     >
-      {burst > 0 && [...Array(6)].map((_, i) => (
-        <span
-          key={`${burst}-${i}`}
-          className="concord-burst-particle"
-          style={{ ['--bx' as any]: `${(i - 2.5) * 12}px`, animationDelay: `${i * 30}ms` }}
-        >
-          {reaction.emoji}
-        </span>
-      ))}
+      {burst > 0 &&
+        [...Array(6)].map((_, i) => (
+          <span
+            key={`${burst}-${i}`}
+            className="concord-burst-particle"
+            style={{ ['--bx' as any]: `${(i - 2.5) * 12}px`, animationDelay: `${i * 30}ms` }}
+          >
+            {reaction.emoji}
+          </span>
+        ))}
       <span>{reaction.emoji}</span>
       <span className="font-semibold">{reaction.count}</span>
     </button>
@@ -1045,7 +1277,11 @@ function AttachmentView({ a }: { a: APIAttachment }) {
         className="relative inline-flex items-center justify-center max-w-xs w-48 h-32 rounded-lg border border-line overflow-hidden group/sp"
       >
         {ct.startsWith('image/') && (
-          <img src={a.url} alt="" className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-60" />
+          <img
+            src={a.url}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-60"
+          />
         )}
         <span className="relative z-10 px-3 py-1 rounded-full bg-black/70 text-white text-xs font-bold uppercase tracking-wider group-hover/sp:bg-black/90">
           Spoiler
@@ -1068,14 +1304,16 @@ function AttachmentView({ a }: { a: APIAttachment }) {
               href={a.url}
               download={a.filename}
               onClick={(e) => e.stopPropagation()}
-              title={t('common.download')} aria-label={t('common.download')}
+              title={t('common.download')}
+              aria-label={t('common.download')}
               className="w-7 h-7 rounded bg-black/60 hover:bg-black/80 text-white flex items-center justify-center text-xs"
             >
               ⬇
             </a>
             <button
               onClick={() => navigator.clipboard?.writeText(a.url)}
-              title={t('common.copyLinkShort')} aria-label={t('common.copyLinkShort')}
+              title={t('common.copyLinkShort')}
+              aria-label={t('common.copyLinkShort')}
               className="w-7 h-7 rounded bg-black/60 hover:bg-black/80 text-white flex items-center justify-center"
             >
               <Share2 size={12} />
@@ -1087,7 +1325,12 @@ function AttachmentView({ a }: { a: APIAttachment }) {
             className="fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-6"
             onClick={() => setLightbox(false)}
           >
-            <img src={a.url} alt={a.filename} className="max-w-full max-h-full rounded-lg" onClick={(e) => e.stopPropagation()} />
+            <img
+              src={a.url}
+              alt={a.filename}
+              className="max-w-full max-h-full rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
             <a
               href={a.url}
               download={a.filename}
@@ -1136,7 +1379,10 @@ function fileIcon(filename: string): string {
   if (['xls', 'xlsx', 'csv'].includes(ext)) return '📊';
   if (['ppt', 'pptx'].includes(ext)) return '📽️';
   if (['mp3', 'wav', 'ogg', 'flac', 'm4a'].includes(ext)) return '🎵';
-  if (['js', 'ts', 'tsx', 'py', 'go', 'rs', 'java', 'c', 'cpp', 'html', 'css', 'json'].includes(ext)) return '💻';
+  if (
+    ['js', 'ts', 'tsx', 'py', 'go', 'rs', 'java', 'c', 'cpp', 'html', 'css', 'json'].includes(ext)
+  )
+    return '💻';
   return '📎';
 }
 
@@ -1160,7 +1406,8 @@ function formatFull(ts: number) {
   if (d.toDateString() === now.toDateString()) return t('date.todayAt', { time: formatTime(ts) });
   const yest = new Date(now);
   yest.setDate(yest.getDate() - 1);
-  if (d.toDateString() === yest.toDateString()) return t('date.yesterdayAt', { time: formatTime(ts) });
+  if (d.toDateString() === yest.toDateString())
+    return t('date.yesterdayAt', { time: formatTime(ts) });
   return d.toLocaleString('tr-TR', {
     day: '2-digit',
     month: '2-digit',
@@ -1170,16 +1417,22 @@ function formatFull(ts: number) {
   });
 }
 
-
 // "(düzenlendi)" etiketi — tıklayınca düzenleme geçmişini (eski sürümler) gösterir
 function EditedLabel({ messageId, editedAt }: { messageId: string; editedAt: string }) {
   const [open, setOpen] = useState(false);
-  const [edits, setEdits] = useState<Array<{ id: string; old_content: string; edited_at: string }> | null>(null);
+  const [edits, setEdits] = useState<Array<{
+    id: string;
+    old_content: string;
+    edited_at: string;
+  }> | null>(null);
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    api.messages.edits(messageId).then(setEdits).catch(() => setEdits([]));
+    api.messages
+      .edits(messageId)
+      .then(setEdits)
+      .catch(() => setEdits([]));
     function onDoc(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
@@ -1198,7 +1451,9 @@ function EditedLabel({ messageId, editedAt }: { messageId: string; editedAt: str
       </button>
       {open && (
         <div className="absolute z-50 bottom-full left-0 mb-1 w-72 max-h-72 overflow-y-auto bg-surface-1 border border-line rounded-xl shadow-2xl p-2">
-          <div className="text-[10px] uppercase font-bold text-ink-tertiary px-1 pb-1">{t('msg.editHistory')}</div>
+          <div className="text-[10px] uppercase font-bold text-ink-tertiary px-1 pb-1">
+            {t('msg.editHistory')}
+          </div>
           {edits === null ? (
             <p className="text-xs text-ink-tertiary p-2">{t('common.loading')}</p>
           ) : edits.length === 0 ? (
@@ -1207,8 +1462,12 @@ function EditedLabel({ messageId, editedAt }: { messageId: string; editedAt: str
             <ul className="space-y-1.5">
               {edits.map((e) => (
                 <li key={e.id} className="bg-surface-2 rounded-lg p-2">
-                  <div className="text-[10px] text-ink-tertiary mb-0.5">{new Date(e.edited_at).toLocaleString('tr-TR')}</div>
-                  <div className="text-xs text-ink-secondary whitespace-pre-wrap break-words line-through decoration-ink-muted/40">{e.old_content}</div>
+                  <div className="text-[10px] text-ink-tertiary mb-0.5">
+                    {new Date(e.edited_at).toLocaleString('tr-TR')}
+                  </div>
+                  <div className="text-xs text-ink-secondary whitespace-pre-wrap break-words line-through decoration-ink-muted/40">
+                    {e.old_content}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -1224,7 +1483,8 @@ function RichEmbeds({ embeds }: { embeds: RichEmbed[] }) {
   return (
     <div className="mt-2 space-y-2">
       {embeds.map((e, idx) => {
-        const color = typeof e.color === 'number' ? '#' + e.color.toString(16).padStart(6, '0') : '#00D9A6';
+        const color =
+          typeof e.color === 'number' ? '#' + e.color.toString(16).padStart(6, '0') : '#00D9A6';
         return (
           <div
             key={idx}
@@ -1233,37 +1493,64 @@ function RichEmbeds({ embeds }: { embeds: RichEmbed[] }) {
           >
             {e.author_name && (
               <div className="flex items-center gap-1.5 mb-1">
-                {e.author_icon && <img src={e.author_icon} alt="" className="w-5 h-5 rounded-full object-cover" />}
+                {e.author_icon && (
+                  <img src={e.author_icon} alt="" className="w-5 h-5 rounded-full object-cover" />
+                )}
                 {e.author_url ? (
-                  <a href={e.author_url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-ink-primary hover:underline">{e.author_name}</a>
+                  <a
+                    href={e.author_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-semibold text-ink-primary hover:underline"
+                  >
+                    {e.author_name}
+                  </a>
                 ) : (
                   <span className="text-xs font-semibold text-ink-primary">{e.author_name}</span>
                 )}
               </div>
             )}
-            {e.title && (
-              e.url ? (
-                <a href={e.url} target="_blank" rel="noreferrer" className="font-semibold text-brand-500 hover:underline text-sm block">{e.title}</a>
+            {e.title &&
+              (e.url ? (
+                <a
+                  href={e.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-brand-500 hover:underline text-sm block"
+                >
+                  {e.title}
+                </a>
               ) : (
                 <div className="font-semibold text-ink-primary text-sm">{e.title}</div>
-              )
+              ))}
+            {e.description && (
+              <div className="text-xs text-ink-secondary mt-1 whitespace-pre-wrap break-words">
+                {e.description}
+              </div>
             )}
-            {e.description && <div className="text-xs text-ink-secondary mt-1 whitespace-pre-wrap break-words">{e.description}</div>}
             {e.fields && e.fields.length > 0 && (
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {e.fields.map((f, i) => (
                   <div key={i} className={f.inline ? '' : 'col-span-2'}>
                     <div className="text-[11px] font-bold text-ink-primary">{f.name}</div>
-                    <div className="text-xs text-ink-secondary whitespace-pre-wrap break-words">{f.value}</div>
+                    <div className="text-xs text-ink-secondary whitespace-pre-wrap break-words">
+                      {f.value}
+                    </div>
                   </div>
                 ))}
               </div>
             )}
-            {e.image_url && <img src={e.image_url} alt="" className="mt-2 rounded max-h-72 w-full object-cover" />}
-            {e.thumbnail_url && !e.image_url && <img src={e.thumbnail_url} alt="" className="mt-2 rounded max-h-20 object-cover" />}
+            {e.image_url && (
+              <img src={e.image_url} alt="" className="mt-2 rounded max-h-72 w-full object-cover" />
+            )}
+            {e.thumbnail_url && !e.image_url && (
+              <img src={e.thumbnail_url} alt="" className="mt-2 rounded max-h-20 object-cover" />
+            )}
             {(e.footer_text || e.timestamp) && (
               <div className="flex items-center gap-1.5 mt-2 text-[10px] text-ink-tertiary">
-                {e.footer_icon && <img src={e.footer_icon} alt="" className="w-4 h-4 rounded-full object-cover" />}
+                {e.footer_icon && (
+                  <img src={e.footer_icon} alt="" className="w-4 h-4 rounded-full object-cover" />
+                )}
                 {e.footer_text && <span>{e.footer_text}</span>}
                 {e.footer_text && e.timestamp && <span>•</span>}
                 {e.timestamp && <span>{new Date(e.timestamp).toLocaleString('tr-TR')}</span>}
@@ -1319,11 +1606,7 @@ function EmbedsView({ messageId, content }: { messageId: string; content: string
             <div className="text-xs text-ink-secondary mt-1 line-clamp-3">{e.description}</div>
           )}
           {e.image_url && (
-            <img
-              src={e.image_url}
-              alt=""
-              className="mt-2 rounded max-h-48 object-cover"
-            />
+            <img src={e.image_url} alt="" className="mt-2 rounded max-h-48 object-cover" />
           )}
         </a>
       ))}
@@ -1363,9 +1646,15 @@ function PollView({ messageId }: { messageId: string }) {
     let alive = true;
     api.polls
       .forMessage(messageId)
-      .then((p) => { if (alive) setPoll(p); })
-      .catch(() => { if (alive) setPoll(null); });
-    return () => { alive = false; };
+      .then((p) => {
+        if (alive) setPoll(p);
+      })
+      .catch(() => {
+        if (alive) setPoll(null);
+      });
+    return () => {
+      alive = false;
+    };
   }, [messageId, ver]);
 
   // Başka kullanıcı oy verince canlı güncelle (gateway → window event)
@@ -1407,8 +1696,14 @@ function PollView({ messageId }: { messageId: string }) {
             <button
               key={a.id}
               onClick={() => vote(a)}
-              onMouseEnter={() => { if (a.count > 0) loadVoters(a.id); }}
-              title={a.count > 0 && voters[a.id] && voters[a.id].trim() ? `Oy verenler: ${voters[a.id]}` : undefined}
+              onMouseEnter={() => {
+                if (a.count > 0) loadVoters(a.id);
+              }}
+              title={
+                a.count > 0 && voters[a.id] && voters[a.id].trim()
+                  ? `Oy verenler: ${voters[a.id]}`
+                  : undefined
+              }
               disabled={poll.expired || busy}
               className={
                 'relative w-full text-left rounded-lg border overflow-hidden transition-colors ' +
@@ -1416,31 +1711,46 @@ function PollView({ messageId }: { messageId: string }) {
                 (poll.expired ? ' cursor-default' : '')
               }
             >
-              <div className="absolute inset-y-0 left-0 bg-brand-500/15 transition-all" style={{ width: pct + '%' }} />
+              <div
+                className="absolute inset-y-0 left-0 bg-brand-500/15 transition-all"
+                style={{ width: pct + '%' }}
+              />
               <div className="relative flex items-center justify-between px-3 py-2 text-sm">
                 <span className="text-ink-primary flex items-center gap-1.5 min-w-0">
                   {a.me_voted && <Check size={13} className="text-brand-500 shrink-0" />}
                   {a.emoji && <span className="shrink-0">{a.emoji}</span>}
                   <span className="truncate">{a.answer_text}</span>
                 </span>
-                <span className="text-xs text-ink-tertiary ml-2 shrink-0">{pct}% · {a.count}</span>
+                <span className="text-xs text-ink-tertiary ml-2 shrink-0">
+                  {pct}% · {a.count}
+                </span>
               </div>
             </button>
           );
         })}
       </div>
       <div className="text-[11px] text-ink-tertiary mt-2 flex items-center justify-between">
-        <span>{total} oy · {poll.allow_multiselect ? 'çoklu seçim' : 'tek seçim'}{poll.anonymous ? ' · anonim' : ''}</span>
+        <span>
+          {total} oy · {poll.allow_multiselect ? 'çoklu seçim' : 'tek seçim'}
+          {poll.anonymous ? ' · anonim' : ''}
+        </span>
         <span className="flex items-center gap-2">
           {!poll.expired && me?.id === poll.created_by && (
             <button
-              onClick={async () => { if (confirm(t('poll.closeConfirm'))) { await api.polls.close(poll.id).catch(() => {}); setVer((v) => v + 1); } }}
+              onClick={async () => {
+                if (confirm(t('poll.closeConfirm'))) {
+                  await api.polls.close(poll.id).catch(() => {});
+                  setVer((v) => v + 1);
+                }
+              }}
               className="text-accent-400 hover:text-accent-500 font-medium"
             >
               Anketi kapat
             </button>
           )}
-          <span>{poll.expired ? t('poll.ended') : poll.expires_at ? pollTimeLeft(poll.expires_at) : ''}</span>
+          <span>
+            {poll.expired ? t('poll.ended') : poll.expires_at ? pollTimeLeft(poll.expires_at) : ''}
+          </span>
         </span>
       </div>
     </div>
@@ -1448,9 +1758,18 @@ function PollView({ messageId }: { messageId: string }) {
 }
 
 // Mesaj içeriğinde concord davet bağlantısı varsa Discord tarzı "Sunucuya Katıl" kartı göster.
-const INVITE_RE = /(?:concord\.com|localhost(?::\d+)?|127\.0\.0\.1(?::\d+)?)\/(?:invite|davet)\/([a-z0-9]{4,16})/i;
+const INVITE_RE =
+  /(?:concord\.com|localhost(?::\d+)?|127\.0\.0\.1(?::\d+)?)\/(?:invite|davet)\/([a-z0-9]{4,16})/i;
 
-function MsgCtxItem({ label, danger, onClick }: { label: string; danger?: boolean; onClick: () => void }) {
+function MsgCtxItem({
+  label,
+  danger,
+  onClick,
+}: {
+  label: string;
+  danger?: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}
@@ -1516,74 +1835,74 @@ function InviteCard({ content }: { content: string }) {
   const iconText = g?.name?.slice(0, 2).toUpperCase() ?? '';
 
   return (
-   <div className="mt-1">
-    {/* Tıklanınca katılan link (kartın üstünde) */}
-    <a
-      href={`https://${linkText}`}
-      onClick={(e) => {
-        e.preventDefault();
-        join();
-      }}
-      className="text-sm text-brand-400 hover:underline break-all cursor-pointer"
-    >
-      {linkText}
-    </a>
-    <div className="mt-1 max-w-sm bg-surface-2 border border-line rounded-xl p-3">
-      <div className="text-[10px] uppercase font-bold text-ink-tertiary tracking-wider mb-2">
-        Bir sunucuya davet edildin
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-2xl bg-brand-500 flex items-center justify-center text-white font-bold shrink-0">
-          {preview ? iconText : '…'}
+    <div className="mt-1">
+      {/* Tıklanınca katılan link (kartın üstünde) */}
+      <a
+        href={`https://${linkText}`}
+        onClick={(e) => {
+          e.preventDefault();
+          join();
+        }}
+        className="text-sm text-brand-400 hover:underline break-all cursor-pointer"
+      >
+        {linkText}
+      </a>
+      <div className="mt-1 max-w-sm bg-surface-2 border border-line rounded-xl p-3">
+        <div className="text-[10px] uppercase font-bold text-ink-tertiary tracking-wider mb-2">
+          Bir sunucuya davet edildin
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-semibold text-ink-primary truncate">
-            {preview ? g!.name : t('common.loading')}
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-brand-500 flex items-center justify-center text-white font-bold shrink-0">
+            {preview ? iconText : '…'}
           </div>
-          {preview && (
-            <div className="flex items-center gap-2.5 text-xs text-ink-tertiary mt-0.5">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-status-online" />
-                {preview.online_count} çevrimiçi
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-status-offline" />
-                {preview.member_count} üye
-              </span>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-ink-primary truncate">
+              {preview ? g!.name : t('common.loading')}
             </div>
-          )}
-          {preview?.channel && (
-            <div className="text-xs text-ink-secondary truncate mt-0.5 flex items-center gap-1">
-              <Hash size={11} className="shrink-0" />
-              {preview.channel.name}
-            </div>
+            {preview && (
+              <div className="flex items-center gap-2.5 text-xs text-ink-tertiary mt-0.5">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-status-online" />
+                  {preview.online_count} çevrimiçi
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-status-offline" />
+                  {preview.member_count} üye
+                </span>
+              </div>
+            )}
+            {preview?.channel && (
+              <div className="text-xs text-ink-secondary truncate mt-0.5 flex items-center gap-1">
+                <Hash size={11} className="shrink-0" />
+                {preview.channel.name}
+              </div>
+            )}
+          </div>
+          {joined ? (
+            <span className="px-3 py-2 rounded-lg bg-surface-3 text-ink-tertiary text-sm font-semibold shrink-0">
+              Katıldın
+            </span>
+          ) : (
+            <button
+              onClick={join}
+              disabled={joining || !preview}
+              className="px-4 py-2 rounded-lg bg-status-online hover:brightness-110 disabled:opacity-60 text-white text-sm font-semibold shrink-0 transition"
+            >
+              {joining ? t('invite.joining') : t('invite.joinServer')}
+            </button>
           )}
         </div>
-        {joined ? (
-          <span className="px-3 py-2 rounded-lg bg-surface-3 text-ink-tertiary text-sm font-semibold shrink-0">
-            Katıldın
-          </span>
-        ) : (
-          <button
-            onClick={join}
-            disabled={joining || !preview}
-            className="px-4 py-2 rounded-lg bg-status-online hover:brightness-110 disabled:opacity-60 text-white text-sm font-semibold shrink-0 transition"
-          >
-            {joining ? t('invite.joining') : t('invite.joinServer')}
-          </button>
+        {preview && (
+          <div className="mt-2 pt-2 border-t border-line text-[11px] text-ink-tertiary">
+            Kuruluş:{' '}
+            {new Date(preview.guild.created_at).toLocaleDateString('tr-TR', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+          </div>
         )}
       </div>
-      {preview && (
-        <div className="mt-2 pt-2 border-t border-line text-[11px] text-ink-tertiary">
-          Kuruluş:{' '}
-          {new Date(preview.guild.created_at).toLocaleDateString('tr-TR', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          })}
-        </div>
-      )}
     </div>
-   </div>
   );
 }

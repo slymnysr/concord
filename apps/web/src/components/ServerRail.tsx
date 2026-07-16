@@ -2,7 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { httpUrl } from '../serverConfig';
 import clsx from 'clsx';
 import { Plus, Compass, Folder } from 'lucide-react';
-import { useAppDispatch, useAppSelector, openModal, switchToDM, switchToGuild, switchToDiscover } from '../store';
+import {
+  useAppDispatch,
+  useAppSelector,
+  openModal,
+  switchToDM,
+  switchToGuild,
+  switchToDiscover,
+} from '../store';
 import { api, type APIGuild } from '../api';
 import { t } from '../i18n';
 
@@ -34,11 +41,14 @@ export function ServerRail() {
   return (
     <aside className="w-[76px] bg-bg flex flex-col items-center py-4 gap-3 border-r border-line">
       <button
-        title={t('rail.friendsDM')} aria-label={t('rail.friendsDM')}
+        title={t('rail.friendsDM')}
+        aria-label={t('rail.friendsDM')}
         onClick={() => dispatch(switchToDM())}
         className={
           'w-12 h-12 rounded-xl bg-surface-1 border border-line hover:border-brand-500/40 hover:scale-105 flex items-center justify-center overflow-hidden transition-all ' +
-          (mode === 'dm' ? 'ring-2 ring-brand-500 ring-offset-2 ring-offset-bg shadow-glow border-brand-500 scale-105' : '')
+          (mode === 'dm'
+            ? 'ring-2 ring-brand-500 ring-offset-2 ring-offset-bg shadow-glow border-brand-500 scale-105'
+            : '')
         }
       >
         <img src="/brand/logo.svg" width={36} height={36} alt="" />
@@ -94,8 +104,12 @@ export function ServerRail() {
                 const draggedId = e.dataTransfer.getData('text/concord-guild');
                 if (!draggedId || draggedId === g.id) return;
                 try {
-                  const order = JSON.parse(localStorage.getItem('concord_guild_order') ?? '[]') as string[];
-                  const filtered = order.filter((id) => id !== draggedId && guilds.some((x) => x.id === id));
+                  const order = JSON.parse(
+                    localStorage.getItem('concord_guild_order') ?? '[]',
+                  ) as string[];
+                  const filtered = order.filter(
+                    (id) => id !== draggedId && guilds.some((x) => x.id === id),
+                  );
                   const targetIdx = filtered.indexOf(g.id);
                   const insertAt = targetIdx >= 0 ? targetIdx : idx;
                   filtered.splice(insertAt, 0, draggedId);
@@ -118,7 +132,8 @@ export function ServerRail() {
               await api.folders.create({ name: name.trim() });
               refreshFolders();
             }}
-            title={t('rail.newFolder')} aria-label={t('rail.newFolder')}
+            title={t('rail.newFolder')}
+            aria-label={t('rail.newFolder')}
             className="w-12 h-12 rounded-xl bg-surface-1 border border-dashed border-line hover:border-brand-500/40 text-ink-tertiary hover:text-brand-500 flex items-center justify-center transition-colors"
           >
             <Folder size={18} />
@@ -130,7 +145,8 @@ export function ServerRail() {
         <button
           onClick={() => dispatch(openModal('create_guild'))}
           className="w-12 h-12 rounded-xl bg-surface-1 hover:bg-brand-500/15 hover:text-brand-500 text-ink-secondary transition-colors flex items-center justify-center border border-line"
-          title={t('rail.addServer')} aria-label={t('rail.addServer')}
+          title={t('rail.addServer')}
+          aria-label={t('rail.addServer')}
         >
           <Plus size={20} strokeWidth={2.5} />
         </button>
@@ -138,9 +154,11 @@ export function ServerRail() {
           onClick={() => dispatch(switchToDiscover())}
           className={clsx(
             'w-12 h-12 rounded-xl bg-surface-1 hover:bg-brand-500/15 hover:text-brand-500 text-ink-secondary transition-colors flex items-center justify-center border border-line',
-            mode === 'discover' && 'ring-2 ring-brand-500 ring-offset-2 ring-offset-bg border-brand-500 text-brand-500',
+            mode === 'discover' &&
+              'ring-2 ring-brand-500 ring-offset-2 ring-offset-bg border-brand-500 text-brand-500',
           )}
-          title={t('rail.discover')} aria-label={t('rail.discover')}
+          title={t('rail.discover')}
+          aria-label={t('rail.discover')}
         >
           <Compass size={20} />
         </button>
@@ -161,16 +179,15 @@ function GuildIcon({ guild, active }: { guild: APIGuild; active: boolean }) {
       if (ch.type === 'category') continue;
       const rs = s.readStates.byChannel[ch.id];
       mentions += rs?.mention_count ?? 0;
-      if (
-        ch.last_message_id &&
-        (!rs?.last_message_id || rs.last_message_id < ch.last_message_id)
-      ) {
+      if (ch.last_message_id && (!rs?.last_message_id || rs.last_message_id < ch.last_message_id)) {
         unread = true;
       }
     }
     return { hasUnread: unread, totalMentions: mentions };
   });
-  const muted = typeof localStorage !== 'undefined' && localStorage.getItem('concord_guildmute_' + guild.id) === '1';
+  const muted =
+    typeof localStorage !== 'undefined' &&
+    localStorage.getItem('concord_guildmute_' + guild.id) === '1';
 
   return (
     <div className={'relative ' + (muted ? 'opacity-50' : '')}>
@@ -190,7 +207,11 @@ function GuildIcon({ guild, active }: { guild: APIGuild; active: boolean }) {
         style={{ backgroundColor: guild.icon_color }}
       >
         {(guild as any).icon_url_v2 ? (
-          <img src={(guild as any).icon_url_v2} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <img
+            src={(guild as any).icon_url_v2}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
         ) : (
           guild.icon_text
         )}
@@ -207,7 +228,9 @@ function GuildIcon({ guild, active }: { guild: APIGuild; active: boolean }) {
           {totalMentions > 99 ? '99+' : totalMentions}
         </span>
       )}
-      {menu && <GuildContextMenu guild={guild} x={menu.x} y={menu.y} onClose={() => setMenu(null)} />}
+      {menu && (
+        <GuildContextMenu guild={guild} x={menu.x} y={menu.y} onClose={() => setMenu(null)} />
+      )}
     </div>
   );
 }

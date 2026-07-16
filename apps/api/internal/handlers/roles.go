@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/concord/api/internal/middleware"
 	"github.com/concord/api/internal/perms"
 	"github.com/concord/api/internal/repo"
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
@@ -288,8 +288,8 @@ func (h *Handler) AssignRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.Events.ToGuild(r.Context(), guildID, "GUILD_MEMBER_UPDATE", map[string]any{
-		"user_id":      userID,
-		"role_added":   roleID,
+		"user_id":    userID,
+		"role_added": roleID,
 	})
 	h.logAudit(r.Context(), guildID, uid, &userID, "role_assign", "", map[string]any{"role_id": roleID})
 	w.WriteHeader(http.StatusNoContent)

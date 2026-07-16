@@ -3,9 +3,22 @@
 // profil kartı, resim büyütme (lightbox), çevrimiçi durum noktaları.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, Image, Modal, Pressable, Alert,
-  ActivityIndicator, ScrollView, type NativeSyntheticEvent, type NativeScrollEvent,
+  View,
+  Text,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  Modal,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+  ScrollView,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
@@ -13,7 +26,15 @@ import * as DocumentPicker from 'expo-document-picker';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../theme';
-import { api, uploadFile, type Message, type Reaction, type User, type Member, type Friend } from '../api';
+import {
+  api,
+  uploadFile,
+  type Message,
+  type Reaction,
+  type User,
+  type Member,
+  type Friend,
+} from '../api';
 import { AudioMessage } from '../AudioMessage';
 import { joinGuild, joinUser, sendTyping, onConnection } from '../gateway';
 import { MarkdownText } from '../MarkdownText';
@@ -27,7 +48,14 @@ import { tap, impact } from '../haptics';
 import type { Nav } from '../nav';
 
 interface Props {
-  channel: { id: string; name: string; guildId?: string; type?: string; participants?: string[]; focusMessageId?: string };
+  channel: {
+    id: string;
+    name: string;
+    guildId?: string;
+    type?: string;
+    participants?: string[];
+    focusMessageId?: string;
+  };
   me: User;
   nav: Nav;
   onBack: () => void;
@@ -36,10 +64,13 @@ interface Props {
 const QUICK_EMOJIS = ['👍', '❤️', '😂', '🔥', '👀', '🎉'];
 
 function statusColor(status?: string) {
-  return status === 'online' ? colors.online
-    : status === 'idle' ? colors.idle
-    : status === 'dnd' ? colors.dnd
-    : colors.inkTertiary;
+  return status === 'online'
+    ? colors.online
+    : status === 'idle'
+      ? colors.idle
+      : status === 'dnd'
+        ? colors.dnd
+        : colors.inkTertiary;
 }
 
 export function ChatScreen({ channel, me, nav, onBack }: Props) {
@@ -60,14 +91,20 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   const [atBottom, setAtBottom] = useState(true);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [firstUnread, setFirstUnread] = useState<string | null>(null);
-  const [pending, setPending] = useState<{ tempId: string; content: string; replyId?: string }[]>([]);
+  const [pending, setPending] = useState<{ tempId: string; content: string; replyId?: string }[]>(
+    [],
+  );
   const [emojiTarget, setEmojiTarget] = useState<'compose' | Message | null>(null);
   const [gifOpen, setGifOpen] = useState(false);
   const [mentionMembers, setMentionMembers] = useState<Member[]>([]);
-  const [mentionChannels, setMentionChannels] = useState<{ id: string; name: string; type: string }[]>([]);
+  const [mentionChannels, setMentionChannels] = useState<
+    { id: string; name: string; type: string }[]
+  >([]);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionKind, setMentionKind] = useState<'user' | 'channel' | null>(null);
-  const [slashCmds, setSlashCmds] = useState<Array<{ id: string; name: string; description: string }>>([]);
+  const [slashCmds, setSlashCmds] = useState<
+    Array<{ id: string; name: string; description: string }>
+  >([]);
   const [pollOpen, setPollOpen] = useState(false);
   const [noteFor, setNoteFor] = useState<User | null>(null);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -75,7 +112,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   const recTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [forwardMsg, setForwardMsg] = useState<Message | null>(null);
-  const [forwardTargets, setForwardTargets] = useState<{ id: string; name: string; kind: string }[]>([]);
+  const [forwardTargets, setForwardTargets] = useState<
+    { id: string; name: string; kind: string }[]
+  >([]);
   const [forwardQuery, setForwardQuery] = useState('');
   const [threadFor, setThreadFor] = useState<Message | null>(null);
   const [recipOpen, setRecipOpen] = useState(false);
@@ -91,8 +130,20 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
 
   const resolveUser = useCallback((id: string) => {
     if (usersRef.current[id]) return;
-    setUsers((u) => ({ ...u, [id]: { id, username: '', display_name: '…', avatar_color: colors.surface3, status: 'offline' } }));
-    api.user(id).then((u) => setUsers((prev) => ({ ...prev, [id]: u }))).catch(() => {});
+    setUsers((u) => ({
+      ...u,
+      [id]: {
+        id,
+        username: '',
+        display_name: '…',
+        avatar_color: colors.surface3,
+        status: 'offline',
+      },
+    }));
+    api
+      .user(id)
+      .then((u) => setUsers((prev) => ({ ...prev, [id]: u })))
+      .catch(() => {});
   }, []);
 
   // İlk yükleme (en yeni 50; en eski üstte) + son 30 mesajın tepkileri
@@ -101,35 +152,55 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     hasMoreRef.current = true;
     atBottomRef.current = true;
     // Çevrimdışı önbellek: anında göster, sonra ağdan tazele
-    AsyncStorage.getItem(`concord_msgs_${channel.id}`).then((c) => {
-      if (!c || cancelled) return;
-      try {
-        const cached = JSON.parse(c) as Message[];
-        if (messagesRef.current.length === 0 && cached.length) {
-          setMessages(cached);
-          for (const m of cached) resolveUser(m.author_id);
-        }
-      } catch {}
-    }).catch(() => {});
-    api.channels.messages(channel.id)
+    AsyncStorage.getItem(`concord_msgs_${channel.id}`)
+      .then((c) => {
+        if (!c || cancelled) return;
+        try {
+          const cached = JSON.parse(c) as Message[];
+          if (messagesRef.current.length === 0 && cached.length) {
+            setMessages(cached);
+            for (const m of cached) resolveUser(m.author_id);
+          }
+        } catch {}
+      })
+      .catch(() => {});
+    api.channels
+      .messages(channel.id)
       .then(async (list) => {
         if (cancelled) return;
         if (list.length < 50) hasMoreRef.current = false;
         const ordered = list.slice().reverse();
         setMessages(ordered);
-        AsyncStorage.setItem(`concord_msgs_${channel.id}`, JSON.stringify(ordered.slice(-50))).catch(() => {});
+        AsyncStorage.setItem(
+          `concord_msgs_${channel.id}`,
+          JSON.stringify(ordered.slice(-50)),
+        ).catch(() => {});
         for (const m of ordered) resolveUser(m.author_id);
         // "Yeni mesajlar" ayracı: en son okunan mesajdan sonraki ilk mesaj
-        api.readStates.list().then((states) => {
-          if (cancelled) return;
-          const r = states.find((x) => x.channel_id === channel.id);
-          if (!r?.last_message_id) return;
-          const fu = ordered.find((m) => { try { return BigInt(m.id) > BigInt(r.last_message_id!); } catch { return false; } });
-          if (fu) setFirstUnread(fu.id);
-        }).catch(() => {});
+        api.readStates
+          .list()
+          .then((states) => {
+            if (cancelled) return;
+            const r = states.find((x) => x.channel_id === channel.id);
+            if (!r?.last_message_id) return;
+            const fu = ordered.find((m) => {
+              try {
+                return BigInt(m.id) > BigInt(r.last_message_id!);
+              } catch {
+                return false;
+              }
+            });
+            if (fu) setFirstUnread(fu.id);
+          })
+          .catch(() => {});
         const tail = ordered.slice(-30);
         const results = await Promise.all(
-          tail.map((m) => api.reactions.list(m.id).then((r) => [m.id, r] as const).catch(() => null)),
+          tail.map((m) =>
+            api.reactions
+              .list(m.id)
+              .then((r) => [m.id, r] as const)
+              .catch(() => null),
+          ),
         );
         if (cancelled) return;
         const map: Record<string, Reaction[]> = {};
@@ -138,7 +209,11 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       })
       .catch(() => {});
     api.channels.ack(channel.id).catch(() => {});
-    AsyncStorage.getItem(`concord_draft_${channel.id}`).then((d) => { if (d) setText(d); }).catch(() => {});
+    AsyncStorage.getItem(`concord_draft_${channel.id}`)
+      .then((d) => {
+        if (d) setText(d);
+      })
+      .catch(() => {});
     if (channel.focusMessageId) setTimeout(() => jumpToMessage(channel.focusMessageId), 600);
     return () => {
       cancelled = true;
@@ -159,7 +234,8 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         for (const m of ordered) resolveUser(m.author_id);
         setMessages((prev) => [...ordered, ...prev]);
       }
-    } catch {} finally {
+    } catch {
+    } finally {
       setLoadingOlder(false);
     }
   }, [channel.id, loadingOlder, resolveUser]);
@@ -167,53 +243,70 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   // Çevrimdışı gönderme kuyruğu — bağlantı/başarı olunca boşaltılır
   const flushQueue = useCallback(async () => {
     let list: { tempId: string; content: string; replyId?: string }[] = [];
-    try { const c = await AsyncStorage.getItem(`concord_queue_${channel.id}`); list = c ? JSON.parse(c) : []; } catch {}
+    try {
+      const c = await AsyncStorage.getItem(`concord_queue_${channel.id}`);
+      list = c ? JSON.parse(c) : [];
+    } catch {}
     if (!list.length) return;
     const remaining: typeof list = [];
     for (const item of list) {
       try {
         const m = await api.channels.sendMessage(channel.id, item.content, item.replyId);
         setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
-      } catch { remaining.push(item); }
+      } catch {
+        remaining.push(item);
+      }
     }
     setPending(remaining);
     AsyncStorage.setItem(`concord_queue_${channel.id}`, JSON.stringify(remaining)).catch(() => {});
   }, [channel.id]);
 
   useEffect(() => {
-    AsyncStorage.getItem(`concord_queue_${channel.id}`).then((c) => { try { setPending(c ? JSON.parse(c) : []); } catch {} }).catch(() => {});
+    AsyncStorage.getItem(`concord_queue_${channel.id}`)
+      .then((c) => {
+        try {
+          setPending(c ? JSON.parse(c) : []);
+        } catch {}
+      })
+      .catch(() => {});
     flushQueue();
   }, [channel.id, flushQueue]);
 
   // Tepki sayacını yerel güncelle (canlı event + optimistic ortak yolu)
-  const bumpReaction = useCallback((messageId: string, emoji: string, delta: 1 | -1, byMe: boolean) => {
-    setReactions((prev) => {
-      const list = prev[messageId] ? [...prev[messageId]] : [];
-      const idx = list.findIndex((r) => r.emoji === emoji);
-      if (idx >= 0) {
-        const r = { ...list[idx] };
-        r.count += delta;
-        if (byMe) r.me = delta > 0;
-        if (r.count <= 0) list.splice(idx, 1);
-        else list[idx] = r;
-      } else if (delta > 0) {
-        list.push({ emoji, count: 1, me: byMe });
-      }
-      return { ...prev, [messageId]: list };
-    });
-  }, []);
+  const bumpReaction = useCallback(
+    (messageId: string, emoji: string, delta: 1 | -1, byMe: boolean) => {
+      setReactions((prev) => {
+        const list = prev[messageId] ? [...prev[messageId]] : [];
+        const idx = list.findIndex((r) => r.emoji === emoji);
+        if (idx >= 0) {
+          const r = { ...list[idx] };
+          r.count += delta;
+          if (byMe) r.me = delta > 0;
+          if (r.count <= 0) list.splice(idx, 1);
+          else list[idx] = r;
+        } else if (delta > 0) {
+          list.push({ emoji, count: 1, me: byMe });
+        }
+        return { ...prev, [messageId]: list };
+      });
+    },
+    [],
+  );
 
   // "yazıyor…" göstergesi — TYPING_START olayında kullanıcıyı 5 sn listede tut
-  const noteTyping = useCallback((userId: string) => {
-    if (!userId || userId === me.id) return;
-    resolveUser(userId);
-    const name = usersRef.current[userId]?.display_name || '…';
-    setTypingNames((prev) => (prev.includes(name) ? prev : [...prev, name]));
-    clearTimeout(typingTimers.current[userId]);
-    typingTimers.current[userId] = setTimeout(() => {
-      setTypingNames((prev) => prev.filter((n) => n !== name));
-    }, 5000);
-  }, [me.id, resolveUser]);
+  const noteTyping = useCallback(
+    (userId: string) => {
+      if (!userId || userId === me.id) return;
+      resolveUser(userId);
+      const name = usersRef.current[userId]?.display_name || '…';
+      setTypingNames((prev) => (prev.includes(name) ? prev : [...prev, name]));
+      clearTimeout(typingTimers.current[userId]);
+      typingTimers.current[userId] = setTimeout(() => {
+        setTypingNames((prev) => prev.filter((n) => n !== name));
+      }, 5000);
+    },
+    [me.id, resolveUser],
+  );
 
   // Gerçek zamanlı: guild kanalı; DM'de kişisel kanal (user:<id>)
   useEffect(() => {
@@ -225,13 +318,19 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       if (ev === 'PRESENCE_UPDATE') {
         const uid = String(payload?.user_id ?? '');
         const st = payload?.status;
-        if (uid && st) setUsers((prev) => (prev[uid] ? { ...prev, [uid]: { ...prev[uid], status: st } } : prev));
+        if (uid && st)
+          setUsers((prev) => (prev[uid] ? { ...prev, [uid]: { ...prev[uid], status: st } } : prev));
         return;
       }
       if (ev === 'REACTION_ADD' || ev === 'REACTION_REMOVE') {
         if (payload?.channel_id !== channel.id) return;
         if (String(payload.user_id) === me.id) return; // kendi tepkim optimistic
-        bumpReaction(String(payload.message_id), payload.emoji, ev === 'REACTION_ADD' ? 1 : -1, false);
+        bumpReaction(
+          String(payload.message_id),
+          payload.emoji,
+          ev === 'REACTION_ADD' ? 1 : -1,
+          false,
+        );
         return;
       }
       const msg: Message | undefined = payload?.message;
@@ -264,18 +363,35 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     } catch {
       // Çevrimdışı → kaybetme, kuyruğa al
       const item = { tempId: String(Date.now()), content, replyId: reply?.id };
-      setPending((p) => { const next = [...p, item]; AsyncStorage.setItem(`concord_queue_${channel.id}`, JSON.stringify(next)).catch(() => {}); return next; });
+      setPending((p) => {
+        const next = [...p, item];
+        AsyncStorage.setItem(`concord_queue_${channel.id}`, JSON.stringify(next)).catch(() => {});
+        return next;
+      });
     } finally {
       setSending(false);
     }
   }
 
-  async function sendWithAttachment(uri: string, filename: string, contentType: string, size: number) {
+  async function sendWithAttachment(
+    uri: string,
+    filename: string,
+    contentType: string,
+    size: number,
+  ) {
     setSending(true);
     try {
-      const pre = await api.uploads.presign({ filename, content_type: contentType, size_bytes: size });
+      const pre = await api.uploads.presign({
+        filename,
+        content_type: contentType,
+        size_bytes: size,
+      });
       const blob = await (await fetch(uri)).blob();
-      const put = await fetch(pre.upload_url, { method: 'PUT', headers: { 'Content-Type': contentType }, body: blob });
+      const put = await fetch(pre.upload_url, {
+        method: 'PUT',
+        headers: { 'Content-Type': contentType },
+        body: blob,
+      });
       if (!put.ok) throw new Error('Dosya yüklenemedi');
       const content = text.trim();
       setText('');
@@ -296,7 +412,12 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.8 });
     const a = res.canceled ? null : res.assets?.[0];
     if (!a) return;
-    await sendWithAttachment(a.uri, a.fileName || `gorsel_${Date.now()}.jpg`, a.mimeType || 'image/jpeg', a.fileSize || 0);
+    await sendWithAttachment(
+      a.uri,
+      a.fileName || `gorsel_${Date.now()}.jpg`,
+      a.mimeType || 'image/jpeg',
+      a.fileSize || 0,
+    );
   }
   async function attachDocument() {
     const res = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true });
@@ -318,17 +439,27 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   async function startRec() {
     try {
       const perm = await Audio.requestPermissionsAsync();
-      if (!perm.granted) { Alert.alert('Concord', 'Mikrofon izni gerekli'); return; }
+      if (!perm.granted) {
+        Alert.alert('Concord', 'Mikrofon izni gerekli');
+        return;
+      }
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording: rec } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      const { recording: rec } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY,
+      );
       setRecording(rec);
       setRecSecs(0);
       recTimer.current = setInterval(() => setRecSecs((x) => x + 1), 1000);
-    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Kayıt başlamadı'); }
+    } catch (e: any) {
+      Alert.alert('Concord', e?.message ?? 'Kayıt başlamadı');
+    }
   }
   async function finishRec(send: boolean) {
     const rec = recording;
-    if (recTimer.current) { clearInterval(recTimer.current); recTimer.current = null; }
+    if (recTimer.current) {
+      clearInterval(recTimer.current);
+      recTimer.current = null;
+    }
     setRecording(null);
     if (!rec) return;
     try {
@@ -338,45 +469,99 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         setSending(true);
         const dur = recSecs;
         const up = await uploadFile(uri, `ses_${dur}sn_${Date.now()}.m4a`, 'audio/m4a', 0);
-        const m = await api.channels.sendMessage(channel.id, '', undefined, [{ url: up.url, filename: up.filename, content_type: 'audio/m4a', size_bytes: 0 }]);
+        const m = await api.channels.sendMessage(channel.id, '', undefined, [
+          { url: up.url, filename: up.filename, content_type: 'audio/m4a', size_bytes: 0 },
+        ]);
         setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
       }
-    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Gönderilemedi'); }
-    finally { setSending(false); setRecSecs(0); }
+    } catch (e: any) {
+      Alert.alert('Concord', e?.message ?? 'Gönderilemedi');
+    } finally {
+      setSending(false);
+      setRecSecs(0);
+    }
   }
 
   async function createPoll(question: string, answers: string[]) {
     setPollOpen(false);
     try {
-      const m = await api.polls.create(channel.id, { question, answers: answers.map((text) => ({ text })) });
+      const m = await api.polls.create(channel.id, {
+        question,
+        answers: answers.map((text) => ({ text })),
+      });
       setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
-    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Anket oluşturulamadı'); }
+    } catch (e: any) {
+      Alert.alert('Concord', e?.message ?? 'Anket oluşturulamadı');
+    }
   }
 
   async function profileDM(u: User) {
     setProfileFor(null);
-    try { const r = await api.dms.open(u.id); nav.push({ kind: 'chat', channel: { id: r.channel_id, name: u.display_name } }); }
-    catch (e: any) { Alert.alert('Concord', e?.message ?? 'DM açılamadı'); }
+    try {
+      const r = await api.dms.open(u.id);
+      nav.push({ kind: 'chat', channel: { id: r.channel_id, name: u.display_name } });
+    } catch (e: any) {
+      Alert.alert('Concord', e?.message ?? 'DM açılamadı');
+    }
   }
   function profileMore(u: User) {
     Alert.alert(u.display_name, `@${u.username}`, [
-      { text: 'Arkadaş ekle', onPress: () => api.friends.send({ user_id: u.id }).then(() => Alert.alert('Concord', 'İstek gönderildi')).catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı')) },
+      {
+        text: 'Arkadaş ekle',
+        onPress: () =>
+          api.friends
+            .send({ user_id: u.id })
+            .then(() => Alert.alert('Concord', 'İstek gönderildi'))
+            .catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı')),
+      },
       { text: 'Not ekle', onPress: () => setNoteFor(u) },
-      { text: 'Engelle', style: 'destructive', onPress: () => api.block(u.id).then(() => { setProfileFor(null); Alert.alert('Concord', 'Engellendi'); }).catch(() => {}) },
-      { text: 'Şikayet et', style: 'destructive', onPress: () => api.report(u.id).then(() => Alert.alert('Concord', 'Şikayet alındı')).catch(() => {}) },
+      {
+        text: 'Engelle',
+        style: 'destructive',
+        onPress: () =>
+          api
+            .block(u.id)
+            .then(() => {
+              setProfileFor(null);
+              Alert.alert('Concord', 'Engellendi');
+            })
+            .catch(() => {}),
+      },
+      {
+        text: 'Şikayet et',
+        style: 'destructive',
+        onPress: () =>
+          api
+            .report(u.id)
+            .then(() => Alert.alert('Concord', 'Şikayet alındı'))
+            .catch(() => {}),
+      },
       { text: 'Vazgeç', style: 'cancel' },
     ]);
   }
   async function showReactors(m: Message, emoji: string) {
-    try { const us = await api.reactions.users(m.id, emoji); Alert.alert(`${emoji} tepkisi`, us.length ? us.map((u) => u.display_name).join('\n') : 'Kimse yok'); } catch {}
+    try {
+      const us = await api.reactions.users(m.id, emoji);
+      Alert.alert(
+        `${emoji} tepkisi`,
+        us.length ? us.map((u) => u.display_name).join('\n') : 'Kimse yok',
+      );
+    } catch {}
   }
   useEffect(() => {
     if (!forwardMsg) return;
     (async () => {
       const t: { id: string; name: string; kind: string }[] = [];
-      try { for (const d of await api.dms.list()) t.push({ id: d.id, name: d.name || 'DM', kind: 'dm' }); } catch {}
+      try {
+        for (const d of await api.dms.list())
+          t.push({ id: d.id, name: d.name || 'DM', kind: 'dm' });
+      } catch {}
       if (channel.guildId) {
-        try { for (const c of await api.guilds.channels(channel.guildId)) if (['text', 'announcement'].includes(c.type)) t.push({ id: c.id, name: '#' + c.name, kind: 'channel' }); } catch {}
+        try {
+          for (const c of await api.guilds.channels(channel.guildId))
+            if (['text', 'announcement'].includes(c.type))
+              t.push({ id: c.id, name: '#' + c.name, kind: 'channel' });
+        } catch {}
       }
       setForwardTargets(t);
     })();
@@ -384,68 +569,116 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
 
   async function doForward(targetId: string) {
     const m = forwardMsg;
-    setForwardMsg(null); setForwardQuery('');
+    setForwardMsg(null);
+    setForwardQuery('');
     if (!m) return;
     try {
-      const atts = (m.attachments ?? []).map((a) => ({ url: a.url, filename: a.filename, content_type: a.content_type || 'application/octet-stream', size_bytes: a.size_bytes || 0 }));
-      await api.channels.sendMessage(targetId, m.content, undefined, atts.length ? atts : undefined);
+      const atts = (m.attachments ?? []).map((a) => ({
+        url: a.url,
+        filename: a.filename,
+        content_type: a.content_type || 'application/octet-stream',
+        size_bytes: a.size_bytes || 0,
+      }));
+      await api.channels.sendMessage(
+        targetId,
+        m.content,
+        undefined,
+        atts.length ? atts : undefined,
+      );
       Alert.alert('Concord', 'İletildi');
-    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'İletilemedi'); }
+    } catch (e: any) {
+      Alert.alert('Concord', e?.message ?? 'İletilemedi');
+    }
   }
 
   async function translate(text: string) {
     try {
-      const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=tr&dt=t&q=${encodeURIComponent(text)}`);
+      const res = await fetch(
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=tr&dt=t&q=${encodeURIComponent(text)}`,
+      );
       const data = await res.json();
       const out = (data?.[0] ?? []).map((seg: any) => seg[0]).join('');
       Alert.alert('Çeviri → Türkçe', out || 'Çevrilemedi');
-    } catch { Alert.alert('Concord', 'Çeviri başarısız'); }
+    } catch {
+      Alert.alert('Concord', 'Çeviri başarısız');
+    }
   }
 
   // Bahsetme için üye + kanal listesi yükle (guild kanalları)
   useEffect(() => {
     if (channel.guildId) {
-      api.guilds.members(channel.guildId).then(setMentionMembers).catch(() => {});
-      api.guilds.channels(channel.guildId)
-        .then((cs) => setMentionChannels(cs.filter((c) => ['text', 'announcement', 'forum', 'voice'].includes(c.type))))
+      api.guilds
+        .members(channel.guildId)
+        .then(setMentionMembers)
         .catch(() => {});
-      api.commands.list(channel.guildId).then(setSlashCmds).catch(() => {});
+      api.guilds
+        .channels(channel.guildId)
+        .then((cs) =>
+          setMentionChannels(
+            cs.filter((c) => ['text', 'announcement', 'forum', 'voice'].includes(c.type)),
+          ),
+        )
+        .catch(() => {});
+      api.commands
+        .list(channel.guildId)
+        .then(setSlashCmds)
+        .catch(() => {});
     }
   }, [channel.guildId]);
 
   const slashMatches = text.startsWith('/')
-    ? slashCmds.filter((c) => c.name.toLowerCase().startsWith(text.slice(1).split(' ')[0].toLowerCase())).slice(0, 6)
+    ? slashCmds
+        .filter((c) => c.name.toLowerCase().startsWith(text.slice(1).split(' ')[0].toLowerCase()))
+        .slice(0, 6)
     : [];
   async function runSlash(cmd: { name: string }) {
     setText('');
     try {
       const m = await api.commands.run(channel.id, cmd.name);
       if (m && m.id) setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
-    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Komut çalıştırılamadı'); }
+    } catch (e: any) {
+      Alert.alert('Concord', e?.message ?? 'Komut çalıştırılamadı');
+    }
   }
 
-  const mentionUserMatches = mentionQuery !== null && mentionKind === 'user'
-    ? mentionMembers.filter((mb) => (mb.nickname || mb.display_name || mb.username).toLowerCase().includes(mentionQuery.toLowerCase())).slice(0, 6)
-    : [];
-  const mentionChannelMatches = mentionQuery !== null && mentionKind === 'channel'
-    ? mentionChannels.filter((c) => c.name.toLowerCase().includes(mentionQuery.toLowerCase())).slice(0, 6)
-    : [];
+  const mentionUserMatches =
+    mentionQuery !== null && mentionKind === 'user'
+      ? mentionMembers
+          .filter((mb) =>
+            (mb.nickname || mb.display_name || mb.username)
+              .toLowerCase()
+              .includes(mentionQuery.toLowerCase()),
+          )
+          .slice(0, 6)
+      : [];
+  const mentionChannelMatches =
+    mentionQuery !== null && mentionKind === 'channel'
+      ? mentionChannels
+          .filter((c) => c.name.toLowerCase().includes(mentionQuery.toLowerCase()))
+          .slice(0, 6)
+      : [];
 
   function insertMention(mb: Member) {
     const name = mb.nickname || mb.display_name;
     setText((p) => p.replace(/@(\w{0,20})$/, `@${name} `));
-    setMentionQuery(null); setMentionKind(null);
+    setMentionQuery(null);
+    setMentionKind(null);
   }
   function insertChannelMention(name: string) {
     setText((p) => p.replace(/#(\w{0,20})$/, `#${name} `));
-    setMentionQuery(null); setMentionKind(null);
+    setMentionQuery(null);
+    setMentionKind(null);
   }
   async function sendGif(url: string) {
     setGifOpen(false);
     try {
-      const m = await api.channels.sendMessage(channel.id, '', undefined, [{ url, filename: 'gif.gif', content_type: 'image/gif', size_bytes: 0 }]);
+      const m = await api.channels.sendMessage(channel.id, '', undefined, [
+        { url, filename: 'gif.gif', content_type: 'image/gif', size_bytes: 0 },
+      ]);
       setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
-    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'GIF gönderilemedi'); }
+    } catch (e: any) {
+      Alert.alert('Concord', e?.message ?? 'GIF gönderilemedi');
+    }
   }
 
   function onEmojiPick(e: string) {
@@ -491,14 +724,19 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     try {
       const updated = await api.messages.edit(m.id, value.trim());
       setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, ...updated } : x)));
-    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Düzenlenemedi'); }
+    } catch (e: any) {
+      Alert.alert('Concord', e?.message ?? 'Düzenlenemedi');
+    }
   }
 
   async function togglePin(m: Message) {
     try {
-      if (m.pinned) await api.messages.unpin(m.id); else await api.messages.pin(m.id);
+      if (m.pinned) await api.messages.unpin(m.id);
+      else await api.messages.pin(m.id);
       setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, pinned: !m.pinned } : x)));
-    } catch (e: any) { Alert.alert('Concord', e?.message ?? 'Olmadı'); }
+    } catch (e: any) {
+      Alert.alert('Concord', e?.message ?? 'Olmadı');
+    }
   }
 
   function remindMenu(m: Message) {
@@ -512,36 +750,101 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   }
 
   async function openPins() {
-    try { setPins(await api.channels.pins(channel.id)); setPinsOpen(true); } catch {}
+    try {
+      setPins(await api.channels.pins(channel.id));
+      setPinsOpen(true);
+    } catch {}
   }
 
   function headerMenu() {
     const opts: any[] = [
-      { text: 'Ara', onPress: () => nav.push({ kind: 'search', guildId: channel.guildId, channelId: channel.id }) },
+      {
+        text: 'Ara',
+        onPress: () =>
+          nav.push({ kind: 'search', guildId: channel.guildId, channelId: channel.id }),
+      },
       { text: 'Sabitlenenler', onPress: openPins },
     ];
     if (channel.guildId) {
       opts.push({ text: "Thread'ler", onPress: () => nav.push({ kind: 'forum', channel }) });
-      opts.push({ text: 'Üyeler', onPress: () => nav.push({ kind: 'members', guildId: channel.guildId!, guildName: channel.name }) });
-      opts.push({ text: 'Kanal ayarları', onPress: () => nav.push({ kind: 'channelSettings', channelId: channel.id, channelName: channel.name, guildId: channel.guildId }) });
-      opts.push({ text: 'Sunucu ayarları', onPress: () => nav.push({ kind: 'serverSettings', guildId: channel.guildId!, guildName: channel.name }) });
-      opts.push({ text: 'Bildirim ayarı', onPress: () => Alert.alert('Bildirim ayarı', channel.name, [
-        { text: 'Tümü', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'all' }).then(() => Alert.alert('Concord', 'Tüm mesajlar')).catch(() => {}) },
-        { text: 'Sadece bahsetmeler', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'mentions' }).then(() => Alert.alert('Concord', 'Sadece bahsetmeler')).catch(() => {}) },
-        { text: 'Sessiz', onPress: () => api.channels.muteSettings(channel.id, { notif_level: 'nothing' }).then(() => Alert.alert('Concord', 'Susturuldu')).catch(() => {}) },
-        { text: 'Vazgeç', style: 'cancel' },
-      ]) });
+      opts.push({
+        text: 'Üyeler',
+        onPress: () =>
+          nav.push({ kind: 'members', guildId: channel.guildId!, guildName: channel.name }),
+      });
+      opts.push({
+        text: 'Kanal ayarları',
+        onPress: () =>
+          nav.push({
+            kind: 'channelSettings',
+            channelId: channel.id,
+            channelName: channel.name,
+            guildId: channel.guildId,
+          }),
+      });
+      opts.push({
+        text: 'Sunucu ayarları',
+        onPress: () =>
+          nav.push({ kind: 'serverSettings', guildId: channel.guildId!, guildName: channel.name }),
+      });
+      opts.push({
+        text: 'Bildirim ayarı',
+        onPress: () =>
+          Alert.alert('Bildirim ayarı', channel.name, [
+            {
+              text: 'Tümü',
+              onPress: () =>
+                api.channels
+                  .muteSettings(channel.id, { notif_level: 'all' })
+                  .then(() => Alert.alert('Concord', 'Tüm mesajlar'))
+                  .catch(() => {}),
+            },
+            {
+              text: 'Sadece bahsetmeler',
+              onPress: () =>
+                api.channels
+                  .muteSettings(channel.id, { notif_level: 'mentions' })
+                  .then(() => Alert.alert('Concord', 'Sadece bahsetmeler'))
+                  .catch(() => {}),
+            },
+            {
+              text: 'Sessiz',
+              onPress: () =>
+                api.channels
+                  .muteSettings(channel.id, { notif_level: 'nothing' })
+                  .then(() => Alert.alert('Concord', 'Susturuldu'))
+                  .catch(() => {}),
+            },
+            { text: 'Vazgeç', style: 'cancel' },
+          ]),
+      });
     }
     if (!channel.guildId && channel.type === 'group_dm') {
-      opts.push({ text: 'Kişi ekle', onPress: () => { api.friends.list().then((f) => setFriendList(f.filter((x) => x.friendship === 'accepted'))).catch(() => {}); setRecipOpen(true); } });
-      opts.push({ text: 'Kişi çıkar', onPress: () => { (channel.participants ?? []).forEach(resolveUser); setRemoveRecipOpen(true); } });
+      opts.push({
+        text: 'Kişi ekle',
+        onPress: () => {
+          api.friends
+            .list()
+            .then((f) => setFriendList(f.filter((x) => x.friendship === 'accepted')))
+            .catch(() => {});
+          setRecipOpen(true);
+        },
+      });
+      opts.push({
+        text: 'Kişi çıkar',
+        onPress: () => {
+          (channel.participants ?? []).forEach(resolveUser);
+          setRemoveRecipOpen(true);
+        },
+      });
     }
     opts.push({ text: 'Vazgeç', style: 'cancel' });
     Alert.alert(channel.name, undefined, opts);
   }
 
   const listRef = useRef<FlatList>(null);
-  const findMessage = (id?: string) => (id ? messagesRef.current.find((m) => m.id === id) : undefined);
+  const findMessage = (id?: string) =>
+    id ? messagesRef.current.find((m) => m.id === id) : undefined;
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
@@ -555,18 +858,28 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     if (!id) return;
     const idx = messagesRef.current.findIndex((m) => m.id === id);
     if (idx < 0) return;
-    try { listRef.current?.scrollToIndex({ index: idx, viewPosition: 0.5, animated: true }); } catch {}
+    try {
+      listRef.current?.scrollToIndex({ index: idx, viewPosition: 0.5, animated: true });
+    } catch {}
     setHighlightId(id);
     setTimeout(() => setHighlightId((h) => (h === id ? null : h)), 1400);
   }
 
   // Yeniden bağlanınca mevcut kanalı tazele (kaçan mesajları yakala)
-  useEffect(() => onConnection((st) => {
-    if (st === 'connected') {
-      flushQueue();
-      if (messagesRef.current.length) api.channels.messages(channel.id).then((list) => setMessages(list.slice().reverse())).catch(() => {});
-    }
-  }), [channel.id, flushQueue]);
+  useEffect(
+    () =>
+      onConnection((st) => {
+        if (st === 'connected') {
+          flushQueue();
+          if (messagesRef.current.length)
+            api.channels
+              .messages(channel.id)
+              .then((list) => setMessages(list.slice().reverse()))
+              .catch(() => {});
+        }
+      }),
+    [channel.id, flushQueue],
+  );
 
   return (
     <KeyboardAvoidingView
@@ -579,7 +892,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           <Text style={s.backText}>‹</Text>
         </TouchableOpacity>
         <Text style={s.headerIcon}>{channel.guildId ? '#' : '@'}</Text>
-        <Text style={s.headerName} numberOfLines={1}>{channel.name}</Text>
+        <Text style={s.headerName} numberOfLines={1}>
+          {channel.name}
+        </Text>
         <TouchableOpacity onPress={headerMenu} style={s.back} hitSlop={10}>
           <Text style={s.menuDots}>⋯</Text>
         </TouchableOpacity>
@@ -596,32 +911,48 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           if (atBottomRef.current) listRef.current?.scrollToEnd({ animated: false });
         }}
         onScrollToIndexFailed={(info) => {
-          setTimeout(() => { try { listRef.current?.scrollToIndex({ index: info.index, viewPosition: 0.5, animated: true }); } catch {} }, 300);
+          setTimeout(() => {
+            try {
+              listRef.current?.scrollToIndex({
+                index: info.index,
+                viewPosition: 0.5,
+                animated: true,
+              });
+            } catch {}
+          }, 300);
         }}
         ListHeaderComponent={
-          loadingOlder ? <ActivityIndicator color={colors.brand} style={{ marginVertical: 12 }} /> : null
+          loadingOlder ? (
+            <ActivityIndicator color={colors.brand} style={{ marginVertical: 12 }} />
+          ) : null
         }
         contentContainerStyle={{ paddingVertical: 8 }}
         renderItem={({ item, index }) => {
           const prevAny = messages[index - 1];
           const newDay =
             !prevAny ||
-            new Date(prevAny.created_at).toDateString() !== new Date(item.created_at).toDateString();
+            new Date(prevAny.created_at).toDateString() !==
+              new Date(item.created_at).toDateString();
           const dayDivider = newDay ? (
             <View style={s.dayRow}>
               <View style={s.dayLine} />
               <Text style={s.dayText}>
-                {new Date(item.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                {new Date(item.created_at).toLocaleDateString('tr-TR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
               </Text>
               <View style={s.dayLine} />
             </View>
           ) : null;
-          const unreadDivider = firstUnread === item.id ? (
-            <View style={s.unreadRow}>
-              <View style={s.unreadLine} />
-              <Text style={s.unreadText}>YENİ</Text>
-            </View>
-          ) : null;
+          const unreadDivider =
+            firstUnread === item.id ? (
+              <View style={s.unreadRow}>
+                <View style={s.unreadLine} />
+                <Text style={s.unreadText}>YENİ</Text>
+              </View>
+            ) : null;
           if (item.system) {
             return (
               <View>
@@ -633,29 +964,56 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           }
           const prev = messages[index - 1];
           const grouped =
-            !!prev && !prev.system && prev.author_id === item.author_id && !item.replied_to_id &&
-            new Date(item.created_at).getTime() - new Date(prev.created_at).getTime() < 5 * 60 * 1000;
+            !!prev &&
+            !prev.system &&
+            prev.author_id === item.author_id &&
+            !item.replied_to_id &&
+            new Date(item.created_at).getTime() - new Date(prev.created_at).getTime() <
+              5 * 60 * 1000;
           const author = users[item.author_id];
           const name = item.webhook_username || author?.display_name || '…';
           const replied = findMessage(item.replied_to_id);
           const msgReactions = reactions[item.id] ?? [];
           return (
-            <Pressable onLongPress={() => { impact(); setMenuFor(item); }} delayLongPress={250}>
+            <Pressable
+              onLongPress={() => {
+                impact();
+                setMenuFor(item);
+              }}
+              delayLongPress={250}
+            >
               {unreadDivider}
               {dayDivider}
               {item.replied_to_id && (
-                <Pressable style={s.replyPreviewRow} onPress={() => jumpToMessage(item.replied_to_id)}>
+                <Pressable
+                  style={s.replyPreviewRow}
+                  onPress={() => jumpToMessage(item.replied_to_id)}
+                >
                   <Text style={s.replyPreviewText} numberOfLines={1}>
-                    ↪ {replied ? `${users[replied.author_id]?.display_name ?? '…'}: ${replied.content}` : 'bir mesaja yanıt'}
+                    ↪{' '}
+                    {replied
+                      ? `${users[replied.author_id]?.display_name ?? '…'}: ${replied.content}`
+                      : 'bir mesaja yanıt'}
                   </Text>
                 </Pressable>
               )}
-              <View style={[s.msgRow, grouped && s.msgRowGrouped, highlightId === item.id && s.msgHighlight]}>
+              <View
+                style={[
+                  s.msgRow,
+                  grouped && s.msgRowGrouped,
+                  highlightId === item.id && s.msgHighlight,
+                ]}
+              >
                 {grouped ? (
                   <View style={s.avatarSpacer} />
                 ) : (
                   <Pressable onPress={() => author && setProfileFor(author)}>
-                    <View style={[s.avatar, { backgroundColor: author?.avatar_color || colors.surface3 }]}>
+                    <View
+                      style={[
+                        s.avatar,
+                        { backgroundColor: author?.avatar_color || colors.surface3 },
+                      ]}
+                    >
                       {author?.avatar_url ? (
                         <Image source={{ uri: author.avatar_url }} style={s.avatarImg} />
                       ) : (
@@ -663,22 +1021,31 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                       )}
                     </View>
                     {!item.webhook_username && (
-                      <View style={[s.statusDot, { backgroundColor: statusColor(author?.status) }]} />
+                      <View
+                        style={[s.statusDot, { backgroundColor: statusColor(author?.status) }]}
+                      />
                     )}
                   </Pressable>
                 )}
                 <View style={s.msgBody}>
                   {!grouped && (
                     <View style={s.msgHead}>
-                      <Text style={s.msgAuthor} onPress={() => author && setProfileFor(author)}>{name}</Text>
+                      <Text style={s.msgAuthor} onPress={() => author && setProfileFor(author)}>
+                        {name}
+                      </Text>
                       <Text style={s.msgTime}>
-                        {new Date(item.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(item.created_at).toLocaleTimeString('tr-TR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </Text>
                     </View>
                   )}
                   {!!item.content && <MarkdownText style={s.msgText}>{item.content}</MarkdownText>}
                   {!!item.poll_id && <PollCard messageId={item.id} meId={me.id} />}
-                  {!item.poll_id && /https?:\/\//.test(item.content) && <EmbedView messageId={item.id} />}
+                  {!item.poll_id && /https?:\/\//.test(item.content) && (
+                    <EmbedView messageId={item.id} />
+                  )}
                   {item.attachments?.map((a: NonNullable<Message['attachments']>[number]) =>
                     (a.content_type ?? '').startsWith('image/') ? (
                       <Pressable key={a.id} onPress={() => setLightbox(a.url)}>
@@ -687,7 +1054,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                     ) : (a.content_type ?? '').startsWith('audio/') ? (
                       <AudioMessage key={a.id} url={a.url} name={a.filename} />
                     ) : (
-                      <Text key={a.id} style={s.file}>📎 {a.filename}</Text>
+                      <Text key={a.id} style={s.file}>
+                        📎 {a.filename}
+                      </Text>
                     ),
                   )}
                   {msgReactions.length > 0 && (
@@ -700,7 +1069,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                           onLongPress={() => showReactors(item, r.emoji)}
                         >
                           <Text style={s.reactionEmoji}>{r.emoji}</Text>
-                          <Text style={[s.reactionCount, r.me && { color: colors.brand }]}>{r.count}</Text>
+                          <Text style={[s.reactionCount, r.me && { color: colors.brand }]}>
+                            {r.count}
+                          </Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -713,7 +1084,10 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       />
 
       {!atBottom && (
-        <TouchableOpacity style={s.jumpFab} onPress={() => listRef.current?.scrollToEnd({ animated: true })}>
+        <TouchableOpacity
+          style={s.jumpFab}
+          onPress={() => listRef.current?.scrollToEnd({ animated: true })}
+        >
           <Text style={s.jumpFabText}>↓ En alta in</Text>
         </TouchableOpacity>
       )}
@@ -740,7 +1114,11 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           {slashMatches.map((c) => (
             <TouchableOpacity key={c.id} style={s.slashItem} onPress={() => runSlash(c)}>
               <Text style={s.slashName}>/{c.name}</Text>
-              {!!c.description && <Text style={s.slashDesc} numberOfLines={1}>{c.description}</Text>}
+              {!!c.description && (
+                <Text style={s.slashDesc} numberOfLines={1}>
+                  {c.description}
+                </Text>
+              )}
             </TouchableOpacity>
           ))}
         </View>
@@ -749,14 +1127,28 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       {(mentionUserMatches.length > 0 || mentionChannelMatches.length > 0) && (
         <View style={s.mentionBar}>
           {mentionUserMatches.map((mb) => (
-            <TouchableOpacity key={mb.user_id} style={s.mentionItem} onPress={() => insertMention(mb)}>
-              <View style={[s.mentionDot, { backgroundColor: mb.avatar_color || colors.surface3 }]} />
-              <Text style={s.mentionName} numberOfLines={1}>{mb.nickname || mb.display_name}</Text>
+            <TouchableOpacity
+              key={mb.user_id}
+              style={s.mentionItem}
+              onPress={() => insertMention(mb)}
+            >
+              <View
+                style={[s.mentionDot, { backgroundColor: mb.avatar_color || colors.surface3 }]}
+              />
+              <Text style={s.mentionName} numberOfLines={1}>
+                {mb.nickname || mb.display_name}
+              </Text>
             </TouchableOpacity>
           ))}
           {mentionChannelMatches.map((c) => (
-            <TouchableOpacity key={c.id} style={s.mentionItem} onPress={() => insertChannelMention(c.name)}>
-              <Text style={s.mentionName} numberOfLines={1}>#{c.name}</Text>
+            <TouchableOpacity
+              key={c.id}
+              style={s.mentionItem}
+              onPress={() => insertChannelMention(c.name)}
+            >
+              <Text style={s.mentionName} numberOfLines={1}>
+                #{c.name}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -764,17 +1156,25 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
 
       {pending.length > 0 && (
         <TouchableOpacity style={s.pendingBar} onPress={flushQueue}>
-          <Text style={s.pendingText}>⏳ {pending.length} mesaj bekliyor — dokun, yeniden dene</Text>
+          <Text style={s.pendingText}>
+            ⏳ {pending.length} mesaj bekliyor — dokun, yeniden dene
+          </Text>
         </TouchableOpacity>
       )}
 
       {recording && (
         <View style={s.recBar}>
           <Text style={{ fontSize: 14 }}>🔴</Text>
-          <Text style={s.recTime}>{Math.floor(recSecs / 60)}:{String(recSecs % 60).padStart(2, '0')}</Text>
+          <Text style={s.recTime}>
+            {Math.floor(recSecs / 60)}:{String(recSecs % 60).padStart(2, '0')}
+          </Text>
           <View style={{ flex: 1 }} />
-          <TouchableOpacity onPress={() => finishRec(false)}><Text style={s.recCancel}>İptal</Text></TouchableOpacity>
-          <TouchableOpacity style={s.recSend} onPress={() => finishRec(true)}><Text style={s.recSendText}>Gönder</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => finishRec(false)}>
+            <Text style={s.recCancel}>İptal</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.recSend} onPress={() => finishRec(true)}>
+            <Text style={s.recSendText}>Gönder</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -791,7 +1191,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           onChangeText={(t) => {
             setText(t);
             if (draftTimer.current) clearTimeout(draftTimer.current);
-            draftTimer.current = setTimeout(() => { AsyncStorage.setItem(`concord_draft_${channel.id}`, t).catch(() => {}); }, 500);
+            draftTimer.current = setTimeout(() => {
+              AsyncStorage.setItem(`concord_draft_${channel.id}`, t).catch(() => {});
+            }, 500);
             if (channel.guildId) {
               sendTyping(channel.guildId, channel.id);
               const mm = /(?:^|\s)([@#])(\w{0,20})$/.exec(t);
@@ -803,13 +1205,22 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           placeholderTextColor={colors.inkTertiary}
           multiline
         />
-        <TouchableOpacity style={[s.sendBtn, (!text.trim() || sending) && { opacity: 0.4 }]} onPress={send} disabled={!text.trim() || sending}>
+        <TouchableOpacity
+          style={[s.sendBtn, (!text.trim() || sending) && { opacity: 0.4 }]}
+          onPress={send}
+          disabled={!text.trim() || sending}
+        >
           <Text style={s.sendText}>➤</Text>
         </TouchableOpacity>
       </View>
 
       {/* Uzun-basma menüsü */}
-      <Modal visible={!!menuFor} transparent animationType="fade" onRequestClose={() => setMenuFor(null)}>
+      <Modal
+        visible={!!menuFor}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuFor(null)}
+      >
         <Pressable style={s.sheetBackdrop} onPress={() => setMenuFor(null)}>
           <Pressable style={s.sheet} onPress={() => {}}>
             <View style={s.quickRow}>
@@ -825,7 +1236,14 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                   <Text style={{ fontSize: 26 }}>{e}</Text>
                 </TouchableOpacity>
               ))}
-              <TouchableOpacity style={s.quickEmoji} onPress={() => { const mm = menuFor; setMenuFor(null); setEmojiTarget(mm); }}>
+              <TouchableOpacity
+                style={s.quickEmoji}
+                onPress={() => {
+                  const mm = menuFor;
+                  setMenuFor(null);
+                  setEmojiTarget(mm);
+                }}
+              >
                 <Text style={{ fontSize: 22 }}>➕</Text>
               </TouchableOpacity>
             </View>
@@ -836,7 +1254,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                 setMenuFor(null);
               }}
             >
-              <Text style={s.sheetItemText}>↩️  Yanıtla</Text>
+              <Text style={s.sheetItemText}>↩️ Yanıtla</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={s.sheetItem}
@@ -845,43 +1263,124 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                 setMenuFor(null);
               }}
             >
-              <Text style={s.sheetItemText}>📋  Metni Kopyala</Text>
+              <Text style={s.sheetItemText}>📋 Metni Kopyala</Text>
             </TouchableOpacity>
             {!!menuFor?.content && (
-              <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); if (m?.content) translate(m.content); }}>
-                <Text style={s.sheetItemText}>🌐  Çevir (→ Türkçe)</Text>
+              <TouchableOpacity
+                style={s.sheetItem}
+                onPress={() => {
+                  const m = menuFor;
+                  setMenuFor(null);
+                  if (m?.content) translate(m.content);
+                }}
+              >
+                <Text style={s.sheetItemText}>🌐 Çevir (→ Türkçe)</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); setForwardMsg(m); }}>
-              <Text style={s.sheetItemText}>↪️  İlet</Text>
+            <TouchableOpacity
+              style={s.sheetItem}
+              onPress={() => {
+                const m = menuFor;
+                setMenuFor(null);
+                setForwardMsg(m);
+              }}
+            >
+              <Text style={s.sheetItemText}>↪️ İlet</Text>
             </TouchableOpacity>
             {!!channel.guildId && (
-              <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); setThreadFor(m); }}>
-                <Text style={s.sheetItemText}>🧵  Thread başlat</Text>
+              <TouchableOpacity
+                style={s.sheetItem}
+                onPress={() => {
+                  const m = menuFor;
+                  setMenuFor(null);
+                  setThreadFor(m);
+                }}
+              >
+                <Text style={s.sheetItemText}>🧵 Thread başlat</Text>
               </TouchableOpacity>
             )}
             {menuFor?.author_id === me.id && !menuFor?.system && (
-              <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); setEditFor(m); }}>
-                <Text style={s.sheetItemText}>✏️  Düzenle</Text>
+              <TouchableOpacity
+                style={s.sheetItem}
+                onPress={() => {
+                  const m = menuFor;
+                  setMenuFor(null);
+                  setEditFor(m);
+                }}
+              >
+                <Text style={s.sheetItemText}>✏️ Düzenle</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); if (m) togglePin(m); }}>
-              <Text style={s.sheetItemText}>📌  {menuFor?.pinned ? 'Sabiti Kaldır' : 'Sabitle'}</Text>
+            <TouchableOpacity
+              style={s.sheetItem}
+              onPress={() => {
+                const m = menuFor;
+                setMenuFor(null);
+                if (m) togglePin(m);
+              }}
+            >
+              <Text style={s.sheetItemText}>
+                📌 {menuFor?.pinned ? 'Sabiti Kaldır' : 'Sabitle'}
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); if (m) api.savedMessages.save(m.id).then(() => Alert.alert('Concord', 'Kaydedildi')).catch(() => {}); }}>
-              <Text style={s.sheetItemText}>🔖  Kaydet</Text>
+            <TouchableOpacity
+              style={s.sheetItem}
+              onPress={() => {
+                const m = menuFor;
+                setMenuFor(null);
+                if (m)
+                  api.savedMessages
+                    .save(m.id)
+                    .then(() => Alert.alert('Concord', 'Kaydedildi'))
+                    .catch(() => {});
+              }}
+            >
+              <Text style={s.sheetItemText}>🔖 Kaydet</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); if (m) remindMenu(m); }}>
-              <Text style={s.sheetItemText}>⏰  Hatırlat</Text>
+            <TouchableOpacity
+              style={s.sheetItem}
+              onPress={() => {
+                const m = menuFor;
+                setMenuFor(null);
+                if (m) remindMenu(m);
+              }}
+            >
+              <Text style={s.sheetItemText}>⏰ Hatırlat</Text>
             </TouchableOpacity>
             {!!menuFor?.edited_at && (
-              <TouchableOpacity style={s.sheetItem} onPress={async () => { const m = menuFor; setMenuFor(null); if (m) { try { const h = await api.messages.edits(m.id); Alert.alert('Düzenleme geçmişi', h.length ? h.map((x) => '• ' + x.old_content).join('\n\n') : 'Geçmiş yok'); } catch {} } }}>
-                <Text style={s.sheetItemText}>🕘  Düzenleme geçmişi</Text>
+              <TouchableOpacity
+                style={s.sheetItem}
+                onPress={async () => {
+                  const m = menuFor;
+                  setMenuFor(null);
+                  if (m) {
+                    try {
+                      const h = await api.messages.edits(m.id);
+                      Alert.alert(
+                        'Düzenleme geçmişi',
+                        h.length ? h.map((x) => '• ' + x.old_content).join('\n\n') : 'Geçmiş yok',
+                      );
+                    } catch {}
+                  }
+                }}
+              >
+                <Text style={s.sheetItemText}>🕘 Düzenleme geçmişi</Text>
               </TouchableOpacity>
             )}
             {channel.type === 'announcement' && (
-              <TouchableOpacity style={s.sheetItem} onPress={() => { const m = menuFor; setMenuFor(null); if (m) api.messages.crosspost(channel.id, m.id).then(() => Alert.alert('Concord', 'Yayınlandı')).catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı')); }}>
-                <Text style={s.sheetItemText}>📣  Yayınla</Text>
+              <TouchableOpacity
+                style={s.sheetItem}
+                onPress={() => {
+                  const m = menuFor;
+                  setMenuFor(null);
+                  if (m)
+                    api.messages
+                      .crosspost(channel.id, m.id)
+                      .then(() => Alert.alert('Concord', 'Yayınlandı'))
+                      .catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı'));
+                }}
+              >
+                <Text style={s.sheetItemText}>📣 Yayınla</Text>
               </TouchableOpacity>
             )}
             {menuFor?.author_id === me.id && (
@@ -893,7 +1392,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                   if (m) deleteMessage(m);
                 }}
               >
-                <Text style={[s.sheetItemText, { color: colors.accent }]}>🗑️  Mesajı Sil</Text>
+                <Text style={[s.sheetItemText, { color: colors.accent }]}>🗑️ Mesajı Sil</Text>
               </TouchableOpacity>
             )}
           </Pressable>
@@ -901,28 +1400,53 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       </Modal>
 
       {/* Profil kartı */}
-      <Modal visible={!!profileFor} transparent animationType="fade" onRequestClose={() => setProfileFor(null)}>
+      <Modal
+        visible={!!profileFor}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setProfileFor(null)}
+      >
         <Pressable style={s.sheetBackdrop} onPress={() => setProfileFor(null)}>
           <Pressable style={s.profileCard} onPress={() => {}}>
             {profileFor?.banner_url ? (
-              <Image source={{ uri: profileFor.banner_url }} style={s.profileBanner} resizeMode="cover" />
+              <Image
+                source={{ uri: profileFor.banner_url }}
+                style={s.profileBanner}
+                resizeMode="cover"
+              />
             ) : (
-              <View style={[s.profileBanner, { backgroundColor: profileFor?.avatar_color || colors.surface3 }]} />
+              <View
+                style={[
+                  s.profileBanner,
+                  { backgroundColor: profileFor?.avatar_color || colors.surface3 },
+                ]}
+              />
             )}
-            <View style={[s.profileAvatar, { backgroundColor: profileFor?.avatar_color || colors.surface3 }]}>
+            <View
+              style={[
+                s.profileAvatar,
+                { backgroundColor: profileFor?.avatar_color || colors.surface3 },
+              ]}
+            >
               {profileFor?.avatar_url ? (
                 <Image source={{ uri: profileFor.avatar_url }} style={s.avatarImg} />
               ) : (
-                <Text style={s.profileAvatarText}>{(profileFor?.display_name || '?').slice(0, 1).toUpperCase()}</Text>
+                <Text style={s.profileAvatarText}>
+                  {(profileFor?.display_name || '?').slice(0, 1).toUpperCase()}
+                </Text>
               )}
             </View>
             <ScrollView style={s.profileBody}>
               <View style={s.profileNameRow}>
                 <Text style={s.profileName}>{profileFor?.display_name}</Text>
                 {profileFor?.bot && <Text style={s.botBadge}>BOT</Text>}
-                <View style={[s.statusDotInline, { backgroundColor: statusColor(profileFor?.status) }]} />
+                <View
+                  style={[s.statusDotInline, { backgroundColor: statusColor(profileFor?.status) }]}
+                />
               </View>
-              {!!profileFor?.username && <Text style={s.profileHandle}>@{profileFor.username}</Text>}
+              {!!profileFor?.username && (
+                <Text style={s.profileHandle}>@{profileFor.username}</Text>
+              )}
               {!!profileFor?.bio && <Text style={s.profileBio}>{profileFor.bio}</Text>}
             </ScrollView>
             {profileFor && profileFor.id !== me.id && (
@@ -943,9 +1467,16 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       </Modal>
 
       {/* Resim büyütme (lightbox) */}
-      <Modal visible={!!lightbox} transparent animationType="fade" onRequestClose={() => setLightbox(null)}>
+      <Modal
+        visible={!!lightbox}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLightbox(null)}
+      >
         <Pressable style={s.lightboxBackdrop} onPress={() => setLightbox(null)}>
-          {!!lightbox && <Image source={{ uri: lightbox }} style={s.lightboxImg} resizeMode="contain" />}
+          {!!lightbox && (
+            <Image source={{ uri: lightbox }} style={s.lightboxImg} resizeMode="contain" />
+          )}
         </Pressable>
       </Modal>
 
@@ -961,75 +1492,155 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       />
 
       {/* Sabitlenen mesajlar */}
-      <Modal visible={pinsOpen} transparent animationType="slide" onRequestClose={() => setPinsOpen(false)}>
+      <Modal
+        visible={pinsOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPinsOpen(false)}
+      >
         <Pressable style={s.sheetBackdrop} onPress={() => setPinsOpen(false)}>
           <Pressable style={s.sheet} onPress={() => {}}>
             <Text style={s.pinsTitle}>📌 Sabitlenen Mesajlar</Text>
             <ScrollView style={{ maxHeight: 380 }}>
               {pins.length === 0 ? (
                 <Text style={s.pinsEmpty}>Sabitlenmiş mesaj yok.</Text>
-              ) : pins.map((p) => (
-                <TouchableOpacity key={p.id} style={s.pinRow} onPress={() => { setPinsOpen(false); setTimeout(() => jumpToMessage(p.id), 250); }}>
-                  <Text style={s.pinAuthor}>{users[p.author_id]?.display_name ?? p.webhook_username ?? '…'}</Text>
-                  <Text style={s.pinContent}>{p.content}</Text>
-                </TouchableOpacity>
-              ))}
+              ) : (
+                pins.map((p) => (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={s.pinRow}
+                    onPress={() => {
+                      setPinsOpen(false);
+                      setTimeout(() => jumpToMessage(p.id), 250);
+                    }}
+                  >
+                    <Text style={s.pinAuthor}>
+                      {users[p.author_id]?.display_name ?? p.webhook_username ?? '…'}
+                    </Text>
+                    <Text style={s.pinContent}>{p.content}</Text>
+                  </TouchableOpacity>
+                ))
+              )}
             </ScrollView>
           </Pressable>
         </Pressable>
       </Modal>
 
       {/* İlet */}
-      <Modal visible={!!forwardMsg} transparent animationType="slide" onRequestClose={() => setForwardMsg(null)}>
+      <Modal
+        visible={!!forwardMsg}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setForwardMsg(null)}
+      >
         <Pressable style={s.sheetBackdrop} onPress={() => setForwardMsg(null)}>
           <Pressable style={s.sheet} onPress={() => {}}>
             <Text style={s.pinsTitle}>İlet</Text>
-            <TextInput style={s.fwdSearch} value={forwardQuery} onChangeText={setForwardQuery} placeholder="Hedef ara…" placeholderTextColor={colors.inkTertiary} />
+            <TextInput
+              style={s.fwdSearch}
+              value={forwardQuery}
+              onChangeText={setForwardQuery}
+              placeholder="Hedef ara…"
+              placeholderTextColor={colors.inkTertiary}
+            />
             <ScrollView style={{ maxHeight: 320 }} keyboardShouldPersistTaps="handled">
-              {forwardTargets.filter((t) => t.name.toLowerCase().includes(forwardQuery.toLowerCase())).map((t) => (
-                <TouchableOpacity key={t.kind + t.id} style={s.sheetItem} onPress={() => doForward(t.id)}>
-                  <Text style={s.sheetItemText}>{t.kind === 'dm' ? '@ ' : ''}{t.name}</Text>
-                </TouchableOpacity>
-              ))}
+              {forwardTargets
+                .filter((t) => t.name.toLowerCase().includes(forwardQuery.toLowerCase()))
+                .map((t) => (
+                  <TouchableOpacity
+                    key={t.kind + t.id}
+                    style={s.sheetItem}
+                    onPress={() => doForward(t.id)}
+                  >
+                    <Text style={s.sheetItemText}>
+                      {t.kind === 'dm' ? '@ ' : ''}
+                      {t.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
             </ScrollView>
           </Pressable>
         </Pressable>
       </Modal>
 
-      <EmojiPicker visible={!!emojiTarget} onPick={onEmojiPick} onClose={() => setEmojiTarget(null)} />
+      <EmojiPicker
+        visible={!!emojiTarget}
+        onPick={onEmojiPick}
+        onClose={() => setEmojiTarget(null)}
+      />
       <GifPicker visible={gifOpen} onPick={sendGif} onClose={() => setGifOpen(false)} />
 
       {/* Grup DM'e kişi ekle */}
-      <Modal visible={recipOpen} transparent animationType="slide" onRequestClose={() => setRecipOpen(false)}>
+      <Modal
+        visible={recipOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setRecipOpen(false)}
+      >
         <Pressable style={s.sheetBackdrop} onPress={() => setRecipOpen(false)}>
           <Pressable style={s.sheet} onPress={() => {}}>
             <Text style={s.pinsTitle}>Kişi ekle</Text>
             <ScrollView style={{ maxHeight: 360 }}>
               {friendList.length === 0 ? (
                 <Text style={s.pinsEmpty}>Eklenecek arkadaş yok.</Text>
-              ) : friendList.map((f) => (
-                <TouchableOpacity key={f.user_id} style={s.sheetItem} onPress={() => api.dms.addRecipient(channel.id, f.user_id).then(() => { setRecipOpen(false); Alert.alert('Concord', 'Eklendi'); }).catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı'))}>
-                  <Text style={s.sheetItemText}>{f.display_name}</Text>
-                </TouchableOpacity>
-              ))}
+              ) : (
+                friendList.map((f) => (
+                  <TouchableOpacity
+                    key={f.user_id}
+                    style={s.sheetItem}
+                    onPress={() =>
+                      api.dms
+                        .addRecipient(channel.id, f.user_id)
+                        .then(() => {
+                          setRecipOpen(false);
+                          Alert.alert('Concord', 'Eklendi');
+                        })
+                        .catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı'))
+                    }
+                  >
+                    <Text style={s.sheetItemText}>{f.display_name}</Text>
+                  </TouchableOpacity>
+                ))
+              )}
             </ScrollView>
           </Pressable>
         </Pressable>
       </Modal>
 
       {/* Grup DM'den kişi çıkar */}
-      <Modal visible={removeRecipOpen} transparent animationType="slide" onRequestClose={() => setRemoveRecipOpen(false)}>
+      <Modal
+        visible={removeRecipOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setRemoveRecipOpen(false)}
+      >
         <Pressable style={s.sheetBackdrop} onPress={() => setRemoveRecipOpen(false)}>
           <Pressable style={s.sheet} onPress={() => {}}>
             <Text style={s.pinsTitle}>Kişi çıkar</Text>
             <ScrollView style={{ maxHeight: 360 }}>
               {(channel.participants ?? []).filter((id) => id !== me.id).length === 0 ? (
                 <Text style={s.pinsEmpty}>Çıkarılacak kişi yok.</Text>
-              ) : (channel.participants ?? []).filter((id) => id !== me.id).map((id) => (
-                <TouchableOpacity key={id} style={s.sheetItem} onPress={() => api.dms.removeRecipient(channel.id, id).then(() => { setRemoveRecipOpen(false); Alert.alert('Concord', 'Çıkarıldı'); }).catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı'))}>
-                  <Text style={s.sheetItemText}>{users[id]?.display_name ?? id}</Text>
-                </TouchableOpacity>
-              ))}
+              ) : (
+                (channel.participants ?? [])
+                  .filter((id) => id !== me.id)
+                  .map((id) => (
+                    <TouchableOpacity
+                      key={id}
+                      style={s.sheetItem}
+                      onPress={() =>
+                        api.dms
+                          .removeRecipient(channel.id, id)
+                          .then(() => {
+                            setRemoveRecipOpen(false);
+                            Alert.alert('Concord', 'Çıkarıldı');
+                          })
+                          .catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı'))
+                      }
+                    >
+                      <Text style={s.sheetItemText}>{users[id]?.display_name ?? id}</Text>
+                    </TouchableOpacity>
+                  ))
+              )}
             </ScrollView>
           </Pressable>
         </Pressable>
@@ -1040,7 +1651,15 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         title={`Not — ${noteFor?.display_name ?? ''}`}
         placeholder="Bu kişi hakkında not (sadece sen görürsün)"
         onCancel={() => setNoteFor(null)}
-        onSubmit={(v) => { const u = noteFor; setNoteFor(null); if (u) api.setNote(u.id, v).then(() => Alert.alert('Concord', 'Not kaydedildi')).catch(() => {}); }}
+        onSubmit={(v) => {
+          const u = noteFor;
+          setNoteFor(null);
+          if (u)
+            api
+              .setNote(u.id, v)
+              .then(() => Alert.alert('Concord', 'Not kaydedildi'))
+              .catch(() => {});
+        }}
       />
       <InputModal
         visible={!!threadFor}
@@ -1049,10 +1668,21 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         submitLabel="Başlat"
         onCancel={() => setThreadFor(null)}
         onSubmit={async (v) => {
-          const m = threadFor; setThreadFor(null);
+          const m = threadFor;
+          setThreadFor(null);
           if (m && v.trim()) {
-            try { const t = await api.threads.create(channel.id, { name: v.trim(), starter_message_id: m.id }); nav.push({ kind: 'chat', channel: { id: t.id, name: t.name, guildId: channel.guildId } }); }
-            catch (e: any) { Alert.alert('Concord', e?.message ?? 'Thread oluşturulamadı'); }
+            try {
+              const t = await api.threads.create(channel.id, {
+                name: v.trim(),
+                starter_message_id: m.id,
+              });
+              nav.push({
+                kind: 'chat',
+                channel: { id: t.id, name: t.name, guildId: channel.guildId },
+              });
+            } catch (e: any) {
+              Alert.alert('Concord', e?.message ?? 'Thread oluşturulamadı');
+            }
           }
         }}
       />
@@ -1062,115 +1692,331 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  header: { flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderColor: colors.line, gap: 8 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderColor: colors.line,
+    gap: 8,
+  },
   back: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   backText: { color: colors.ink, fontSize: 28, lineHeight: 30 },
   headerIcon: { color: colors.inkTertiary, fontSize: 18, fontWeight: '800' },
   headerName: { color: colors.ink, fontSize: 17, fontWeight: '800', flex: 1 },
   system: { color: colors.inkTertiary, fontSize: 13, paddingHorizontal: 16, paddingVertical: 6 },
-  dayRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, marginTop: 14, marginBottom: 2 },
+  dayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    marginTop: 14,
+    marginBottom: 2,
+  },
   dayLine: { flex: 1, height: 1, backgroundColor: colors.line },
   dayText: { color: colors.inkTertiary, fontSize: 11, fontWeight: '700' },
-  unreadRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, marginTop: 8 },
+  unreadRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    marginTop: 8,
+  },
   unreadLine: { flex: 1, height: 1, backgroundColor: colors.accent },
   unreadText: { color: colors.accent, fontSize: 10, fontWeight: '800' },
   msgRow: { flexDirection: 'row', paddingHorizontal: 12, marginTop: 12, gap: 10 },
   msgRowGrouped: { marginTop: 2 },
-  msgHighlight: { backgroundColor: colors.brand + '22', borderLeftWidth: 3, borderLeftColor: colors.brand },
-  jumpFab: { position: 'absolute', right: 14, bottom: 70, backgroundColor: colors.surface3, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: colors.line, zIndex: 5 },
+  msgHighlight: {
+    backgroundColor: colors.brand + '22',
+    borderLeftWidth: 3,
+    borderLeftColor: colors.brand,
+  },
+  jumpFab: {
+    position: 'absolute',
+    right: 14,
+    bottom: 70,
+    backgroundColor: colors.surface3,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: colors.line,
+    zIndex: 5,
+  },
   jumpFabText: { color: colors.ink, fontWeight: '700', fontSize: 13 },
-  avatar: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
   avatarImg: { width: '100%', height: '100%' },
   avatarSpacer: { width: 38 },
   avatarText: { color: '#fff', fontWeight: '800', fontSize: 15 },
   statusDot: {
-    position: 'absolute', right: -1, bottom: -1, width: 13, height: 13, borderRadius: 7,
-    borderWidth: 3, borderColor: colors.bg,
+    position: 'absolute',
+    right: -1,
+    bottom: -1,
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    borderWidth: 3,
+    borderColor: colors.bg,
   },
   msgBody: { flex: 1 },
   msgHead: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
   msgAuthor: { color: colors.ink, fontWeight: '700', fontSize: 15 },
   msgTime: { color: colors.inkTertiary, fontSize: 11 },
   msgText: { color: colors.ink, fontSize: 15, lineHeight: 21, marginTop: 1 },
-  attachment: { width: 220, height: 150, borderRadius: 10, marginTop: 6, backgroundColor: colors.surface2 },
+  attachment: {
+    width: 220,
+    height: 150,
+    borderRadius: 10,
+    marginTop: 6,
+    backgroundColor: colors.surface2,
+  },
   file: { color: colors.brand, marginTop: 4 },
   replyPreviewRow: { paddingLeft: 60, paddingRight: 12, marginTop: 10 },
   replyPreviewText: { color: colors.inkTertiary, fontSize: 12 },
   reactionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
   reactionChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.surface2,
-    borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: colors.line,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.surface2,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: colors.line,
   },
   reactionChipMine: { borderColor: colors.brand, backgroundColor: colors.brand + '22' },
   reactionEmoji: { fontSize: 14 },
   reactionCount: { color: colors.inkSecondary, fontSize: 12, fontWeight: '700' },
-  typing: { color: colors.inkSecondary, fontSize: 12, fontStyle: 'italic', paddingHorizontal: 16, paddingBottom: 4 },
+  typing: {
+    color: colors.inkSecondary,
+    fontSize: 12,
+    fontStyle: 'italic',
+    paddingHorizontal: 16,
+    paddingBottom: 4,
+  },
   replyBar: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8,
-    backgroundColor: colors.surface1, borderTopWidth: 1, borderColor: colors.line, gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: colors.surface1,
+    borderTopWidth: 1,
+    borderColor: colors.line,
+    gap: 8,
   },
   replyBarText: { color: colors.inkSecondary, flex: 1, fontSize: 13 },
   replyBarClose: { color: colors.inkTertiary, fontSize: 16, padding: 4 },
-  inputRow: { flexDirection: 'row', alignItems: 'flex-end', padding: 10, gap: 8, borderTopWidth: 1, borderColor: colors.line },
-  input: {
-    flex: 1, backgroundColor: colors.surface2, borderRadius: 22, paddingHorizontal: 16,
-    paddingTop: 10, paddingBottom: 10, color: colors.ink, fontSize: 15, maxHeight: 110,
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    padding: 10,
+    gap: 8,
+    borderTopWidth: 1,
+    borderColor: colors.line,
   },
-  sendBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.brand, alignItems: 'center', justifyContent: 'center' },
+  input: {
+    flex: 1,
+    backgroundColor: colors.surface2,
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 10,
+    color: colors.ink,
+    fontSize: 15,
+    maxHeight: 110,
+  },
+  sendBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sendText: { color: '#06281F', fontSize: 18, fontWeight: '800' },
-  pendingBar: { backgroundColor: colors.idle + '22', borderTopWidth: 1, borderColor: colors.idle, paddingVertical: 8, alignItems: 'center' },
+  pendingBar: {
+    backgroundColor: colors.idle + '22',
+    borderTopWidth: 1,
+    borderColor: colors.idle,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
   pendingText: { color: colors.idle, fontWeight: '700', fontSize: 12 },
-  recBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: colors.surface1, borderTopWidth: 1, borderColor: colors.line },
+  recBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: colors.surface1,
+    borderTopWidth: 1,
+    borderColor: colors.line,
+  },
   recTime: { color: colors.ink, fontWeight: '800', fontSize: 15 },
   recCancel: { color: colors.inkSecondary, fontWeight: '700', paddingHorizontal: 10 },
-  recSend: { backgroundColor: colors.brand, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 8 },
+  recSend: {
+    backgroundColor: colors.brand,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
   recSendText: { color: '#06281F', fontWeight: '800' },
-  attachBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  attachBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   attachIcon: { color: colors.inkSecondary, fontSize: 22, fontWeight: '700' },
-  mentionBar: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: colors.surface1, borderTopWidth: 1, borderColor: colors.line },
-  mentionItem: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.surface2, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6 },
+  mentionBar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: colors.surface1,
+    borderTopWidth: 1,
+    borderColor: colors.line,
+  },
+  mentionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.surface2,
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
   mentionDot: { width: 18, height: 18, borderRadius: 9 },
   mentionName: { color: colors.ink, fontSize: 13, fontWeight: '600', maxWidth: 120 },
-  slashItem: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.surface2, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, width: '100%' },
+  slashItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.surface2,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    width: '100%',
+  },
   slashName: { color: colors.brand, fontWeight: '800', fontSize: 14 },
   slashDesc: { color: colors.inkSecondary, fontSize: 12, flex: 1 },
   sheetBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: colors.surface1, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    padding: 16, paddingBottom: 28, gap: 4,
+    backgroundColor: colors.surface1,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 16,
+    paddingBottom: 28,
+    gap: 4,
   },
-  quickRow: { flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 12, borderBottomWidth: 1, borderColor: colors.line, marginBottom: 8 },
-  quickEmoji: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  quickRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderColor: colors.line,
+    marginBottom: 8,
+  },
+  quickEmoji: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sheetItem: { paddingVertical: 13, paddingHorizontal: 8 },
   sheetItemText: { color: colors.ink, fontSize: 16, fontWeight: '600' },
-  profileCard: { backgroundColor: colors.surface1, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 20, maxHeight: '70%' },
+  profileCard: {
+    backgroundColor: colors.surface1,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+    maxHeight: '70%',
+  },
   profileBanner: { height: 90, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
   profileAvatar: {
-    width: 76, height: 76, borderRadius: 38, marginTop: -38, marginLeft: 18,
-    borderWidth: 5, borderColor: colors.surface1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    marginTop: -38,
+    marginLeft: 18,
+    borderWidth: 5,
+    borderColor: colors.surface1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   profileAvatarText: { color: '#fff', fontWeight: '800', fontSize: 30 },
   profileBody: { paddingHorizontal: 18, paddingTop: 8 },
   profileNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   profileName: { color: colors.ink, fontWeight: '800', fontSize: 20 },
-  botBadge: { backgroundColor: colors.brand, color: '#06281F', fontSize: 10, fontWeight: '800', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
+  botBadge: {
+    backgroundColor: colors.brand,
+    color: '#06281F',
+    fontSize: 10,
+    fontWeight: '800',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
   statusDotInline: { width: 12, height: 12, borderRadius: 6 },
   profileHandle: { color: colors.inkSecondary, fontSize: 14, marginTop: 2 },
   profileBio: { color: colors.ink, fontSize: 14, lineHeight: 20, marginTop: 12 },
   profileActions: { flexDirection: 'row', gap: 8, marginHorizontal: 18, marginTop: 14 },
   profileBtn: { flex: 1, backgroundColor: colors.brand, borderRadius: 12, paddingVertical: 11 },
   profileBtnText: { color: '#06281F', textAlign: 'center', fontWeight: '800' },
-  profileMore: { width: 48, backgroundColor: colors.surface2, borderRadius: 12, paddingVertical: 11, alignItems: 'center' },
+  profileMore: {
+    width: 48,
+    backgroundColor: colors.surface2,
+    borderRadius: 12,
+    paddingVertical: 11,
+    alignItems: 'center',
+  },
   profileMoreText: { color: colors.ink, fontSize: 18, fontWeight: '800' },
-  profileClose: { marginHorizontal: 18, marginTop: 10, backgroundColor: colors.surface2, borderRadius: 12, paddingVertical: 11 },
+  profileClose: {
+    marginHorizontal: 18,
+    marginTop: 10,
+    backgroundColor: colors.surface2,
+    borderRadius: 12,
+    paddingVertical: 11,
+  },
   profileCloseText: { color: colors.ink, textAlign: 'center', fontWeight: '700' },
-  lightboxBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' },
+  lightboxBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   lightboxImg: { width: '100%', height: '100%' },
   menuDots: { color: colors.ink, fontSize: 24, fontWeight: '800' },
   pinsTitle: { color: colors.ink, fontWeight: '800', fontSize: 16, marginBottom: 12 },
-  fwdSearch: { backgroundColor: colors.surface2, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, color: colors.ink, marginBottom: 8 },
+  fwdSearch: {
+    backgroundColor: colors.surface2,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    color: colors.ink,
+    marginBottom: 8,
+  },
   pinsEmpty: { color: colors.inkTertiary, paddingVertical: 16, textAlign: 'center' },
-  pinRow: { paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  pinRow: {
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
   pinAuthor: { color: colors.brand, fontWeight: '700', fontSize: 13 },
   pinContent: { color: colors.ink, fontSize: 14, marginTop: 2 },
 });

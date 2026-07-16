@@ -8,15 +8,32 @@ import { ScreenHeader, Empty, ui } from '../ui';
 export function NotificationsScreen({ onBack }: { onBack: () => void }) {
   const [items, setItems] = useState<Notification[]>([]);
 
-  const load = () => api.notifications.list().then(setItems).catch(() => {});
-  useEffect(() => { load(); }, []);
+  const load = () =>
+    api.notifications
+      .list()
+      .then(setItems)
+      .catch(() => {});
+  useEffect(() => {
+    load();
+  }, []);
 
   return (
     <View style={ui.screen}>
       <ScreenHeader
         title="Bildirimler"
         onBack={onBack}
-        right={<TouchableOpacity onPress={async () => { try { await api.notifications.markAllRead(); load(); } catch {} }}><Text style={ui.headerBtn}>Tümü okundu</Text></TouchableOpacity>}
+        right={
+          <TouchableOpacity
+            onPress={async () => {
+              try {
+                await api.notifications.markAllRead();
+                load();
+              } catch {}
+            }}
+          >
+            <Text style={ui.headerBtn}>Tümü okundu</Text>
+          </TouchableOpacity>
+        }
       />
       <FlatList
         data={items}
@@ -35,7 +52,12 @@ export function NotificationsScreen({ onBack }: { onBack: () => void }) {
 }
 
 const s = StyleSheet.create({
-  row: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  row: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
   unread: { backgroundColor: colors.surface1 },
   title: { color: colors.ink, fontSize: 15, fontWeight: '700' },
   body: { color: colors.inkSecondary, fontSize: 14, marginTop: 2 },

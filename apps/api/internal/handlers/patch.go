@@ -15,21 +15,21 @@ import (
 // === GUILD UPDATE ===
 
 type updateGuildReq struct {
-	Name        *string `json:"name,omitempty"`
-	IconText    *string `json:"icon_text,omitempty"`
-	IconColor   *string `json:"icon_color,omitempty"`
-	IconURL     *string `json:"icon_url,omitempty"`
-	BannerURL   *string `json:"banner_url,omitempty"`
-	Description *string `json:"description,omitempty"`
-	IsPublic    *bool   `json:"is_public,omitempty"`
-	OwnerID     *string `json:"owner_id,omitempty"`
-	VanityURLCode     *string `json:"vanity_url_code,omitempty"`
-	AfkChannelID      *string `json:"afk_channel_id,omitempty"`
-	AfkTimeoutSec     *int32  `json:"afk_timeout_sec,omitempty"`
-	SystemChannelID   *string `json:"system_channel_id,omitempty"`
-	VerificationLevel *int32  `json:"verification_level,omitempty"`
-	ExplicitContentFilter *int32 `json:"explicit_content_filter,omitempty"`
-	AutoRoleID        *string `json:"auto_role_id,omitempty"`
+	Name                  *string `json:"name,omitempty"`
+	IconText              *string `json:"icon_text,omitempty"`
+	IconColor             *string `json:"icon_color,omitempty"`
+	IconURL               *string `json:"icon_url,omitempty"`
+	BannerURL             *string `json:"banner_url,omitempty"`
+	Description           *string `json:"description,omitempty"`
+	IsPublic              *bool   `json:"is_public,omitempty"`
+	OwnerID               *string `json:"owner_id,omitempty"`
+	VanityURLCode         *string `json:"vanity_url_code,omitempty"`
+	AfkChannelID          *string `json:"afk_channel_id,omitempty"`
+	AfkTimeoutSec         *int32  `json:"afk_timeout_sec,omitempty"`
+	SystemChannelID       *string `json:"system_channel_id,omitempty"`
+	VerificationLevel     *int32  `json:"verification_level,omitempty"`
+	ExplicitContentFilter *int32  `json:"explicit_content_filter,omitempty"`
+	AutoRoleID            *string `json:"auto_role_id,omitempty"`
 }
 
 func (h *Handler) UpdateGuild(w http.ResponseWriter, r *http.Request) {
@@ -171,15 +171,15 @@ func (h *Handler) UpdateGuild(w http.ResponseWriter, r *http.Request) {
 // === CHANNEL UPDATE ===
 
 type updateChannelReq struct {
-	Name         *string `json:"name,omitempty"`
-	Topic        *string `json:"topic,omitempty"`
-	Position     *int32  `json:"position,omitempty"`
-	NSFW         *bool   `json:"nsfw,omitempty"`
-	RateLimitSec *int32  `json:"rate_limit_sec,omitempty"`
-	AutoArchiveMinutes *int32 `json:"auto_archive_minutes,omitempty"`
-	ParentID     *string `json:"parent_id,omitempty"`
-	Bitrate      *int32  `json:"bitrate,omitempty"`
-	UserLimit    *int32  `json:"user_limit,omitempty"`
+	Name               *string `json:"name,omitempty"`
+	Topic              *string `json:"topic,omitempty"`
+	Position           *int32  `json:"position,omitempty"`
+	NSFW               *bool   `json:"nsfw,omitempty"`
+	RateLimitSec       *int32  `json:"rate_limit_sec,omitempty"`
+	AutoArchiveMinutes *int32  `json:"auto_archive_minutes,omitempty"`
+	ParentID           *string `json:"parent_id,omitempty"`
+	Bitrate            *int32  `json:"bitrate,omitempty"`
+	UserLimit          *int32  `json:"user_limit,omitempty"`
 }
 
 func (h *Handler) UpdateChannel(w http.ResponseWriter, r *http.Request) {
@@ -318,13 +318,13 @@ func (h *Handler) UpdateChannel(w http.ResponseWriter, r *http.Request) {
 // === USER ME UPDATE (profil) ===
 
 type updateMeReq struct {
-	DisplayName *string `json:"display_name,omitempty"`
-	Bio         *string `json:"bio,omitempty"`
-	AvatarURL   *string `json:"avatar_url,omitempty"`
-	BannerURL   *string `json:"banner_url,omitempty"`
-	AvatarColor *string `json:"avatar_color,omitempty"`
-	Pronouns    *string `json:"pronouns,omitempty"`
-	AccentColor *string `json:"accent_color,omitempty"`
+	DisplayName      *string `json:"display_name,omitempty"`
+	Bio              *string `json:"bio,omitempty"`
+	AvatarURL        *string `json:"avatar_url,omitempty"`
+	BannerURL        *string `json:"banner_url,omitempty"`
+	AvatarColor      *string `json:"avatar_color,omitempty"`
+	Pronouns         *string `json:"pronouns,omitempty"`
+	AccentColor      *string `json:"accent_color,omitempty"`
 	AvatarDecoration *string `json:"avatar_decoration,omitempty"`
 }
 

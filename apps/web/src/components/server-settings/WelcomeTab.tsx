@@ -58,7 +58,9 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
   const prompts = w.onboarding_prompts ?? [];
   const rid = () => Math.random().toString(36).slice(2, 9);
   function addPrompt() {
-    patch({ onboarding_prompts: [...prompts, { id: rid(), title: t('welcome.newQuestion'), options: [] }] });
+    patch({
+      onboarding_prompts: [...prompts, { id: rid(), title: t('welcome.newQuestion'), options: [] }],
+    });
   }
   function updatePrompt(i: number, p: Partial<APIOnboardingPrompt>) {
     patch({ onboarding_prompts: prompts.map((x, idx) => (idx === i ? { ...x, ...p } : x)) });
@@ -71,7 +73,10 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
       idx === pi
         ? {
             ...p,
-            options: [...p.options, { id: rid(), label: t('welcome.option'), emoji: '', role_ids: [] }],
+            options: [
+              ...p.options,
+              { id: rid(), label: t('welcome.option'), emoji: '', role_ids: [] },
+            ],
           }
         : p,
     );
@@ -137,7 +142,9 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
         style={{ opacity: w.enabled ? 1 : 0.5, pointerEvents: w.enabled ? 'auto' : 'none' }}
       >
         <div>
-          <label className="block text-xs font-semibold text-ink-tertiary mb-1">{t('welcome.description')}</label>
+          <label className="block text-xs font-semibold text-ink-tertiary mb-1">
+            {t('welcome.description')}
+          </label>
           <textarea
             value={w.description}
             onChange={(e) => patch({ description: e.target.value })}
@@ -149,7 +156,9 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
 
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-xs font-semibold text-ink-tertiary">{t('welcome.featuredChannels')}</label>
+            <label className="text-xs font-semibold text-ink-tertiary">
+              {t('welcome.featuredChannels')}
+            </label>
             <button
               onClick={addChannel}
               className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1"
@@ -212,7 +221,9 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
             className="w-4 h-4 accent-brand-500"
           />
           <div>
-            <div className="text-sm font-semibold text-ink-primary">{t('welcome.rulesRequired')}</div>
+            <div className="text-sm font-semibold text-ink-primary">
+              {t('welcome.rulesRequired')}
+            </div>
             <div className="text-xs text-ink-tertiary">
               Üye kabul edene kadar karşılama ekranı tam ekran gösterilir.
             </div>
@@ -232,7 +243,9 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
           Yeni üyeye ilgi alanlarını sor; seçtiği seçeneğe bağlı roller otomatik atanır.
         </p>
         <div className="space-y-3">
-          {prompts.length === 0 && <p className="text-xs text-ink-tertiary">{t('welcome.noQuestions')}</p>}
+          {prompts.length === 0 && (
+            <p className="text-xs text-ink-tertiary">{t('welcome.noQuestions')}</p>
+          )}
           {prompts.map((p, pi) => (
             <div key={p.id} className="bg-surface-1 border border-line rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">

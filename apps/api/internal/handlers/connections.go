@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/concord/api/internal/middleware"
+	"github.com/go-chi/chi/v5"
 )
 
 // === Hesap bağlantıları (Discord "Connections" paritesi) ===

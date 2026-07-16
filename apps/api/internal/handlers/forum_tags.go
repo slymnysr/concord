@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/concord/api/internal/middleware"
 	"github.com/concord/api/internal/perms"
+	"github.com/go-chi/chi/v5"
 )
 
 type forumTagView struct {

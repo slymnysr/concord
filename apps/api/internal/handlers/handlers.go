@@ -10,6 +10,7 @@ import (
 	"github.com/concord/api/internal/config"
 	"github.com/concord/api/internal/events"
 	"github.com/concord/api/internal/mailer"
+	"github.com/concord/api/internal/push"
 	"github.com/concord/api/internal/repo"
 	"github.com/concord/api/internal/snowflake"
 	"github.com/concord/api/internal/storage"
@@ -30,6 +31,7 @@ type Handler struct {
 	Events  *events.Publisher
 	AutoMod *automod.Engine
 	Mailer  *mailer.Mailer
+	Push    *push.Sender
 
 	Users         *repo.Users
 	Guilds        *repo.Guilds
@@ -44,6 +46,7 @@ type Handler struct {
 	DMs           *repo.DMs
 	Reactions     *repo.Reactions
 	MediaObjects  *repo.MediaObjects
+	PushSubs      *repo.PushSubs
 	Attachments   *repo.Attachments
 	Mentions      *repo.Mentions
 	Notifications *repo.Notifications
@@ -56,8 +59,14 @@ func (h *Handler) Config() *config.Config { return h.cfg }
 
 func New(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool, rdb *redis.Client, ids *snowflake.Generator, iss *auth.Issuer, store *storage.Storage) *Handler {
 	return &Handler{
-		logger:        logger,
-		cfg:           cfg,
+		logger: logger,
+		cfg:    cfg,
+		Push: push.NewSender(push.Config{
+			ExpoAccessToken: cfg.ExpoAccessToken,
+			VAPIDPublicKey:  cfg.VAPIDPublicKey,
+			VAPIDPrivateKey: cfg.VAPIDPrivateKey,
+			VAPIDSubject:    cfg.VAPIDSubject,
+		}),
 		IDs:           ids,
 		Iss:           iss,
 		Pool:          pool,
@@ -79,6 +88,7 @@ func New(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool, rdb *redis.
 		DMs:           repo.NewDMs(pool),
 		Reactions:     repo.NewReactions(pool),
 		MediaObjects:  repo.NewMediaObjects(pool),
+		PushSubs:      repo.NewPushSubs(pool),
 		Attachments:   repo.NewAttachments(pool),
 		Mentions:      repo.NewMentions(pool),
 		Notifications: repo.NewNotifications(pool),

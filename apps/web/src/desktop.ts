@@ -20,9 +20,7 @@ export function initDesktopBridge() {
       const href = a.href;
       if (/^https?:\/\//i.test(href) && !href.startsWith(location.origin)) {
         e.preventDefault();
-        import('@tauri-apps/plugin-opener')
-          .then((m) => m.openUrl(href))
-          .catch(() => {});
+        import('@tauri-apps/plugin-opener').then((m) => m.openUrl(href)).catch(() => {});
       }
     },
     true,

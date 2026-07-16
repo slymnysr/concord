@@ -31,17 +31,17 @@ spec:
             - { name: epmd, containerPort: 4369 }
             - { name: dist, containerPort: 9100 }
           envFrom:
-            - configMapRef: { name: concord-config }  # REDIS_HOST/REDIS_PORT buradan
+            - configMapRef: { name: concord-config } # REDIS_HOST/REDIS_PORT buradan
           env:
             - name: PHX_SERVER
-              value: "true"
+              value: 'true'
             - name: PHX_HOST
-              value: "concord.example.com"
+              value: 'concord.example.com'
             # NOT: uygulama GATEWAY_PORT okur (config/runtime.exs). Eskiden burada PORT
             # yazıyordu — hiçbir yer okumuyordu, yalnızca 4000 varsayılanı sayesinde
             # çalışıyordu (var olmayan bir ayar düğmesi izlenimi veriyordu).
             - name: GATEWAY_PORT
-              value: "4000"
+              value: '4000'
             # JWT doğrulaması API ile AYNI secret'ı kullanmalı, yoksa WS 403 verir.
             # Değişken adı da AYNI olmalı: gateway eskiden CONCORD_JWT_SECRET okuyordu,
             # burası JWT_SECRET veriyordu → gateway sessizce DEV secret'ına düşüyordu.
@@ -51,17 +51,17 @@ spec:
               valueFrom: { secretKeyRef: { name: concord-secrets, key: SECRET_KEY_BASE } }
             # --- Kümeleme ---
             - name: CLUSTER_STRATEGY
-              value: "kubernetes"
+              value: 'kubernetes'
             - name: K8S_HEADLESS_SERVICE
-              value: "gateway-headless"
+              value: 'gateway-headless'
             - name: K8S_APP_NAME
-              value: "gateway"
+              value: 'gateway'
             - name: POD_IP
               valueFrom: { fieldRef: { fieldPath: status.podIP } }
             - name: RELEASE_NODE
-              value: "gateway@$(POD_IP)"
+              value: 'gateway@$(POD_IP)'
             - name: RELEASE_DISTRIBUTION
-              value: "name"
+              value: 'name'
             - name: RELEASE_COOKIE
               valueFrom: { secretKeyRef: { name: concord-secrets, key: RELEASE_COOKIE } }
           readinessProbe:
@@ -74,7 +74,7 @@ spec:
             periodSeconds: 20
           resources:
             requests: { cpu: 100m, memory: 256Mi }
-            limits: { cpu: "2", memory: 1Gi }
+            limits: { cpu: '2', memory: 1Gi }
 ---
 # İstemcilerin bağlandığı normal servis (yük dağıtımı)
 apiVersion: v1
@@ -97,7 +97,7 @@ metadata:
   namespace: concord
 spec:
   clusterIP: None
-  publishNotReadyAddresses: true  # pod hazır olmadan da kümeye katılabilsin
+  publishNotReadyAddresses: true # pod hazır olmadan da kümeye katılabilsin
   selector: { app: gateway }
   ports:
     - { name: epmd, port: 4369 }

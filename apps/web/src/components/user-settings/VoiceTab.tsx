@@ -205,7 +205,9 @@ export function VoiceTab() {
             </select>
           </div>
           <div className="flex-1">
-            <label className="block text-xs font-semibold text-ink-secondary mb-1">{t('voice.frameRate')}</label>
+            <label className="block text-xs font-semibold text-ink-secondary mb-1">
+              {t('voice.frameRate')}
+            </label>
             <select
               defaultValue={localStorage.getItem('concord_stream_fps') ?? '30'}
               onChange={(e) => localStorage.setItem('concord_stream_fps', e.target.value)}

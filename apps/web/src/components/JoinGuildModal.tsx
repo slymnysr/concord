@@ -60,9 +60,7 @@ export function JoinGuildModal() {
         Arkadaşından aldığın davet kodunu veya bağlantısını gir.
       </p>
 
-      <label className="block text-sm font-semibold text-ink-primary mb-1.5">
-        Davet kodu
-      </label>
+      <label className="block text-sm font-semibold text-ink-primary mb-1.5">Davet kodu</label>
       <div className="flex gap-2">
         <input
           autoFocus

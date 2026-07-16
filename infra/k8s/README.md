@@ -12,6 +12,7 @@ kubectl apply -f ingress.yaml
 ```
 
 ## ⚠️ Secret'lar (prod'da zorunlu)
+
 API, dev-default secret ile **başlamayı reddeder** (`config.MustSecure`, FAZ A). Bu yüzden
 `concord-secrets` içindeki değerler GERÇEK olmalı:
 
@@ -27,6 +28,7 @@ kubectl -n concord create secret generic concord-secrets \
 `secrets.example.yaml` yalnızca şablondur — **asla gerçek değerle commit'leme**.
 
 ## Ölçekleme notları
+
 - **api**: stateless → `replicas` serbestçe artırılır (rate-limit Redis-backed, ortak sayaç).
 - **gateway**: şu an tek-node PubSub. Çok-replica için **libcluster + distributed Presence**
   gerekir (bkz. ROADMAP FAZ D). O yapılana kadar `replicas: 1` bırak.

@@ -66,7 +66,9 @@ export function ReactionRolesTab({ guildId }: { guildId: string }) {
       <div className="bg-surface-2 border border-line rounded-xl p-4 mb-4 space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-ink-tertiary mb-1">{t('common.channel')}</label>
+            <label className="block text-xs font-semibold text-ink-tertiary mb-1">
+              {t('common.channel')}
+            </label>
             <select
               value={channelId}
               onChange={(e) => setChannelId(e.target.value)}
@@ -81,7 +83,9 @@ export function ReactionRolesTab({ guildId }: { guildId: string }) {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-ink-tertiary mb-1">{t('rr.messageId')}</label>
+            <label className="block text-xs font-semibold text-ink-tertiary mb-1">
+              {t('rr.messageId')}
+            </label>
             <input
               value={messageId}
               onChange={(e) => setMessageId(e.target.value.replace(/[^\d]/g, ''))}
@@ -90,7 +94,9 @@ export function ReactionRolesTab({ guildId }: { guildId: string }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-ink-tertiary mb-1">{t('common.emoji')}</label>
+            <label className="block text-xs font-semibold text-ink-tertiary mb-1">
+              {t('common.emoji')}
+            </label>
             <input
               value={emoji}
               onChange={(e) => setEmoji(e.target.value)}
@@ -99,7 +105,9 @@ export function ReactionRolesTab({ guildId }: { guildId: string }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-ink-tertiary mb-1">{t('common.role')}</label>
+            <label className="block text-xs font-semibold text-ink-tertiary mb-1">
+              {t('common.role')}
+            </label>
             <select
               value={roleId}
               onChange={(e) => setRoleId(e.target.value)}

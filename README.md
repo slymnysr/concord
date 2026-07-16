@@ -4,19 +4,19 @@ Türkiye için yerli Discord alternatifi. **İşlevsel parite hedefine ulaşıld
 
 ## Mimari
 
-| Bileşen | Teknoloji | Klasör |
-|---------|-----------|--------|
-| Gateway (WebSocket) | Elixir/Phoenix | `apps/gateway` |
-| API (REST) | Go + chi | `apps/api` |
-| Voice/Video SFU | Node.js + mediasoup | `apps/voice` |
-| Web istemcisi | React + Vite + Redux Toolkit + Tailwind | `apps/web` |
-| Masaüstü | **Tauri 2** (WebView2/webkit2gtk) | `apps/desktop` ([README](apps/desktop/README.md)) |
-| Mobil | React Native (planlı) | `apps/mobile` |
-| Ana DB | PostgreSQL | docker compose |
-| Cache/PubSub | Redis | docker compose |
-| Object storage | MinIO (dev) → Cloudflare R2 (prod) | docker compose |
-| Dev SMTP | MailHog (`http://localhost:8025`) | docker compose |
-| Mesaj DB (ölçek fazı) | ScyllaDB | docker compose |
+| Bileşen               | Teknoloji                               | Klasör                                            |
+| --------------------- | --------------------------------------- | ------------------------------------------------- |
+| Gateway (WebSocket)   | Elixir/Phoenix                          | `apps/gateway`                                    |
+| API (REST)            | Go + chi                                | `apps/api`                                        |
+| Voice/Video SFU       | Node.js + mediasoup                     | `apps/voice`                                      |
+| Web istemcisi         | React + Vite + Redux Toolkit + Tailwind | `apps/web`                                        |
+| Masaüstü              | **Tauri 2** (WebView2/webkit2gtk)       | `apps/desktop` ([README](apps/desktop/README.md)) |
+| Mobil                 | React Native (planlı)                   | `apps/mobile`                                     |
+| Ana DB                | PostgreSQL                              | docker compose                                    |
+| Cache/PubSub          | Redis                                   | docker compose                                    |
+| Object storage        | MinIO (dev) → Cloudflare R2 (prod)      | docker compose                                    |
+| Dev SMTP              | MailHog (`http://localhost:8025`)       | docker compose                                    |
+| Mesaj DB (ölçek fazı) | ScyllaDB                                | docker compose                                    |
 
 ## Geliştirme Ortamı
 

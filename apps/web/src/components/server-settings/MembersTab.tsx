@@ -38,12 +38,7 @@ export function MembersTab({ guildId }: { guildId: string }) {
     await api.guilds.timeout(guildId, m.user_id, sec);
   }
   async function transferOwnership(m: APIMember) {
-    if (
-      !confirm(
-        t('member.transferConfirm', { name: m.display_name }),
-      )
-    )
-      return;
+    if (!confirm(t('member.transferConfirm', { name: m.display_name }))) return;
     try {
       await api.guilds.update(guildId, { owner_id: m.user_id });
       await dispatch(fetchGuilds());

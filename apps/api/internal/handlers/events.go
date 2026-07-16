@@ -79,32 +79,32 @@ func (h *Handler) DispatchDueEventReminders(ctx context.Context) {
 }
 
 type eventView struct {
-	ID               string    `json:"id"`
-	GuildID          string    `json:"guild_id"`
-	ChannelID        *string   `json:"channel_id,omitempty"`
-	CreatorID        string    `json:"creator_id"`
-	Name             string    `json:"name"`
-	Description      *string   `json:"description,omitempty"`
-	ScheduledStartAt time.Time `json:"scheduled_start_at"`
+	ID               string     `json:"id"`
+	GuildID          string     `json:"guild_id"`
+	ChannelID        *string    `json:"channel_id,omitempty"`
+	CreatorID        string     `json:"creator_id"`
+	Name             string     `json:"name"`
+	Description      *string    `json:"description,omitempty"`
+	ScheduledStartAt time.Time  `json:"scheduled_start_at"`
 	ScheduledEndAt   *time.Time `json:"scheduled_end_at,omitempty"`
-	EntityType       string    `json:"entity_type"`
-	EntityLocation   *string   `json:"entity_location,omitempty"`
-	Status           string    `json:"status"`
-	ImageURL         *string   `json:"image_url,omitempty"`
-	SubscriberCount  int       `json:"subscriber_count"`
-	Subscribed       bool      `json:"subscribed"`
-	CreatedAt        time.Time `json:"created_at"`
+	EntityType       string     `json:"entity_type"`
+	EntityLocation   *string    `json:"entity_location,omitempty"`
+	Status           string     `json:"status"`
+	ImageURL         *string    `json:"image_url,omitempty"`
+	SubscriberCount  int        `json:"subscriber_count"`
+	Subscribed       bool       `json:"subscribed"`
+	CreatedAt        time.Time  `json:"created_at"`
 }
 
 type createEventReq struct {
-	ChannelID        string  `json:"channel_id,omitempty"`
-	Name             string  `json:"name"`
-	Description      string  `json:"description,omitempty"`
-	ScheduledStartAt string  `json:"scheduled_start_at"`
-	ScheduledEndAt   string  `json:"scheduled_end_at,omitempty"`
-	EntityType       string  `json:"entity_type"` // 'voice'|'stage_instance'|'external'
-	EntityLocation   string  `json:"entity_location,omitempty"`
-	ImageURL         string  `json:"image_url,omitempty"`
+	ChannelID        string `json:"channel_id,omitempty"`
+	Name             string `json:"name"`
+	Description      string `json:"description,omitempty"`
+	ScheduledStartAt string `json:"scheduled_start_at"`
+	ScheduledEndAt   string `json:"scheduled_end_at,omitempty"`
+	EntityType       string `json:"entity_type"` // 'voice'|'stage_instance'|'external'
+	EntityLocation   string `json:"entity_location,omitempty"`
+	ImageURL         string `json:"image_url,omitempty"`
 }
 
 // POST /api/v1/guilds/:id/events

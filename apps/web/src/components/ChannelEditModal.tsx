@@ -32,9 +32,7 @@ export function ChannelEditModal({ channel }: Props) {
         topic,
         nsfw,
         rate_limit_sec: rateLimit,
-        ...(isVoice
-          ? { user_limit: userLimit, bitrate: Math.round(bitrate * 1000) }
-          : {}),
+        ...(isVoice ? { user_limit: userLimit, bitrate: Math.round(bitrate * 1000) } : {}),
       });
       await dispatch(fetchChannels(guildId));
       dispatch(closeModal());
@@ -53,12 +51,20 @@ export function ChannelEditModal({ channel }: Props) {
       <p className="text-sm text-ink-secondary mb-5">#{channel.name}</p>
 
       <form onSubmit={submit}>
-        <label className="block text-sm font-semibold text-ink-primary mb-1.5">{t('channel.nameLabel')}</label>
+        <label className="block text-sm font-semibold text-ink-primary mb-1.5">
+          {t('channel.nameLabel')}
+        </label>
         <div className="relative mb-4">
           {isVoice ? (
-            <Volume2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-tertiary" />
+            <Volume2
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-tertiary"
+            />
           ) : (
-            <Hash size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-tertiary" />
+            <Hash
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-tertiary"
+            />
           )}
           <input
             value={name}
@@ -70,7 +76,9 @@ export function ChannelEditModal({ channel }: Props) {
 
         {!isVoice && (
           <>
-            <label className="block text-sm font-semibold text-ink-primary mb-1.5">{t('channel.topic')}</label>
+            <label className="block text-sm font-semibold text-ink-primary mb-1.5">
+              {t('channel.topic')}
+            </label>
             <input
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
@@ -116,11 +124,14 @@ export function ChannelEditModal({ channel }: Props) {
               min={0}
               max={99}
               value={userLimit}
-              onChange={(e) => setUserLimit(Math.min(99, Math.max(0, parseInt(e.target.value || '0', 10))))}
+              onChange={(e) =>
+                setUserLimit(Math.min(99, Math.max(0, parseInt(e.target.value || '0', 10))))
+              }
               className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2.5 text-ink-primary mb-1"
             />
             <p className="text-xs text-ink-tertiary mb-4">
-              0 = sınırsız. Dolu kanala yalnızca "Üyeleri Taşı / Kanalları Yönet" yetkisi olanlar girebilir.
+              0 = sınırsız. Dolu kanala yalnızca "Üyeleri Taşı / Kanalları Yönet" yetkisi olanlar
+              girebilir.
             </p>
 
             <label className="block text-sm font-semibold text-ink-primary mb-1.5">

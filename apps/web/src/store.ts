@@ -1,6 +1,20 @@
-import { configureStore, createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import {
+  configureStore,
+  createSlice,
+  createAsyncThunk,
+  type PayloadAction,
+} from '@reduxjs/toolkit';
 import { useDispatch, useSelector, type TypedUseSelectorHook } from 'react-redux';
-import { api, type APIUser, type APIGuild, type APIChannel, type APIMessage, type APIMember, type APIReaction, type APIReadState } from './api';
+import {
+  api,
+  type APIUser,
+  type APIGuild,
+  type APIChannel,
+  type APIMessage,
+  type APIMember,
+  type APIReaction,
+  type APIReadState,
+} from './api';
 import { httpUrl } from './serverConfig';
 
 // ===== NAVIGASYON KALICILIĞI (F5 sonrası kaldığın yerden devam) =====
@@ -82,14 +96,36 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loginThunk.pending, (s) => { s.loading = true; s.error = null; })
-      .addCase(loginThunk.fulfilled, (s, a) => { s.loading = false; s.user = a.payload; })
-      .addCase(loginThunk.rejected, (s, a) => { s.loading = false; s.error = a.payload as string; })
-      .addCase(registerThunk.pending, (s) => { s.loading = true; s.error = null; })
-      .addCase(registerThunk.fulfilled, (s, a) => { s.loading = false; s.user = a.payload; })
-      .addCase(registerThunk.rejected, (s, a) => { s.loading = false; s.error = a.payload as string; })
-      .addCase(fetchMe.fulfilled, (s, a) => { s.user = a.payload; })
-      .addCase(fetchMe.rejected, (s) => { s.user = null; });
+      .addCase(loginThunk.pending, (s) => {
+        s.loading = true;
+        s.error = null;
+      })
+      .addCase(loginThunk.fulfilled, (s, a) => {
+        s.loading = false;
+        s.user = a.payload;
+      })
+      .addCase(loginThunk.rejected, (s, a) => {
+        s.loading = false;
+        s.error = a.payload as string;
+      })
+      .addCase(registerThunk.pending, (s) => {
+        s.loading = true;
+        s.error = null;
+      })
+      .addCase(registerThunk.fulfilled, (s, a) => {
+        s.loading = false;
+        s.user = a.payload;
+      })
+      .addCase(registerThunk.rejected, (s, a) => {
+        s.loading = false;
+        s.error = a.payload as string;
+      })
+      .addCase(fetchMe.fulfilled, (s, a) => {
+        s.user = a.payload;
+      })
+      .addCase(fetchMe.rejected, (s) => {
+        s.user = null;
+      });
   },
 });
 
@@ -104,12 +140,9 @@ export const fetchGuilds = createAsyncThunk('guilds/list', async () => {
   return await api.guilds.list();
 });
 
-export const createGuildThunk = createAsyncThunk(
-  'guilds/create',
-  async (name: string) => {
-    return await api.guilds.create(name);
-  },
-);
+export const createGuildThunk = createAsyncThunk('guilds/create', async (name: string) => {
+  return await api.guilds.create(name);
+});
 
 const guildsSlice = createSlice({
   name: 'guilds',
@@ -120,20 +153,22 @@ const guildsSlice = createSlice({
     },
   },
   extraReducers: (b) => {
-    b.addCase(fetchGuilds.pending, (s) => { s.loading = true; })
-     .addCase(fetchGuilds.fulfilled, (s, a) => {
-       s.loading = false;
-       s.list = a.payload;
-       // Seçili yoksa ya da kayıtlı sunucu artık yoksa (silinmiş/çıkılmış) ilk sunucuya düş
-       const exists = s.selectedId && a.payload.some((g) => g.id === s.selectedId);
-       if (!exists && a.payload.length > 0) {
-         s.selectedId = a.payload[0].id;
-       }
-     })
-     .addCase(createGuildThunk.fulfilled, (s, a) => {
-       s.list.push(a.payload);
-       s.selectedId = a.payload.id;
-     });
+    b.addCase(fetchGuilds.pending, (s) => {
+      s.loading = true;
+    })
+      .addCase(fetchGuilds.fulfilled, (s, a) => {
+        s.loading = false;
+        s.list = a.payload;
+        // Seçili yoksa ya da kayıtlı sunucu artık yoksa (silinmiş/çıkılmış) ilk sunucuya düş
+        const exists = s.selectedId && a.payload.some((g) => g.id === s.selectedId);
+        if (!exists && a.payload.length > 0) {
+          s.selectedId = a.payload[0].id;
+        }
+      })
+      .addCase(createGuildThunk.fulfilled, (s, a) => {
+        s.list.push(a.payload);
+        s.selectedId = a.payload.id;
+      });
   },
 });
 
@@ -158,12 +193,20 @@ export const fetchChannels = createAsyncThunk(
 
 const channelsSlice = createSlice({
   name: 'channels',
-  initialState: { byGuild: {}, selectedId: NAV.channelId, lastByMode: { guild: {}, dm: NAV.dmChannelId }, loading: false } as ChannelsState,
+  initialState: {
+    byGuild: {},
+    selectedId: NAV.channelId,
+    lastByMode: { guild: {}, dm: NAV.dmChannelId },
+    loading: false,
+  } as ChannelsState,
   reducers: {
     selectChannel(state, action: PayloadAction<string | null>) {
       state.selectedId = action.payload;
     },
-    rememberGuildChannel(state, action: PayloadAction<{ guildId: string; channelId: string | null }>) {
+    rememberGuildChannel(
+      state,
+      action: PayloadAction<{ guildId: string; channelId: string | null }>,
+    ) {
       state.lastByMode.guild[action.payload.guildId] = action.payload.channelId;
     },
     rememberDMChannel(state, action: PayloadAction<string | null>) {
@@ -192,13 +235,10 @@ interface MessagesState {
   loadingChannel: string | null;
 }
 
-export const fetchMessages = createAsyncThunk(
-  'messages/list',
-  async (channelId: string) => {
-    const list = await api.channels.messages(channelId);
-    return { channelId, list: list.slice().reverse() };
-  },
-);
+export const fetchMessages = createAsyncThunk('messages/list', async (channelId: string) => {
+  const list = await api.channels.messages(channelId);
+  return { channelId, list: list.slice().reverse() };
+});
 
 export const sendMessageThunk = createAsyncThunk(
   'messages/send',
@@ -239,20 +279,20 @@ const messagesSlice = createSlice({
     b.addCase(fetchMessages.pending, (s, a) => {
       s.loadingChannel = a.meta.arg;
     })
-    .addCase(fetchMessages.rejected, (s, a) => {
-      if (s.loadingChannel === a.meta.arg) s.loadingChannel = null;
-    })
-    .addCase(fetchMessages.fulfilled, (s, a) => {
-      s.byChannel[a.payload.channelId] = a.payload.list;
-      if (s.loadingChannel === a.payload.channelId) s.loadingChannel = null;
-    })
-     .addCase(sendMessageThunk.fulfilled, (s, a) => {
-       const list = s.byChannel[a.payload.channel_id] ?? [];
-       if (!list.some((m) => m.id === a.payload.id)) {
-         list.push(a.payload);
-         s.byChannel[a.payload.channel_id] = list;
-       }
-     });
+      .addCase(fetchMessages.rejected, (s, a) => {
+        if (s.loadingChannel === a.meta.arg) s.loadingChannel = null;
+      })
+      .addCase(fetchMessages.fulfilled, (s, a) => {
+        s.byChannel[a.payload.channelId] = a.payload.list;
+        if (s.loadingChannel === a.payload.channelId) s.loadingChannel = null;
+      })
+      .addCase(sendMessageThunk.fulfilled, (s, a) => {
+        const list = s.byChannel[a.payload.channel_id] ?? [];
+        if (!list.some((m) => m.id === a.payload.id)) {
+          list.push(a.payload);
+          s.byChannel[a.payload.channel_id] = list;
+        }
+      });
   },
 });
 
@@ -273,12 +313,12 @@ const usersSlice = createSlice({
     b.addCase(fetchMe.fulfilled, (s, a) => {
       s.byId[a.payload.id] = a.payload;
     })
-     .addCase(loginThunk.fulfilled, (s, a) => {
-       s.byId[a.payload.id] = a.payload;
-     })
-     .addCase(registerThunk.fulfilled, (s, a) => {
-       s.byId[a.payload.id] = a.payload;
-     });
+      .addCase(loginThunk.fulfilled, (s, a) => {
+        s.byId[a.payload.id] = a.payload;
+      })
+      .addCase(registerThunk.fulfilled, (s, a) => {
+        s.byId[a.payload.id] = a.payload;
+      });
   },
 });
 
@@ -287,13 +327,10 @@ interface ReactionsState {
   byMessage: Record<string, APIReaction[]>;
 }
 
-export const fetchReactions = createAsyncThunk(
-  'reactions/list',
-  async (messageId: string) => {
-    const list = await api.reactions.list(messageId);
-    return { messageId, list };
-  },
-);
+export const fetchReactions = createAsyncThunk('reactions/list', async (messageId: string) => {
+  const list = await api.reactions.list(messageId);
+  return { messageId, list };
+});
 
 export const toggleReactionThunk = createAsyncThunk(
   'reactions/toggle',
@@ -313,24 +350,24 @@ const reactionsSlice = createSlice({
     b.addCase(fetchReactions.fulfilled, (s, a) => {
       s.byMessage[a.payload.messageId] = a.payload.list;
     })
-     .addCase(toggleReactionThunk.fulfilled, (s, a) => {
-       s.byMessage[a.payload.messageId] = a.payload.list;
-     })
-     // N+1 fix: mesaj listesi reactions'ı gömülü döndürür (API-KONTRAT). Mesajlar
-     // yüklenince tekil GET .../reactions atmak yerine store'u buradan tohumla.
-     .addCase(fetchMessages.fulfilled, (s, a) => {
-       for (const m of a.payload.list) {
-         if (m.reactions) s.byMessage[m.id] = m.reactions;
-       }
-     })
-     .addCase(messagesSlice.actions.prependMessages, (s, a) => {
-       for (const m of a.payload.list) {
-         if (m.reactions) s.byMessage[m.id] = m.reactions;
-       }
-     })
-     .addCase(messagesSlice.actions.pushMessage, (s, a) => {
-       if (a.payload.reactions) s.byMessage[a.payload.id] = a.payload.reactions;
-     });
+      .addCase(toggleReactionThunk.fulfilled, (s, a) => {
+        s.byMessage[a.payload.messageId] = a.payload.list;
+      })
+      // N+1 fix: mesaj listesi reactions'ı gömülü döndürür (API-KONTRAT). Mesajlar
+      // yüklenince tekil GET .../reactions atmak yerine store'u buradan tohumla.
+      .addCase(fetchMessages.fulfilled, (s, a) => {
+        for (const m of a.payload.list) {
+          if (m.reactions) s.byMessage[m.id] = m.reactions;
+        }
+      })
+      .addCase(messagesSlice.actions.prependMessages, (s, a) => {
+        for (const m of a.payload.list) {
+          if (m.reactions) s.byMessage[m.id] = m.reactions;
+        }
+      })
+      .addCase(messagesSlice.actions.pushMessage, (s, a) => {
+        if (a.payload.reactions) s.byMessage[a.payload.id] = a.payload.reactions;
+      });
   },
 });
 
@@ -339,13 +376,10 @@ interface MembersState {
   byGuild: Record<string, APIMember[]>;
 }
 
-export const fetchMembers = createAsyncThunk(
-  'members/list',
-  async (guildId: string) => {
-    const list = await api.guilds.members(guildId);
-    return { guildId, list };
-  },
-);
+export const fetchMembers = createAsyncThunk('members/list', async (guildId: string) => {
+  const list = await api.guilds.members(guildId);
+  return { guildId, list };
+});
 
 const membersSlice = createSlice({
   name: 'members',
@@ -380,7 +414,10 @@ interface PresenceState {
   // Ses katılımcısı userId -> görünen ad (voice presence'tan; ID→ad lookup'ı gerektirmez)
   voiceNamesByUser: Record<string, string>;
   // Rich presence: guild -> userId -> aktivite (Oynuyor/Dinliyor/...)
-  activityByGuild: Record<string, Record<string, { type: string; name: string; started_at?: number }>>;
+  activityByGuild: Record<
+    string,
+    Record<string, { type: string; name: string; started_at?: number }>
+  >;
   // Canlı durum: guild -> userId -> online/idle/dnd (görünmezler presence'ta hiç yok)
   statusByGuild: Record<string, Record<string, string>>;
 }
@@ -398,7 +435,13 @@ export const fetchVoicePresence = createAsyncThunk(
 
 const presenceSlice = createSlice({
   name: 'presence',
-  initialState: { onlineByGuild: {}, voiceByChannel: {}, voiceNamesByUser: {}, activityByGuild: {}, statusByGuild: {} } as PresenceState,
+  initialState: {
+    onlineByGuild: {},
+    voiceByChannel: {},
+    voiceNamesByUser: {},
+    activityByGuild: {},
+    statusByGuild: {},
+  } as PresenceState,
   reducers: {
     setGuildPresence(
       state,
@@ -555,7 +598,11 @@ const readStatesSlice = createSlice({
     }).addCase(ackChannel.fulfilled, (s, a) => {
       const cur = s.byChannel[a.payload.channelId];
       s.byChannel[a.payload.channelId] = {
-        ...(cur ?? { channel_id: a.payload.channelId, mention_count: 0, last_read_at: new Date().toISOString() }),
+        ...(cur ?? {
+          channel_id: a.payload.channelId,
+          mention_count: 0,
+          last_read_at: new Date().toISOString(),
+        }),
         last_message_id: a.payload.lastMessageId,
         mention_count: 0,
         last_read_at: new Date().toISOString(),
@@ -589,7 +636,14 @@ interface UiState {
   // Kanal oluştur penceresi açılırken ön-seçili tür (+ butonundan gelir)
   createChannelType: 'text' | 'voice' | null;
   profileCardUserId: string | null;
-  profileCardAnchor: { top: number; left: number; right: number; bottom: number; width: number; height: number } | null;
+  profileCardAnchor: {
+    top: number;
+    left: number;
+    right: number;
+    bottom: number;
+    width: number;
+    height: number;
+  } | null;
   // Mesajsız ama açık DM (profil kartından "Mesaj" ile gelinen): sidebar'da "Yeni" rozetli pinned satır
   pendingDM: { channelId: string; partnerId: string } | null;
   // Yanıtlanan mesaj ID (input'un üstünde "Yanıtlanan: @x" gösterimi)
@@ -646,10 +700,7 @@ const uiSlice = createSlice({
       state.mode = 'dm';
       state.selectedDMChannelId = action.payload;
     },
-    setPendingDM(
-      state,
-      action: PayloadAction<{ channelId: string; partnerId: string } | null>,
-    ) {
+    setPendingDM(state, action: PayloadAction<{ channelId: string; partnerId: string } | null>) {
       state.pendingDM = action.payload;
     },
     openEditChannel(state, action: PayloadAction<string>) {
@@ -694,7 +745,14 @@ const uiSlice = createSlice({
       state.profileCardUserId = action.payload.userId;
       const r = action.payload.anchorRect;
       state.profileCardAnchor = r
-        ? { top: r.top, left: r.left, right: r.right, bottom: r.bottom, width: r.width, height: r.height }
+        ? {
+            top: r.top,
+            left: r.left,
+            right: r.right,
+            bottom: r.bottom,
+            width: r.width,
+            height: r.height,
+          }
         : null;
     },
   },
@@ -707,16 +765,32 @@ export const { pushMessage, updateMessage, removeMessage, prependMessages } = me
 
 // Eski mesajları yükle (sonsuz kaydırma): en eski mesajdan öncesini getirip başa ekler
 export const loadOlderMessages =
-  (channelId: string, beforeId: string) =>
-  async (dispatch: AppDispatch) => {
-    const older = await api.channels.messages(channelId, beforeId, 50).catch(() => [] as APIMessage[]);
+  (channelId: string, beforeId: string) => async (dispatch: AppDispatch) => {
+    const older = await api.channels
+      .messages(channelId, beforeId, 50)
+      .catch(() => [] as APIMessage[]);
     if (older.length) dispatch(prependMessages({ channelId, list: older.slice().reverse() }));
     return older.length;
   };
 export const { upsertUser } = usersSlice.actions;
 export const { setGuildPresence } = presenceSlice.actions;
 export const { setTyping, pruneTyping } = typingSlice.actions;
-export const { toggleMemberList, setMobileNav, openModal, closeModal, setMode, selectDM, openProfileCard, setPendingDM, openEditChannel, openChannelPerms, openChannelSettings, openCreateChannel, toggleIgnore, setReplyTo } = uiSlice.actions;
+export const {
+  toggleMemberList,
+  setMobileNav,
+  openModal,
+  closeModal,
+  setMode,
+  selectDM,
+  openProfileCard,
+  setPendingDM,
+  openEditChannel,
+  openChannelPerms,
+  openChannelSettings,
+  openCreateChannel,
+  toggleIgnore,
+  setReplyTo,
+} = uiSlice.actions;
 export const { bumpRead } = readStatesSlice.actions;
 export const { addToast, removeToast } = toastsSlice.actions;
 
@@ -741,26 +815,27 @@ export const switchToDiscover = () => (dispatch: AppDispatch) => {
   dispatch(selectChannel(null));
 };
 
-export const switchToGuild = (guildId?: string) => (dispatch: AppDispatch, getState: () => RootState) => {
-  const s = getState();
-  if (s.ui.mode === 'dm' && s.channels.selectedId) {
-    dispatch(rememberDMChannel(s.channels.selectedId));
-  }
-  dispatch(setMode('guild'));
-  const gid = guildId ?? s.guilds.selectedId;
-  if (!gid) {
-    dispatch(selectChannel(null));
-    return;
-  }
-  if (guildId) dispatch(selectGuild(guildId));
-  const remembered = s.channels.lastByMode.guild[gid];
-  if (remembered && s.channels.byGuild[gid]?.some((c) => c.id === remembered)) {
-    dispatch(selectChannel(remembered));
-    return;
-  }
-  const firstText = s.channels.byGuild[gid]?.find((c) => c.type !== 'voice');
-  dispatch(selectChannel(firstText?.id ?? null));
-};
+export const switchToGuild =
+  (guildId?: string) => (dispatch: AppDispatch, getState: () => RootState) => {
+    const s = getState();
+    if (s.ui.mode === 'dm' && s.channels.selectedId) {
+      dispatch(rememberDMChannel(s.channels.selectedId));
+    }
+    dispatch(setMode('guild'));
+    const gid = guildId ?? s.guilds.selectedId;
+    if (!gid) {
+      dispatch(selectChannel(null));
+      return;
+    }
+    if (guildId) dispatch(selectGuild(guildId));
+    const remembered = s.channels.lastByMode.guild[gid];
+    if (remembered && s.channels.byGuild[gid]?.some((c) => c.id === remembered)) {
+      dispatch(selectChannel(remembered));
+      return;
+    }
+    const firstText = s.channels.byGuild[gid]?.find((c) => c.type !== 'voice');
+    dispatch(selectChannel(firstText?.id ?? null));
+  };
 
 export const store = configureStore({
   reducer: {

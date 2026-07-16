@@ -31,7 +31,11 @@ export function FollowChannelModal() {
       .channels(targetGuildId)
       .then((list) => {
         if (cancelled) return;
-        setChannels(list.filter((c) => (c.type === 'text' || c.type === 'announcement') && c.id !== sourceChannelId));
+        setChannels(
+          list.filter(
+            (c) => (c.type === 'text' || c.type === 'announcement') && c.id !== sourceChannelId,
+          ),
+        );
       })
       .catch(() => setChannels([]));
     return () => {
@@ -45,7 +49,12 @@ export function FollowChannelModal() {
     api.follows
       .follow(sourceChannelId, targetChannelId)
       .then(() => {
-        dispatch(addToast({ kind: 'success', message: 'Kanal takip edildi — yayınlanan duyurular oraya iletilecek' }));
+        dispatch(
+          addToast({
+            kind: 'success',
+            message: 'Kanal takip edildi — yayınlanan duyurular oraya iletilecek',
+          }),
+        );
         dispatch(closeModal());
       })
       .catch((e: any) => {
@@ -61,8 +70,8 @@ export function FollowChannelModal() {
         <h2 className="text-lg font-bold text-ink-primary">{t('follow.title')}</h2>
       </div>
       <p className="text-sm text-ink-tertiary mb-4">
-        <span className="font-semibold text-ink-secondary">#{sourceChannel?.name}</span> kanalında yayınlanan
-        duyurular, seçtiğin kanala otomatik iletilir.
+        <span className="font-semibold text-ink-secondary">#{sourceChannel?.name}</span> kanalında
+        yayınlanan duyurular, seçtiğin kanala otomatik iletilir.
       </p>
 
       <label className="block text-xs font-semibold uppercase tracking-wider text-ink-tertiary mb-1.5">
@@ -89,7 +98,9 @@ export function FollowChannelModal() {
           </label>
           <div className="max-h-48 overflow-y-auto rounded-lg border border-line divide-y divide-line mb-4">
             {channels.length === 0 && (
-              <div className="px-3 py-2.5 text-sm text-ink-tertiary">{t('follow.noTextChannel')}</div>
+              <div className="px-3 py-2.5 text-sm text-ink-tertiary">
+                {t('follow.noTextChannel')}
+              </div>
             )}
             {channels.map((c) => (
               <button

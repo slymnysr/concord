@@ -20,8 +20,8 @@ jobs:
           version: 9
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "pnpm"
+          node-version: '20'
+          cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
       - name: Install
         run: pnpm install --frozen-lockfile
@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: '1.22'
           cache-dependency-path: apps/api/go.sum
       - run: go mod download
       - run: go vet ./...
@@ -75,8 +75,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.16"
-          otp-version: "26"
+          elixir-version: '1.16'
+          otp-version: '26'
       - name: Cache deps
         uses: actions/cache@v4
         with:
@@ -98,13 +98,13 @@ jobs:
           POSTGRES_USER: concord
           POSTGRES_PASSWORD: concord_dev
           POSTGRES_DB: concord
-        ports: ["5433:5432"]
+        ports: ['5433:5432']
         options: >-
           --health-cmd "pg_isready -U concord" --health-interval 5s
           --health-timeout 5s --health-retries 10
       redis:
         image: redis:7-alpine
-        ports: ["6379:6379"]
+        ports: ['6379:6379']
         options: >-
           --health-cmd "redis-cli ping" --health-interval 5s
           --health-timeout 5s --health-retries 10
@@ -112,7 +112,7 @@ jobs:
       POSTGRES_DSN: postgres://concord:concord_dev@localhost:5433/concord?sslmode=disable
       JWT_SECRET: ci_jwt_secret_at_least_32_characters_long_x
       REDIS_HOST: localhost
-      REDIS_PORT: "6379"
+      REDIS_PORT: '6379'
       E2E_BASE_URL: http://localhost:3000
       E2E_API_URL: http://localhost:8080
       E2E_VOICE_WS: ws://localhost:4443
@@ -123,17 +123,17 @@ jobs:
         with: { version: 9 }
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "pnpm"
+          node-version: '20'
+          cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: '1.22'
           cache-dependency-path: apps/api/go.sum
       - uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.16"
-          otp-version: "26"
+          elixir-version: '1.16'
+          otp-version: '26'
       - name: Cache gateway deps
         uses: actions/cache@v4
         with:
@@ -236,8 +236,8 @@ jobs:
         with: { version: 9 }
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "pnpm"
+          node-version: '20'
+          cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Type check
@@ -257,8 +257,8 @@ jobs:
         with: { version: 9 }
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "pnpm"
+          node-version: '20'
+          cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Type-check
@@ -276,6 +276,6 @@ jobs:
           version: 9
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec prettier --check "**/*.{ts,tsx,js,jsx,json,md,yaml,yml}"

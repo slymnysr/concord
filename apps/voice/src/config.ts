@@ -13,7 +13,9 @@ export const config = {
   // Çok-makine cascade (FAZ C). Kapalıyken voice tek node çalışır (davranış eskisi gibi).
   cluster: {
     enabled: (process.env.VOICE_CLUSTER_ENABLED ?? 'false') === 'true',
-    redisUrl: process.env.REDIS_URL ?? `redis://${process.env.REDIS_HOST ?? 'localhost'}:${process.env.REDIS_PORT ?? '6379'}`,
+    redisUrl:
+      process.env.REDIS_URL ??
+      `redis://${process.env.REDIS_HOST ?? 'localhost'}:${process.env.REDIS_PORT ?? '6379'}`,
     // Node kimliği sabit olmalı: yeniden başlayınca aynı kimlikle dönmezse eski kayıt
     // TTL dolana kadar hayalet node olarak kalır. k8s'te pod adı verilir.
     nodeId: process.env.VOICE_NODE_ID ?? os.hostname() ?? randomUUID(),
