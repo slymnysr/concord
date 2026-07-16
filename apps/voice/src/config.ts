@@ -1,8 +1,32 @@
 // Concord voice config — mediasoup ayarları + JWT secret + portlar
 import type { types as msTypes } from 'mediasoup';
 
+import os from 'node:os';
+import { randomUUID } from 'node:crypto';
+
+const httpPort = parseInt(process.env.VOICE_HTTP_PORT ?? '4444', 10);
+
 export const config = {
   port: parseInt(process.env.VOICE_PORT ?? '4443', 10),
+  httpPort,
+
+  // Çok-makine cascade (FAZ C). Kapalıyken voice tek node çalışır (davranış eskisi gibi).
+  cluster: {
+    enabled: (process.env.VOICE_CLUSTER_ENABLED ?? 'false') === 'true',
+    redisUrl: process.env.REDIS_URL ?? `redis://${process.env.REDIS_HOST ?? 'localhost'}:${process.env.REDIS_PORT ?? '6379'}`,
+    // Node kimliği sabit olmalı: yeniden başlayınca aynı kimlikle dönmezse eski kayıt
+    // TTL dolana kadar hayalet node olarak kalır. k8s'te pod adı verilir.
+    nodeId: process.env.VOICE_NODE_ID ?? os.hostname() ?? randomUUID(),
+    // Pipe transport'un DİĞER node'lardan erişilebilir IP'si. 127.0.0.1 yalnızca
+    // aynı makinedeki node'lar için doğrudur; çok-makinede gerçek IP şart.
+    pipeIp: process.env.VOICE_PIPE_IP ?? '127.0.0.1',
+    // Bu node'un iç HTTP adresi — pipe pazarlığı buradan yapılır
+    httpUrl: process.env.VOICE_HTTP_URL ?? `http://127.0.0.1:${httpPort}`,
+    // İstemcinin bu node'a bağlanacağı WS adresi (SFU seçici bunu döner)
+    wsUrl: process.env.VOICE_WS_URL ?? `ws://127.0.0.1:${process.env.VOICE_PORT ?? '4443'}`,
+    // Node'lar arası iç çağrıları koruyan secret (pipe pazarlığı dışarı açık olmamalı)
+    secret: process.env.VOICE_CLUSTER_SECRET ?? 'dev_voice_cluster_secret',
+  },
   // JWT_SECRET — API ve gateway ile AYNI değişken adı. Eskiden CONCORD_JWT_SECRET
   // okunuyordu ama hiçbir yer onu set etmiyordu → voice üretimde dev secret'ına düşüyor,
   // API'nin imzaladığı token'ları doğrulayamıyordu (ses bağlantısı 403). Bkz. gateway/token.ex.

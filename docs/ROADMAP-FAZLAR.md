@@ -57,10 +57,41 @@ bu dosyada `## API-KONTRAT` başlığı altında yayınla ki FAZ B ona kodlasın
 - **i18n tamamlama** — kalan ~40 bileşeni `t()` ile sar.
 **Sözleşme (dışarıdan):** FAZ A'nın `## API-KONTRAT`'ını tüketir. **Test:** bileşen davranışı korunur (E2E ayar akışları).
 
-## FAZ C — Ses Ölçekleme (`apps/voice/`)
+## FAZ C — Ses Ölçekleme (`apps/voice/`) ✅ TAMAM
 **Sahiplenir:** `apps/voice/**`
-**Yapılacaklar:** mediasoup **çok-makine** — `pipeToRouter` cascade + SFU seçici (yük dağıtımı). _Yapma: tek makinede bırakma._
-**Sözleşme (sabit):** `/presence` `{id,name}[]` şeması değişmez. **Test:** 2 worker/makine arası ses aktarımı.
+**Durum:** çok-makine cascade çalışıyor; 2 AYRI node process'iyle KANITLANDI
+(`pnpm --filter @concord/voice test:cascade`): A'daki peer produce etti → küme olayı yayıldı →
+B pipe kurdu → producer'ı aldı → B'deki peer aynı producer id ile `newProducer` aldı.
+
+**Neden elle pipe:** `router.pipeToRouter({router})` yalnızca AYNI PROCESS'teki router'ları
+bağlar → çok-makinede kullanılamaz. mediasoup'un çok-makine yolu izlendi: iki tarafta
+`createPipeTransport` (SRTP açık — node'lar arası RTP güvenilmeyen ağdan geçer), ip/port
+el sıkışması, sonra bir tarafta `consume` / diğerinde aynı id ile `produce`.
+
+**Parçalar:** `cluster.ts` (Redis node kaydı + kanal üyeliği + olay veriyolu; Redis zaten
+yığında vardı, etcd/consul eklemek gereksiz yük olurdu), `pipe.ts` (link ömrü — pipe'lar
+(kanal, uzak-node) başına TEK sefer kurulur; her producer için yeni pipe port aralığını
+tüketirdi), `cascade.ts` (olay → pipe orkestrasyonu), SFU seçici (`/sfu/select`).
+
+**SFU seçici politikası:** kanalı zaten barındıran node önce, yoksa en az yüklü. Sadece yüke
+bakmak aynı kanalı node'lara dağıtır → her yayın için pipe, bant genişliği boşuna N katı.
+
+**Sözleşme korundu:** `/presence` `{id,name}[]` — ama artık küme geneli topluyor. Yalnızca
+yerel peer'ları dönmek sözleşmeyi sessizce bozardı (istemci A'ya sorar, B'dekileri göremez).
+
+**FAZ C'nin bulduğu 2 gerçek bug:**
+1. **SFU seçici yanlış porta yönlendiriyordu:** uzak node'un adresini yerel porttan
+   türetiyordu (`ws://<uzak-host>:<YEREL port>`). Tüm node'lar aynı portu kullanırsa tesadüfen
+   çalışır. Artık her node KENDİ wsUrl'ini duyuruyor.
+2. **k8s'te voice env adlarının 5'i okunmuyordu** (`ANNOUNCED_IP`, `PORT`, `HTTP_PORT`,
+   `RTC_MIN/MAX_PORT` — kod `MS_*`/`VOICE_*` okuyor). Dördü varsayılanla tesadüfen çalışıyordu
+   ama `ANNOUNCED_IP` okunmadığı için voice üretimde **127.0.0.1 ilan ediyordu → ICE her
+   istemcide düşer, KİMSE KİMSEYİ DUYAMAZDI.** Manifest'in kendi yorumu "ANNOUNCED_IP şarttır,
+   yoksa istemci sesi duymaz" diyordu — ve tam da o env ölüydü.
+
+**k8s:** StatefulSet (node kimliği sabit olmalı: değişirse ölü node'lar TTL dolana kadar
+hayalet kalır), replicas 2, `VOICE_PIPE_IP=$(HOST_IP)` (127.0.0.1 kalırsa node'lar birbirine
+bağlanamaz), `VOICE_CLUSTER_SECRET` (pipe uçları kimliksiz kalırsa yabancı RTP çekebilir).
 
 ## FAZ D — Gateway Kümeleme (`apps/gateway/`) ✅ TAMAM
 **Sahiplenir:** `apps/gateway/**`

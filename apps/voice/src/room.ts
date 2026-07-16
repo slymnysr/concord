@@ -78,7 +78,7 @@ export class Room {
   }
 }
 
-const rooms = new Map<string, Room>();
+export const rooms = new Map<string, Room>();
 
 export function getRoom(channelId: string): Room {
   let room = rooms.get(channelId);
