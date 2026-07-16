@@ -115,6 +115,16 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, resp)
 }
 
+// Brute-force eşikleri (loginFailWindow içinde, e-postanın son başarılı girişinden beri).
+// Asıl savunma hesap kapsamlı olanlar; IP eşiği yalnızca kaba bir kötüye kullanım tavanıdır ve
+// paylaşımlı çıkış IP'lerini (operatör CGNAT'ı) cezalandırmayacak kadar yüksek tutulur.
+const (
+	loginFailWindow   = 15 * time.Minute
+	maxFailPerEmailIP = 5   // bu hesap + bu IP → saldırgan kendi IP'sini kilitler, kurban etkilenmez
+	maxFailPerEmail   = 20  // bu hesap, her IP → dağıtık saldırı tavanı
+	maxFailPerIP      = 100 // bu IP, her hesap → credential-stuffing tavanı
+)
+
 type loginReq struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -130,9 +140,16 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 	clientIP := parseClientIP(r)
 
-	// Brute-force kontrolü: 15 dakikada 5 başarısızdan fazlaysa engelle
-	failures, _ := h.LoginAttempts.RecentFailures(r.Context(), req.Email, clientIP, 15*time.Minute)
-	if failures >= 5 {
+	// Brute-force kontrolü — katmanlı: IP başına GEVŞEK, hesap başına SIKI.
+	// Tek bir "email VEYA ip >= 5" eşiği İKİ şeyi birden kırıyordu: saldırgan kurbanın
+	// e-postasına 5 yanlış parola atıp hesabı kilitliyordu (hedefli DoS) ve CGNAT arkasındaki
+	// paylaşımlı IP'de 5 hata o IP'deki herkesi kilitliyordu. Bkz. repo.FailureCounts.
+	f, err := h.LoginAttempts.RecentFailures(r.Context(), req.Email, clientIP, loginFailWindow)
+	if err != nil {
+		// Sayaç okunamıyorsa girişi kapatma (fail-open) — ama görünür olsun.
+		h.logger.Warn("brute-force sayacı okunamadı", zap.Error(err))
+	} else if f.EmailIP >= maxFailPerEmailIP || f.Email >= maxFailPerEmail || f.IP >= maxFailPerIP {
+		w.Header().Set("Retry-After", strconv.Itoa(int(loginFailWindow.Seconds())))
 		writeError(w, http.StatusTooManyRequests, "rate_limited",
 			"çok fazla başarısız giriş; lütfen 15 dakika sonra tekrar dene")
 		return

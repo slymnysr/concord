@@ -27,6 +27,11 @@ type Config struct {
 	AllowedOrigins []string
 	// Voice server → API çağrılarını koruyan paylaşılan secret
 	VoiceControlSecret string
+	// Rate limit (istek/dakika, PER-IP kaba tavan). Asıl brute-force savunması hesap kapsamlıdır
+	// (handlers/auth.go: maxFailPerEmailIP/Email/IP) — bu çit yalnızca kaba kötüye kullanımı keser
+	// ve paylaşımlı çıkış IP'lerini (operatör CGNAT'ı) boğmayacak kadar gevşek tutulur.
+	AuthRateLimitPerMin int
+	APIRateLimitPerMin  int
 	// Hesap bağlantıları (Connections) OAuth — boşsa GitHub doğrulaması kapalı, elle ekleme çalışır
 	GitHubClientID     string
 	GitHubClientSecret string
@@ -49,20 +54,22 @@ func Load() *Config {
 		RedisAddr:     getEnv("REDIS_HOST", "localhost") + ":" + getEnv("REDIS_PORT", "6379"),
 		RedisPassword: getEnv("REDIS_PASSWORD", ""),
 		// NOT: Gateway'in (Elixir) default'u ile AYNI olmalı, yoksa WS token doğrulaması 403 verir
-		JWTSecret:          getEnv("JWT_SECRET", devJWTSecret),
-		Environment:        getEnv("NODE_ENV", "development"),
-		WorkerID:           parseInt64(getEnv("WORKER_ID", "1")),
-		AllowedOrigins:     splitCSV(getEnv("ALLOWED_ORIGINS", "http://localhost:3000")),
-		VoiceControlSecret: getEnv("VOICE_CONTROL_SECRET", devVoiceSecret),
-		GitHubClientID:     getEnv("GITHUB_CLIENT_ID", ""),
-		GitHubClientSecret: getEnv("GITHUB_CLIENT_SECRET", ""),
-		PublicBaseURL:      getEnv("PUBLIC_BASE_URL", "http://localhost:8080"),
-		SMTPHost:           getEnv("SMTP_HOST", "localhost"),
-		SMTPPort:           getEnv("SMTP_PORT", "1025"),
-		SMTPUser:           getEnv("SMTP_USER", ""),
-		SMTPPass:           getEnv("SMTP_PASS", ""),
-		MailFrom:           getEnv("MAIL_FROM", "Concord <no-reply@concord.local>"),
-		WebBaseURL:         getEnv("WEB_BASE_URL", "http://localhost:3000"),
+		JWTSecret:           getEnv("JWT_SECRET", devJWTSecret),
+		Environment:         getEnv("NODE_ENV", "development"),
+		WorkerID:            parseInt64(getEnv("WORKER_ID", "1")),
+		AllowedOrigins:      splitCSV(getEnv("ALLOWED_ORIGINS", "http://localhost:3000")),
+		VoiceControlSecret:  getEnv("VOICE_CONTROL_SECRET", devVoiceSecret),
+		AuthRateLimitPerMin: parseIntDefault(getEnv("AUTH_RATE_LIMIT_PER_MIN", "60"), 60),
+		APIRateLimitPerMin:  parseIntDefault(getEnv("API_RATE_LIMIT_PER_MIN", "600"), 600),
+		GitHubClientID:      getEnv("GITHUB_CLIENT_ID", ""),
+		GitHubClientSecret:  getEnv("GITHUB_CLIENT_SECRET", ""),
+		PublicBaseURL:       getEnv("PUBLIC_BASE_URL", "http://localhost:8080"),
+		SMTPHost:            getEnv("SMTP_HOST", "localhost"),
+		SMTPPort:            getEnv("SMTP_PORT", "1025"),
+		SMTPUser:            getEnv("SMTP_USER", ""),
+		SMTPPass:            getEnv("SMTP_PASS", ""),
+		MailFrom:            getEnv("MAIL_FROM", "Concord <no-reply@concord.local>"),
+		WebBaseURL:          getEnv("WEB_BASE_URL", "http://localhost:3000"),
 	}
 }
 
@@ -94,6 +101,14 @@ func splitCSV(s string) []string {
 		}
 	}
 	return out
+}
+
+func parseIntDefault(s string, fallback int) int {
+	v, err := strconv.Atoi(s)
+	if err != nil || v <= 0 {
+		return fallback
+	}
+	return v
 }
 
 func parseInt64(s string) int64 {

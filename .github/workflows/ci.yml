@@ -73,6 +73,108 @@ jobs:
       - run: mix compile --warnings-as-errors
       - run: mix test
 
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: concord
+          POSTGRES_PASSWORD: concord_dev
+          POSTGRES_DB: concord
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U concord" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      POSTGRES_DSN: postgres://concord:concord_dev@localhost:5433/concord?sslmode=disable
+      JWT_SECRET: ci_jwt_secret_at_least_32_characters_long_x
+      REDIS_HOST: localhost
+      REDIS_PORT: "6379"
+      E2E_BASE_URL: http://localhost:3000
+      E2E_API_URL: http://localhost:8080
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      # Şema: migration aracı yok → *.up.sql sırayla uygulanır (README ile aynı yöntem)
+      - name: Apply migrations
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          for f in $(ls apps/api/migrations/*.up.sql | sort); do
+            PGPASSWORD=concord_dev psql -h localhost -p 5433 -U concord -d concord -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+
+      - name: Build & start API
+        run: |
+          cd apps/api && go build -o bin/api ./cmd/api
+          ./bin/api > /tmp/api.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8080/health && break || sleep 1
+          done
+          curl -sf http://localhost:8080/health || { echo "API ayağa kalkmadı"; cat /tmp/api.log; exit 1; }
+
+      - name: Build & serve web
+        run: |
+          pnpm --filter @concord/web exec vite build
+          pnpm --filter @concord/web exec vite preview --port 3000 --host > /tmp/web.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/ >/dev/null && break || sleep 1
+          done
+          curl -sf http://localhost:3000/ >/dev/null || { echo "web ayağa kalkmadı"; cat /tmp/web.log; exit 1; }
+
+      - name: Install Playwright browser
+        run: pnpm --filter @concord/e2e exec playwright install chromium --with-deps
+
+      - name: Run E2E
+        run: pnpm --filter @concord/e2e exec playwright test
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7
+
+  voice:
+    name: Voice (Node/mediasoup)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Type-check
+        run: pnpm --filter @concord/voice exec tsc --noEmit
+      - name: Build
+        run: pnpm --filter @concord/voice build
+
   lint-format:
     name: Format check
     runs-on: ubuntu-latest

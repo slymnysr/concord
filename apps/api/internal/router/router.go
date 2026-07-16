@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/concord/api/internal/auth"
+	"github.com/concord/api/internal/handlers"
+	mw "github.com/concord/api/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/concord/api/internal/auth"
-	"github.com/concord/api/internal/handlers"
-	mw "github.com/concord/api/internal/middleware"
 )
 
 func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
@@ -32,16 +32,16 @@ func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 		MaxAge:           300,
 	}))
 	// Genel çit: per-user (giriş yapılmışsa) / per-IP token-bucket
-	r.Use(limiter.Limit("global", 600, time.Minute))
+	r.Use(limiter.Limit("global", cfg.APIRateLimitPerMin, time.Minute))
 
 	r.Get("/health", h.Health)
 	r.Get("/version", h.Version)
 	r.Handle("/metrics", promhttp.Handler())
 
 	r.Route("/api/v1", func(r chi.Router) {
-		// Anonim — kimlik doğrulama endpoint'leri brute-force'a karşı SIKI limitli (10/dk)
+		// Anonim — per-IP kaba çit; asıl brute-force savunması hesap kapsamlı (handlers/auth.go)
 		r.Group(func(r chi.Router) {
-			r.Use(limiter.Limit("auth", 10, time.Minute))
+			r.Use(limiter.Limit("auth", cfg.AuthRateLimitPerMin, time.Minute))
 			r.Post("/auth/register", h.Register)
 			r.Post("/auth/login", h.Login)
 			r.Post("/auth/forgot-password", h.ForgotPassword)
