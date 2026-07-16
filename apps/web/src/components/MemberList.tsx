@@ -13,6 +13,7 @@ import {
   addToast,
 } from '../store';
 import { api, type APIMember, type APIRole } from '../api';
+import { t } from '../i18n';
 
 export function MemberList() {
   const guildId = useAppSelector((s) => s.guilds.selectedId);
@@ -73,7 +74,7 @@ export function MemberList() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Üye ara"
+            placeholder={t('member.searchPlaceholder')}
             className="w-full bg-surface-2 border border-line rounded-md pl-8 pr-2 py-1.5 text-sm text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-brand-500/50"
           />
         </div>
@@ -88,10 +89,10 @@ export function MemberList() {
       {/* Arama modu: düz filtrelenmiş liste */}
       {searchResults !== null ? (
         searchResults.length === 0 ? (
-          <p className="px-4 text-sm text-ink-tertiary text-center py-6">Eşleşen üye yok.</p>
+          <p className="px-4 text-sm text-ink-tertiary text-center py-6">{t('member.noMatch')}</p>
         ) : (
           <Group
-            label="Arama Sonuçları"
+            label={t('member.searchResults')}
             count={searchResults.length}
             members={searchResults}
             online
@@ -111,7 +112,7 @@ export function MemberList() {
       ))}
       {onlineRest.length > 0 && (
         <Group
-          label={roleBuckets.length > 0 ? 'Online' : 'Çevrimiçi'}
+          label={roleBuckets.length > 0 ? 'Online' : t('status.online')}
           count={onlineRest.length}
           members={onlineRest}
           online
@@ -124,7 +125,7 @@ export function MemberList() {
             className="w-full px-3 mt-2 mb-1 text-[11px] font-bold text-ink-tertiary uppercase tracking-[0.08em] hover:text-ink-secondary flex items-center justify-between"
           >
             <span>Çevrimdışı — {offlineMembers.length}</span>
-            <span>{hideOffline ? 'Göster' : 'Gizle'}</span>
+            <span>{hideOffline ? t('common.show') : t('common.hide')}</span>
           </button>
           {!hideOffline && <Group label="" count={offlineMembers.length} members={offlineMembers} online={false} />}
         </>
@@ -248,7 +249,7 @@ function MemberRow({ m, online }: { m: APIMember; online: boolean }) {
             {topIcon && (
               topIcon.startsWith('http')
                 ? <img src={topIcon} alt="" className="w-3.5 h-3.5 object-contain shrink-0" />
-                : <span className="text-xs shrink-0" title="Rol ikonu" aria-label="Rol ikonu">{topIcon}</span>
+                : <span className="text-xs shrink-0" title={t('role.icon')} aria-label={t('role.icon')}>{topIcon}</span>
             )}
             {m.bot && (
               <span className="bg-brand-500/15 text-brand-500 text-[9px] font-semibold px-1 rounded">
@@ -310,7 +311,7 @@ function MemberContextMenu({
       dispatch(selectChannel(r.channel_id));
       dispatch(setPendingDM({ channelId: r.channel_id, partnerId: m.user_id }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.code === 'dm_restricted' ? 'Bu kullanıcı yalnızca arkadaşlarından mesaj alıyor' : 'DM açılamadı' }));
+      dispatch(addToast({ kind: 'error', message: e?.code === 'dm_restricted' ? 'Bu kullanıcı yalnızca arkadaşlarından mesaj alıyor' : t('dm.openFailed') }));
     }
     onClose();
   }
@@ -341,7 +342,7 @@ function MemberContextMenu({
 
   async function timeoutMember() {
     if (!guildId) return;
-    const mins = prompt('Timeout süresi (dakika)?', '10');
+    const mins = prompt(t('member.timeoutPrompt'), '10');
     if (!mins) {
       onClose();
       return;
@@ -392,7 +393,7 @@ function MemberContextMenu({
 
   async function changeNick() {
     if (!guildId) return;
-    const next = prompt('Takma ad (boş = sıfırla):', m.nickname ?? '');
+    const next = prompt(t('member.nicknamePrompt'), m.nickname ?? '');
     if (next === null) {
       onClose();
       return;
@@ -422,18 +423,18 @@ function MemberContextMenu({
       >
         <Item
           icon={<User size={14} />}
-          label="Profili Görüntüle"
+          label={t('member.viewProfile')}
           onClick={() => {
             dispatch(openProfileCard({ userId: m.user_id, anchorRect: null }));
             onClose();
           }}
         />
-        <Item icon={<Pencil size={14} />} label="Takma Ad Değiştir" onClick={changeNick} />
-        {!isMe && <Item icon={<MessageSquare size={14} />} label="Mesaj" onClick={openDM} />}
+        <Item icon={<Pencil size={14} />} label={t('member.changeNickname')} onClick={changeNick} />
+        {!isMe && <Item icon={<MessageSquare size={14} />} label={t('member.message')} onClick={openDM} />}
         {!isMe && (
           <Item
             icon={<AtSign size={14} />}
-            label="Bahset"
+            label={t('member.mention')}
             onClick={() => {
               const ev = new CustomEvent('concord:insert-text', {
                 detail: { text: `<@${m.user_id}> ` },
@@ -452,13 +453,13 @@ function MemberContextMenu({
               className="w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2.5 text-ink-primary hover:bg-surface-2 transition-colors"
             >
               <span className="text-ink-tertiary"><Shield size={14} /></span>
-              <span className="font-medium flex-1">Rolleri Yönet</span>
+              <span className="font-medium flex-1">{t('role.manage')}</span>
               <ChevronRight size={13} className={'text-ink-tertiary transition-transform ' + (rolesOpen ? 'rotate-90' : '')} />
             </button>
             {rolesOpen && (
               <div className="max-h-44 overflow-y-auto bg-surface-2 rounded-lg mx-1 my-1 p-1">
                 {roles.length === 0 ? (
-                  <p className="text-xs text-ink-tertiary px-2 py-1.5">Rol yok.</p>
+                  <p className="text-xs text-ink-tertiary px-2 py-1.5">{t('role.none')}</p>
                 ) : (
                   roles.map((r) => {
                     const has = memberRoles.has(r.id);
@@ -480,7 +481,7 @@ function MemberContextMenu({
                 )}
               </div>
             )}
-            <Item icon={<Clock size={14} />} label="Zaman Aşımı (Timeout)" onClick={timeoutMember} />
+            <Item icon={<Clock size={14} />} label={t('member.timeout')} onClick={timeoutMember} />
             <Item icon={<UserMinus size={14} />} label="Sunucudan At" danger onClick={kick} />
             <Item icon={<BanIcon size={14} />} label="Yasakla" danger onClick={ban} />
           </>

@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Settings, Shield, Link2, Plug, Trash2, Hash, Volume2, Check, Copy, X } from 'lucide-react';
 import { api, type APIChannel, type APIRole } from '../api';
 import { useAppDispatch, useAppSelector, closeModal, fetchChannels, openChannelPerms, addToast } from '../store';
+import { t } from '../i18n';
 
 type Tab = 'overview' | 'permissions' | 'invites' | 'integrations';
 
 const VIEW_BIT = 1n << 10n; // Kanalı Görüntüle
 
 const SLOW_MODES: { v: number; label: string }[] = [
-  { v: 0, label: 'Kapalı' },
+  { v: 0, label: t('common.off') },
   { v: 5, label: '5sn' },
   { v: 10, label: '10sn' },
   { v: 15, label: '15sn' },
@@ -21,7 +22,7 @@ const SLOW_MODES: { v: number; label: string }[] = [
 ];
 
 const ARCHIVE_OPTS: { v: number; label: string }[] = [
-  { v: 0, label: 'Kapalı' },
+  { v: 0, label: t('common.off') },
   { v: 60, label: '1 saat' },
   { v: 1440, label: '24 saat' },
   { v: 4320, label: '3 gün' },
@@ -138,7 +139,7 @@ function OverviewTab({ channel }: { channel: APIChannel }) {
 
   return (
     <div className="max-w-xl">
-      <h2 className="text-xl font-bold text-ink-primary mb-5">Genel Görünüm</h2>
+      <h2 className="text-xl font-bold text-ink-primary mb-5">{t('channel.overview')}</h2>
 
       <label className="block text-xs font-bold uppercase text-ink-tertiary tracking-wider mb-1.5">
         Kanal Adı
@@ -166,7 +167,7 @@ function OverviewTab({ channel }: { channel: APIChannel }) {
             value={topic}
             onChange={(e) => setTopic(e.target.value.slice(0, 1024))}
             rows={2}
-            placeholder="Bu kanalın nasıl kullanılacağını anlat!"
+            placeholder={t('channel.topicPlaceholder')}
             className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2.5 text-ink-primary placeholder:text-ink-tertiary resize-none"
           />
           <div className="text-[11px] text-ink-tertiary text-right mt-1 mb-5">{1024 - topic.length} karakter kaldı</div>
@@ -194,7 +195,7 @@ function OverviewTab({ channel }: { channel: APIChannel }) {
 
           <label className="flex items-center justify-between gap-3 mb-5 cursor-pointer">
             <span>
-              <span className="block text-sm font-semibold text-ink-primary">Yaş Sınırlı Kanal</span>
+              <span className="block text-sm font-semibold text-ink-primary">{t('msg.nsfwChannel')}</span>
               <span className="block text-xs text-ink-tertiary">
                 Yaş sınırlı kanallar sakıncalı içerik filtresinden muaftır.
               </span>
@@ -253,7 +254,7 @@ function OverviewTab({ channel }: { channel: APIChannel }) {
           disabled={!dirty || busy}
           className="px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 disabled:text-ink-tertiary text-white font-semibold"
         >
-          {busy ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
+          {busy ? t('common.saving') : t('channel.saveChanges')}
         </button>
         {saved && (
           <span className="text-sm text-emerald-400 flex items-center gap-1">
@@ -288,7 +289,7 @@ function ForumTagsManager({ channelId }: { channelId: string }) {
       setNewName('');
       setNewEmoji('');
     } catch (e: any) {
-      setErr(e?.detail || e?.message || 'Etiket eklenemedi');
+      setErr(e?.detail || e?.message || t('forum.tagAddFailed'));
     } finally {
       setBusy(false);
     }
@@ -300,14 +301,14 @@ function ForumTagsManager({ channelId }: { channelId: string }) {
 
   return (
     <div className="mt-6 pt-5 border-t border-line">
-      <h3 className="text-sm font-bold text-ink-primary mb-1">Forum Etiketleri</h3>
+      <h3 className="text-sm font-bold text-ink-primary mb-1">{t('forum.tags')}</h3>
       <p className="text-xs text-ink-tertiary mb-3">Üyeler gönderi açarken bu etiketleri seçip filtreleyebilir (en fazla 20).</p>
       <div className="flex flex-wrap gap-1.5 mb-3">
-        {tags.length === 0 && <span className="text-xs text-ink-tertiary">Henüz etiket yok.</span>}
-        {tags.map((t) => (
-          <span key={t.id} className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-surface-3 text-ink-secondary">
-            {t.emoji ? t.emoji + ' ' : ''}{t.name}
-            <button onClick={() => remove(t.id)} className="text-ink-tertiary hover:text-accent-500" title="Sil" aria-label="Sil">
+        {tags.length === 0 && <span className="text-xs text-ink-tertiary">{t('forum.noTags')}</span>}
+        {tags.map((tag) => (
+          <span key={tag.id} className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-surface-3 text-ink-secondary">
+            {tag.emoji ? tag.emoji + ' ' : ''}{tag.name}
+            <button onClick={() => remove(tag.id)} className="text-ink-tertiary hover:text-accent-500" title={t('common.delete')} aria-label={t('common.delete')}>
               <X size={12} />
             </button>
           </span>
@@ -325,7 +326,7 @@ function ForumTagsManager({ channelId }: { channelId: string }) {
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
           maxLength={40}
-          placeholder="Etiket adı (ör. Soru, Hata, Duyuru)"
+          placeholder={t('forum.tagPlaceholder')}
           className="flex-1 bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-1.5 text-sm text-ink-primary"
         />
         <button
@@ -383,9 +384,9 @@ function PermissionsTab({ channel }: { channel: APIChannel }) {
         deny: deny.toString(),
       });
       setIsPrivate(next);
-      dispatch(addToast({ kind: 'success', message: next ? 'Kanal özel yapıldı' : 'Kanal herkese açık' }));
+      dispatch(addToast({ kind: 'success', message: next ? t('channel.madePrivate') : t('channel.madePublic') }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Güncellenemedi' }));
+      dispatch(addToast({ kind: 'error', message: e?.message || t('common.updateFailed') }));
     } finally {
       setBusy(false);
     }
@@ -393,14 +394,14 @@ function PermissionsTab({ channel }: { channel: APIChannel }) {
 
   return (
     <div className="max-w-xl">
-      <h2 className="text-xl font-bold text-ink-primary mb-1">Kanal İzinleri</h2>
+      <h2 className="text-xl font-bold text-ink-primary mb-1">{t('channel.permissions')}</h2>
       <p className="text-sm text-ink-secondary mb-5">
         Bu kanalda kimin ne yapabileceğini özelleştirmek için izinleri kullan.
       </p>
 
       <label className="flex items-center justify-between gap-3 bg-surface-2 border border-line rounded-xl px-4 py-3 cursor-pointer">
         <span>
-          <span className="block text-sm font-semibold text-ink-primary">Özel Kanal</span>
+          <span className="block text-sm font-semibold text-ink-primary">{t('channel.private')}</span>
           <span className="block text-xs text-ink-tertiary">
             Bir kanalı özel yapmak, sadece seçilen üyelerin ve rollerin bu kanalı görüntüleyebilmesini sağlar.
           </span>
@@ -418,7 +419,7 @@ function PermissionsTab({ channel }: { channel: APIChannel }) {
         onClick={() => dispatch(openChannelPerms(channel.id))}
         className="mt-4 w-full flex items-center justify-between px-4 py-3 rounded-xl border border-line hover:border-brand-500/50 hover:bg-surface-2 transition-colors"
       >
-        <span className="text-sm font-semibold text-ink-primary">Gelişmiş izinler</span>
+        <span className="text-sm font-semibold text-ink-primary">{t('channel.advancedPerms')}</span>
         <span className="text-xs text-ink-tertiary">Roller / Üyeler →</span>
       </button>
     </div>

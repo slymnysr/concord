@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Hash, Volume2, Megaphone, MessagesSquare, Mic, Users, UserPlus, Bell, Search, AtSign, Pin, Clock, Menu, type LucideIcon } from 'lucide-react';
 import { useAppDispatch, useAppSelector, toggleMemberList, setMobileNav, openModal, openProfileCard, selectChannel, switchToGuild, switchToDM, selectDM } from '../store';
 import { api, type APIPublicUser } from '../api';
+import { t } from '../i18n';
 
 const Icon: Record<string, LucideIcon> = {
   text: Hash,
@@ -53,7 +54,7 @@ export function ChannelHeader() {
       <button
         onClick={() => dispatch(setMobileNav(true))}
         className="md:hidden w-8 h-8 -ml-1 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 shrink-0"
-        title="Menü" aria-label="Menü"
+        title={t('common.menu')} aria-label={t('common.menu')}
       >
         <Menu size={20} />
       </button>
@@ -61,7 +62,7 @@ export function ChannelHeader() {
       <div className="flex items-baseline gap-3 min-w-0">
         <h1 className="text-ink-primary font-semibold truncate">
           {mode === 'dm'
-            ? dmPartner?.display_name ?? (channelId ? 'Yükleniyor...' : 'Bir konuşma seç')
+            ? dmPartner?.display_name ?? (channelId ? t('common.loading') : t('dm.pickConversation'))
             : channel?.name ?? '—'}
         </h1>
         {channel?.type === 'announcement' && (
@@ -75,7 +76,7 @@ export function ChannelHeader() {
           </span>
         )}
         {channel && channel.rate_limit_sec > 0 && (
-          <span className="text-ink-tertiary text-[11px] flex items-center gap-0.5 shrink-0" title="Yavaş mod aktif" aria-label="Yavaş mod aktif">
+          <span className="text-ink-tertiary text-[11px] flex items-center gap-0.5 shrink-0" title={t('channel.slowmodeActive')} aria-label={t('channel.slowmodeActive')}>
             <Clock size={12} /> {channel.rate_limit_sec}sn
           </span>
         )}
@@ -90,10 +91,10 @@ export function ChannelHeader() {
                 ? `@${dmPartner.username}`
                 : ''
               : channel?.type === 'voice'
-                ? 'Sesli kanal'
+                ? t('channel.voiceChannel')
                 : channel?.type === 'announcement'
-                  ? 'Duyuru kanalı'
-                  : 'Sohbet'}
+                  ? t('channel.announcementChannel')
+                  : t('channel.chat')}
           </span>
         )}
       </div>
@@ -103,19 +104,19 @@ export function ChannelHeader() {
           <button
             type="button"
             onClick={() => dispatch(openModal('follow_channel'))}
-            title="Bu duyuru kanalını başka bir sunucudan takip et"
-            aria-label="Kanalı takip et"
+            title={t('channel.followHint')}
+            aria-label={t('channel.follow')}
             className="h-9 px-3 rounded-lg bg-surface-2 hover:bg-surface-3 text-ink-secondary hover:text-ink-primary text-sm font-semibold flex items-center gap-1.5 transition-colors"
           >
             <Megaphone size={16} />
-            <span className="hidden md:inline">Takip Et</span>
+            <span className="hidden md:inline">{t('channel.followBtn')}</span>
           </button>
         )}
         {channelId && mode !== 'dm' && <ThreadsButton channelId={channelId} />}
         {channelId && mode !== 'dm' && <PinsButton channelId={channelId} />}
         <button
           onClick={() => dispatch(openModal('search'))}
-          title="Ara" aria-label="Ara"
+          title={t('common.search')} aria-label={t('common.search')}
           className="w-9 h-9 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 hover:text-ink-primary transition-colors"
         >
           <Search size={18} />
@@ -125,18 +126,18 @@ export function ChannelHeader() {
           <button
             type="button"
             onClick={() => dispatch(openModal('invite_link'))}
-            title="Sunucuya davet bağlantısı oluştur" aria-label="Sunucuya davet bağlantısı oluştur"
+            title={t('guild.createInviteLink')} aria-label={t('guild.createInviteLink')}
             className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold flex items-center gap-1.5 transition-colors"
           >
             <UserPlus size={16} />
-            <span>Davet Et</span>
+            <span>{t('guild.inviteBtn')}</span>
           </button>
         )}
         <button
           type="button"
           onClick={() => dispatch(toggleMemberList())}
-          title={mode === 'dm' ? 'Profili aç/kapat' : 'Üye listesini aç/kapat'}
-          aria-label={mode === 'dm' ? 'Profili aç/kapat' : 'Üye listesini aç/kapat'}
+          title={mode === 'dm' ? t('profile.toggle') : t('member.toggleList')}
+          aria-label={mode === 'dm' ? t('profile.toggle') : t('member.toggleList')}
           className={
             'h-9 px-2 min-w-9 rounded-lg flex items-center justify-center gap-1 transition-colors text-ink-secondary ' +
             (showMembers ? 'bg-brand-500/15 text-brand-500' : 'hover:bg-surface-2 hover:text-ink-primary')
