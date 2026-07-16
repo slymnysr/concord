@@ -47,7 +47,22 @@ jobs:
           cache-dependency-path: apps/api/go.sum
       - run: go mod download
       - run: go vet ./...
-      - run: go test -race -cover ./...
+      - run: go test -race -coverprofile=coverage.out ./...
+      # Kapsam görünür olsun — yoksa "-cover" çıktısı log'da kaybolur ve kimse bakmaz
+      - name: Coverage özeti
+        run: |
+          go tool cover -func=coverage.out | tail -1
+          {
+            echo "### API kapsamı"
+            echo '```'
+            go tool cover -func=coverage.out | tail -1
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/coverage.out
+          retention-days: 7
       - run: go build -o bin/api ./cmd/api
 
   gateway:
@@ -100,6 +115,8 @@ jobs:
       REDIS_PORT: "6379"
       E2E_BASE_URL: http://localhost:3000
       E2E_API_URL: http://localhost:8080
+      E2E_VOICE_WS: ws://localhost:4443
+      E2E_VOICE_HTTP: http://localhost:4444
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
@@ -113,6 +130,17 @@ jobs:
         with:
           go-version: "1.22"
           cache-dependency-path: apps/api/go.sum
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16"
+          otp-version: "26"
+      - name: Cache gateway deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/gateway/deps
+            apps/gateway/_build
+          key: ${{ runner.os }}-mix-${{ hashFiles('apps/gateway/mix.lock') }}
 
       - name: Install deps
         run: pnpm install --frozen-lockfile
@@ -133,6 +161,35 @@ jobs:
             curl -sf http://localhost:8080/health && break || sleep 1
           done
           curl -sf http://localhost:8080/health || { echo "API ayağa kalkmadı"; cat /tmp/api.log; exit 1; }
+
+      # Realtime (mesaj/tipografi olaylari) Gateway uzerinden akar → E2E icin ZORUNLU.
+      # Yoksa "realtime CIFT YONLU" testi CI'da duser, yerelde gecer (yaniltici yesil).
+      - name: Start Gateway
+        working-directory: apps/gateway
+        env:
+          MIX_ENV: dev
+          # API ile AYNI olmali, yoksa WS token dogrulamasi 403 verir
+          JWT_SECRET: ci_jwt_secret_at_least_32_characters_long_x
+        run: |
+          mix deps.get
+          mix compile
+          elixir --no-halt -S mix phx.server > /tmp/gateway.log 2>&1 &
+          for i in $(seq 1 45); do
+            curl -sf http://localhost:4000/ >/dev/null 2>&1 && break || sleep 1
+          done
+          curl -sf http://localhost:4000/ >/dev/null 2>&1 || { echo "Gateway ayağa kalkmadı"; cat /tmp/gateway.log; exit 1; }
+
+      # Ses presence sozlesmesi (/presence {id,name}[]) icin voice SFU gerekli
+      - name: Build & start Voice
+        env:
+          JWT_SECRET: ci_jwt_secret_at_least_32_characters_long_x
+        run: |
+          pnpm --filter @concord/voice build
+          node apps/voice/dist/index.js > /tmp/voice.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf "http://localhost:4444/presence?channels=1" >/dev/null && break || sleep 1
+          done
+          curl -sf "http://localhost:4444/presence?channels=1" >/dev/null || { echo "Voice ayağa kalkmadı"; cat /tmp/voice.log; exit 1; }
 
       - name: Build & serve web
         run: |
@@ -156,6 +213,40 @@ jobs:
           name: playwright-report
           path: e2e/playwright-report/
           retention-days: 7
+
+      # Test duserse hangi servisin patladigini gormeden teshis edilemiyor
+      - name: Upload service logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-service-logs
+          path: |
+            /tmp/api.log
+            /tmp/gateway.log
+            /tmp/voice.log
+            /tmp/web.log
+          retention-days: 7
+
+  mobile:
+    name: Mobil (tsc + expo export)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Type check
+        run: pnpm --filter @concord/mobile exec tsc --noEmit
+      # Bundle gerçekten derleniyor mu (tsc bunu göstermez: Metro çözümlemesi, native
+      # modül importları, Babel dönüşümleri ayrı kırılır). Native araç zinciri gerekmez.
+      # NOT: web platformu react-native-web istiyor, uygulama iOS/Android hedefli → android.
+      - name: Expo export (bundle)
+        run: pnpm --filter @concord/mobile exec expo export --platform android --output-dir /tmp/expo-out
 
   voice:
     name: Voice (Node/mediasoup)

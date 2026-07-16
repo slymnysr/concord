@@ -81,4 +81,59 @@ test.describe('Mesajlaşma + realtime', () => {
     expect(found.reactions[0].count).toBe(1);
     expect(found.reactions[0].me).toBe(true);
   });
+
+  /**
+   * REGRESYON — elle testte bulundu: mesajlar TEK YÖNLÜ düşüyordu. Linux web'den atılan
+   * Chrome'a anında geliyordu, ama Chrome'dan atılan Linux'a gelmiyordu (sayfa yenilemek
+   * gerekiyordu). Tek tarayıcı + API'den enjekte eden test bunu KAÇIRIR; iki gerçek istemci şart.
+   */
+  test('realtime ÇİFT YÖNLÜ: iki tarayıcı birbirinin mesajını yenilemeden görür', async ({ browser, request }) => {
+    const alice = makeUser('rta');
+    const bob = makeUser('rtb');
+    const aliceToken = await registerViaApi(request, alice);
+    const bobToken = await registerViaApi(request, bob);
+
+    const guild = await createGuild(request, aliceToken, `E2E-RT ${Date.now()}`);
+    const inv = await request.post(`${API}/api/v1/guilds/${guild.id}/invites`, {
+      headers: { Authorization: `Bearer ${aliceToken}` },
+      data: {},
+    });
+    const { code } = await inv.json();
+    expect((await request.post(`${API}/api/v1/invites/${code}/accept`, {
+      headers: { Authorization: `Bearer ${bobToken}` },
+    })).ok()).toBeTruthy();
+
+    const channels = await guildChannels(request, aliceToken, guild.id);
+    const text = channels.find((c: any) => c.type === 'text');
+
+    // İki AYRI tarayıcı bağlamı = iki gerçek istemci, iki ayrı WS
+    const ctxA = await browser.newContext();
+    const ctxB = await browser.newContext();
+    try {
+      const pageA = await ctxA.newPage();
+      const pageB = await ctxB.newPage();
+      await seedSession(pageA, request, alice);
+      await seedSession(pageB, request, bob);
+      for (const p of [pageA, pageB]) {
+        await p.getByRole('button', { name: text.name, exact: true }).first().click();
+      }
+
+      const box = /kanalına yaz|Message #/i;
+
+      // A → B
+      const fromA = `A-DAN-${Date.now()}`;
+      await pageA.getByRole('textbox', { name: box }).fill(fromA);
+      await pageA.keyboard.press('Enter');
+      await expect(pageB.getByText(fromA), 'A→B yönü düşmedi').toBeVisible({ timeout: 10_000 });
+
+      // B → A  (elle testte KIRIK olan yön)
+      const fromB = `B-DEN-${Date.now()}`;
+      await pageB.getByRole('textbox', { name: box }).fill(fromB);
+      await pageB.keyboard.press('Enter');
+      await expect(pageA.getByText(fromB), 'B→A yönü düşmedi — tek yönlü realtime geri geldi').toBeVisible({ timeout: 10_000 });
+    } finally {
+      await ctxA.close();
+      await ctxB.close();
+    }
+  });
 });

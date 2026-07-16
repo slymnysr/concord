@@ -11,7 +11,10 @@ export interface TestUser {
 
 /** Her koşu için benzersiz kullanıcı — testler birbirinin durumunu bozmasın. */
 export function makeUser(tag: string): TestUser {
-  const n = `${tag}${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`.toLowerCase();
+  // API kuralı: kullanıcı adı 3-32 karakter, sadece a-z 0-9 . _ → etiketi burada süz,
+  // yoksa geçersiz ad testi 400'le düşürür ve hata asıl senaryoyu gizler.
+  const safe = tag.toLowerCase().replace(/[^a-z0-9._]/g, '');
+  const n = `${safe}${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`.slice(0, 32);
   return { email: `${n}@e2e.local`, password: 'e2e-parola-123', username: n, displayName: `E2E ${tag}` };
 }
 

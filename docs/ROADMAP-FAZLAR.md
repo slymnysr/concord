@@ -94,10 +94,21 @@ bu dosyada `## API-KONTRAT` başlığı altında yayınla ki FAZ B ona kodlasın
 
 **Sözleşme (dışarıya):** FAZ A/C/D'ye servis adresleri (env). **Bağımlılık:** Grafana←FAZ A metrics (mantıksal, dosya değil).
 
-## FAZ G — Test & CI (`.github/` + `e2e/`)
-**Sahiplenir:** `.github/workflows/**`, YENİ `e2e/`, `playwright.config.ts`
-**Yapılacaklar:** Playwright E2E (kara-kutu: giriş, mesaj CRUD, realtime çift-yönlü, ses presence adı, scroll, kanal CRUD); CI'da lint+go test+tsc+expo export+E2E; coverage. _Yapma: birkaç smoke ile yetinme._
-**Sözleşme:** çalışan ortama karşı (iç koda bağımsız). **Test:** kendisi.
+## FAZ G — Test & CI (`.github/` + `e2e/`) ✅ TAMAM
+**Sahiplenir:** `.github/workflows/**`, `e2e/`
+**Durum:** 18 E2E testi yeşil; CI job'ları: web, api, gateway, e2e, mobile, voice, lint-format.
+- Kapsam: giriş/kayıt, mesaj CRUD, **realtime çift-yönlü** (iki tarayıcı bağlamı — tek yönlü
+  test bu bug'ı kaçırıyordu), ses presence adı + Snowflake string ID, scroll (metin **ve** ses
+  kanalı, kanalın kendi sohbeti doldurularak), kanal CRUD + yetki, güvenlik başlıkları,
+  /metrics, brute-force sözleşmesi.
+- E2E job artık Gateway **ve** Voice'u da ayağa kaldırıyor (yoksa realtime/presence testleri
+  yerelde geçip CI'da düşerdi); düşerse servis logları artifact olarak yükleniyor.
+- Mobil job: tsc + `expo export --platform android` (bundle gerçekten derleniyor mu).
+- API kapsamı `-coverprofile` ile ölçülüyor, job özetine yazılıyor (şu an **%48.4**).
+
+**FAZ G'nin bulduğu ve düzelttiği gerçek bug (FAZ A bölgesi):** brute-force sayacı
+`(email OR ip)` tek eşikle çalışıyordu → çapraz hesap kilidi + CGNAT tahribatı. Katmanlandırıldı
+(email+ip 5 / email 20 / ip 100), başarılı giriş sayacı sıfırlıyor, 429 Retry-After taşıyor.
 
 ---
 

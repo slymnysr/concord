@@ -9,6 +9,8 @@
     "report": "playwright show-report"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.0"
+    "@playwright/test": "^1.49.0",
+    "@types/ws": "^8.5.13",
+    "ws": "^8.18.0"
   }
 }
