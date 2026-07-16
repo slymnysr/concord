@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { api, type APIRole, type APIChannel, type APIReactionRole } from '../../api';
+import { t } from '../../i18n';
 
 export function ReactionRolesTab({ guildId }: { guildId: string }) {
   const [bindings, setBindings] = useState<APIReactionRole[]>([]);
@@ -30,7 +31,7 @@ export function ReactionRolesTab({ guildId }: { guildId: string }) {
   async function submit() {
     setError('');
     if (!messageId.trim() || !channelId || !emoji.trim() || !roleId) {
-      setError('Tüm alanları doldur.');
+      setError(t('rr.fillAll'));
       return;
     }
     setSaving(true);
@@ -45,7 +46,7 @@ export function ReactionRolesTab({ guildId }: { guildId: string }) {
       setEmoji('');
       await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Eklenemedi (mesaj/rol geçerli mi?)');
+      setError(e instanceof Error ? e.message : t('rr.addFailed'));
     } finally {
       setSaving(false);
     }
@@ -56,7 +57,7 @@ export function ReactionRolesTab({ guildId }: { guildId: string }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-ink-primary mb-1">Tepki Rolleri</h2>
+      <h2 className="text-2xl font-bold text-ink-primary mb-1">{t('rr.title')}</h2>
       <p className="text-sm text-ink-secondary mb-4">
         Bir mesaja belirli bir emoji ile tepki veren üyeye otomatik rol atanır; tepki kaldırılınca
         rol geri alınır.
@@ -65,13 +66,13 @@ export function ReactionRolesTab({ guildId }: { guildId: string }) {
       <div className="bg-surface-2 border border-line rounded-xl p-4 mb-4 space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-ink-tertiary mb-1">Kanal</label>
+            <label className="block text-xs font-semibold text-ink-tertiary mb-1">{t('common.channel')}</label>
             <select
               value={channelId}
               onChange={(e) => setChannelId(e.target.value)}
               className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
             >
-              <option value="">Seç...</option>
+              <option value="">{t('common.select')}</option>
               {channels.map((c) => (
                 <option key={c.id} value={c.id}>
                   #{c.name}
@@ -80,31 +81,31 @@ export function ReactionRolesTab({ guildId }: { guildId: string }) {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-ink-tertiary mb-1">Mesaj ID</label>
+            <label className="block text-xs font-semibold text-ink-tertiary mb-1">{t('rr.messageId')}</label>
             <input
               value={messageId}
               onChange={(e) => setMessageId(e.target.value.replace(/[^\d]/g, ''))}
-              placeholder="Mesaj ID (sağ tık → ID kopyala)"
+              placeholder={t('rr.messageIdPlaceholder')}
               className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-ink-tertiary mb-1">Emoji</label>
+            <label className="block text-xs font-semibold text-ink-tertiary mb-1">{t('common.emoji')}</label>
             <input
               value={emoji}
               onChange={(e) => setEmoji(e.target.value)}
-              placeholder="örn. 🎮 veya :ad:"
+              placeholder={t('rr.emojiPlaceholder')}
               className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-ink-tertiary mb-1">Rol</label>
+            <label className="block text-xs font-semibold text-ink-tertiary mb-1">{t('common.role')}</label>
             <select
               value={roleId}
               onChange={(e) => setRoleId(e.target.value)}
               className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
             >
-              <option value="">Seç...</option>
+              <option value="">{t('common.select')}</option>
               {roles.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}
@@ -119,12 +120,12 @@ export function ReactionRolesTab({ guildId }: { guildId: string }) {
           disabled={saving}
           className="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 text-white font-semibold"
         >
-          {saving ? 'Ekleniyor...' : 'Bağlama Ekle'}
+          {saving ? t('common.adding') : t('rr.addBinding')}
         </button>
       </div>
 
       {bindings.length === 0 ? (
-        <p className="text-ink-tertiary text-sm">Henüz tepki rolü bağlaması yok.</p>
+        <p className="text-ink-tertiary text-sm">{t('rr.none')}</p>
       ) : (
         <ul className="space-y-2">
           {bindings.map((b) => (

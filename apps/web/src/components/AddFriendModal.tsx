@@ -3,6 +3,7 @@ import { httpUrl } from '../serverConfig';
 import { UserPlus, Check, X, Mail } from 'lucide-react';
 import { api } from '../api';
 import { useAppDispatch, useAppSelector, openModal } from '../store';
+import { t } from '../i18n';
 
 interface FriendItem {
   user_id: string;
@@ -58,7 +59,7 @@ export function AddFriendModal() {
         setError(body.detail ?? 'istek gönderilemedi');
         return;
       }
-      setSuccess('İstek gönderildi.');
+      setSuccess(t('friend.requestSentDot'));
       setUsername('');
       refresh();
     } catch (e: any) {
@@ -77,7 +78,7 @@ export function AddFriendModal() {
   }
 
   async function remove(userId: string) {
-    if (!confirm('Arkadaşlığı sonlandırmak istiyor musun?')) return;
+    if (!confirm(t('friend.endConfirm'))) return;
     await fetch(httpUrl(`/api/v1/friends/${userId}`), {
       method: 'DELETE',
       headers: { Authorization: 'Bearer ' + localStorage.getItem('concord_access') },
@@ -111,7 +112,7 @@ export function AddFriendModal() {
         <div className="w-10 h-10 rounded-xl bg-brand-500/15 text-brand-500 flex items-center justify-center">
           <UserPlus size={20} />
         </div>
-        <h2 className="text-xl font-bold text-ink-primary">Arkadaşlar</h2>
+        <h2 className="text-xl font-bold text-ink-primary">{t('friend.title')}</h2>
       </div>
 
       <div className="flex gap-1 mb-4 border-b border-line">

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Trash2, Plus, Calendar, X } from 'lucide-react';
 import { useAppSelector } from '../../store';
 import { api } from '../../api';
+import { t } from '../../i18n';
 
 export function EventsTab({ guildId }: { guildId: string }) {
   const [events, setEvents] = useState<Awaited<ReturnType<typeof api.events.list>>>([]);
@@ -50,13 +51,13 @@ export function EventsTab({ guildId }: { guildId: string }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-ink-primary">Etkinlikler</h2>
+        <h2 className="text-2xl font-bold text-ink-primary">{t('event.title')}</h2>
         <button
           onClick={() => setCreating((v) => !v)}
           className="bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5"
         >
           {creating ? <X size={14} /> : <Plus size={14} />}
-          {creating ? 'Vazgeç' : 'Yeni Etkinlik'}
+          {creating ? t('common.discard') : t('event.new')}
         </button>
       </div>
 
@@ -65,19 +66,19 @@ export function EventsTab({ guildId }: { guildId: string }) {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Etkinlik adı"
+            placeholder={t('event.namePlaceholder')}
             className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
           />
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Açıklama (isteğe bağlı)"
+            placeholder={t('event.descPlaceholder')}
             rows={2}
             className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none resize-none"
           />
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-ink-tertiary mb-1">Başlangıç</label>
+              <label className="block text-xs text-ink-tertiary mb-1">{t('event.start')}</label>
               <input
                 type="datetime-local"
                 value={start}
@@ -86,7 +87,7 @@ export function EventsTab({ guildId }: { guildId: string }) {
               />
             </div>
             <div>
-              <label className="block text-xs text-ink-tertiary mb-1">Bitiş (opsiyonel)</label>
+              <label className="block text-xs text-ink-tertiary mb-1">{t('event.end')}</label>
               <input
                 type="datetime-local"
                 value={end}
@@ -100,9 +101,9 @@ export function EventsTab({ guildId }: { guildId: string }) {
             onChange={(e) => setEntityType(e.target.value as any)}
             className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary"
           >
-            <option value="voice">Sesli Kanalda</option>
-            <option value="stage_instance">Sahnede</option>
-            <option value="external">Dış mekan (URL/adres)</option>
+            <option value="voice">{t('event.inVoice')}</option>
+            <option value="stage_instance">{t('event.onStage')}</option>
+            <option value="external">{t('event.external')}</option>
           </select>
           {entityType !== 'external' ? (
             <select
@@ -122,7 +123,7 @@ export function EventsTab({ guildId }: { guildId: string }) {
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="https://meet.google.com/... veya adres"
+              placeholder={t('event.locationPlaceholder')}
               className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
             />
           )}
@@ -137,7 +138,7 @@ export function EventsTab({ guildId }: { guildId: string }) {
       )}
 
       {events.length === 0 ? (
-        <p className="text-ink-tertiary text-sm">Henüz etkinlik yok.</p>
+        <p className="text-ink-tertiary text-sm">{t('event.none')}</p>
       ) : (
         <ul className="space-y-2">
           {events.map((e) => (
@@ -173,11 +174,11 @@ export function EventsTab({ guildId }: { guildId: string }) {
                       : 'bg-surface-3 hover:bg-brand-500 hover:text-white text-ink-secondary')
                   }
                 >
-                  {e.subscribed ? '✓ İlgileniyorum' : 'İlgileniyorum'}
+                  {e.subscribed ? '✓ İlgileniyorum' : t('event.interested')}
                 </button>
                 <button
                   onClick={() => {
-                    if (confirm('Etkinliği silmek istiyor musun?')) {
+                    if (confirm(t('event.deleteConfirm'))) {
                       api.events.delete(e.id).then(refresh);
                     }
                   }}

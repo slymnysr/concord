@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Mic, MicOff, PhoneOff, Volume2, Headphones, HeadphoneOff } from 'lucide-react';
 import { voice } from '../voice';
 import { useAppSelector } from '../store';
+import { t } from '../i18n';
 
 export function useVoiceState() {
   const [connected, setConnected] = useState<boolean>(voice.isConnected());
@@ -80,7 +81,7 @@ export function VoiceStatusBar() {
         <div className={'text-[12px] font-semibold flex items-center gap-1 ' + (srvMute || srvDeaf ? 'text-accent-500' : 'text-status-online')}>
           <Volume2 size={12} className="shrink-0" />
           <span className="truncate">
-            {srvDeaf ? 'Sunucuda sağırlaştırıldın' : srvMute ? 'Sunucuda susturuldun' : 'Ses Bağlı'}
+            {srvDeaf ? t('voice.serverDeafenedYou') : srvMute ? t('voice.serverMutedYou') : t('voice.connected')}
           </span>
         </div>
         <div className="text-[10px] text-ink-tertiary truncate">
@@ -91,7 +92,7 @@ export function VoiceStatusBar() {
       <button
         onClick={toggleMic}
         disabled={srvMute || srvDeaf}
-        title={srvMute || srvDeaf ? 'Sunucu tarafından susturuldun — kendin açamazsın' : micOn ? 'Mikrofonu kapat' : 'Mikrofonu aç'}
+        title={srvMute || srvDeaf ? 'Sunucu tarafından susturuldun — kendin açamazsın' : micOn ? t('voice.micOff') : t('voice.micOn')}
         className={
           'w-7 h-7 rounded-md flex items-center justify-center transition-colors shrink-0 ' +
           (srvMute || srvDeaf
@@ -106,7 +107,7 @@ export function VoiceStatusBar() {
       <button
         onClick={() => { if (!srvDeaf) voice.setDeafened(!deafened); }}
         disabled={srvDeaf}
-        title={srvDeaf ? 'Sunucu tarafından sağırlaştırıldın' : deafened ? 'Sağırlığı aç' : 'Sağırlaştır (tüm sesi kapat)'}
+        title={srvDeaf ? t('voice.serverDeafenedByMod') : deafened ? t('voice.undeafen') : t('voice.deafen')}
         className={
           'w-7 h-7 rounded-md flex items-center justify-center transition-colors shrink-0 ' +
           (deafened || srvDeaf
@@ -118,7 +119,7 @@ export function VoiceStatusBar() {
       </button>
       <button
         onClick={leave}
-        title="Sesten ayrıl" aria-label="Sesten ayrıl"
+        title={t('voice.leave')} aria-label={t('voice.leave')}
         className="w-7 h-7 rounded-md text-ink-secondary hover:bg-accent-500 hover:text-white flex items-center justify-center transition-colors shrink-0"
       >
         <PhoneOff size={14} />
@@ -149,8 +150,8 @@ function SignalBars() {
   return (
     <div
       className="flex items-end gap-[2px] shrink-0"
-      title={rtt === null ? 'Bağlantı kalitesi ölçülüyor…' : `Gecikme: ${rtt} ms`}
-      aria-label={rtt === null ? 'Bağlantı kalitesi ölçülüyor' : `Gecikme ${rtt} milisaniye`}
+      title={rtt === null ? t('voice.qualityMeasuring') : `Gecikme: ${rtt} ms`}
+      aria-label={rtt === null ? t('voice.qualityMeasuringAria') : `Gecikme ${rtt} milisaniye`}
     >
       {[4, 7, 10].map((h, i) => (
         <span
