@@ -1,0 +1,67 @@
+# Voice SFU (mediasoup)
+#
+# ⚠️ replicas: 1 — ŞU AN ÖLÇEKLENEMEZ.
+# mediasoup router'ları makine-yereldir; iki replica'daki kullanıcılar BİRBİRİNİ DUYMAZ
+# (aynı kanal farklı pod'lara düşerse sessizce bölünür). Çok-replica için router cascade
+# (pipeToRouter) + SFU seçici gerekir → ROADMAP FAZ C. O yapılana kadar 1'de sabit.
+#
+# ⚠️ Ağ: RTC medyası UDP/TCP port aralığından AKAR; Service/Ingress üzerinden proxy'lenemez.
+# hostNetwork + hostPort ile doğrudan node'a açılır. NAT arkasındaysa ANNOUNCED_IP şarttır,
+# yoksa ICE başarısız olur (istemci sesi duymaz).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voice
+  namespace: concord
+  labels: { app: voice }
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # hostNetwork port çakışmasını önle
+  selector:
+    matchLabels: { app: voice }
+  template:
+    metadata:
+      labels: { app: voice }
+    spec:
+      # RTC portları için host ağı — mediasoup'un ilan ettiği IP'ye doğrudan erişim
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: voice
+          image: ghcr.io/slymnysr/concord-voice:latest
+          ports:
+            - { name: signaling, containerPort: 4443, hostPort: 4443 }
+            - { name: control, containerPort: 4444, hostPort: 4444 }
+          env:
+            - name: PORT
+              value: "4443"
+            - name: HTTP_PORT
+              value: "4444"
+            # Node'un DIŞARIDAN görünen IP'si — ICE adaylarında ilan edilir.
+            - name: ANNOUNCED_IP
+              valueFrom: { fieldRef: { fieldPath: status.hostIP } }
+            - name: RTC_MIN_PORT
+              value: "40000"
+            - name: RTC_MAX_PORT
+              value: "40100"
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: JWT_SECRET } }
+            - name: VOICE_CONTROL_SECRET
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: VOICE_CONTROL_SECRET } }
+            - name: API_INTERNAL_URL
+              value: "http://api:8080/api/v1"
+          resources:
+            requests: { cpu: 500m, memory: 512Mi }
+            limits: { cpu: "4", memory: 2Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voice
+  namespace: concord
+spec:
+  selector: { app: voice }
+  ports:
+    - { name: signaling, port: 4443, targetPort: 4443 }
+    - { name: control, port: 4444, targetPort: 4444 }

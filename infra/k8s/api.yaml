@@ -1,0 +1,70 @@
+# API — StatefulSet (Deployment DEĞİL) çünkü Snowflake ID üretimi replica başına
+# BENZERSİZ WORKER_ID ister. StatefulSet kararlı ordinal verir (api-0, api-1…) →
+# WORKER_ID pod adının son ekinden türetilir. Deployment'ta rastgele pod adı olurdu
+# ve iki replica aynı WORKER_ID'yi alıp ÇAKIŞAN ID üretebilirdi.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: api
+  namespace: concord
+  labels: { app: api }
+spec:
+  serviceName: api
+  # Stateless iş mantığı → serbestçe ölçeklenir (rate-limit Redis-backed, ortak sayaç).
+  replicas: 2
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels: { app: api }
+  template:
+    metadata:
+      labels: { app: api }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/slymnysr/concord-api:latest
+          # Pod ordinal'ini (api-0 → 0) WORKER_ID yap, sonra binary'i exec et.
+          command: ["/bin/sh", "-c"]
+          args:
+            - 'export WORKER_ID="${POD_NAME##*-}"; echo "worker_id=$WORKER_ID"; exec /api'
+          ports:
+            - { name: http, containerPort: 8080 }
+          envFrom:
+            - configMapRef: { name: concord-config }
+          env:
+            - name: POD_NAME
+              valueFrom: { fieldRef: { fieldPath: metadata.name } }
+            - name: POSTGRES_DSN
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: POSTGRES_DSN } }
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: JWT_SECRET } }
+            - name: VOICE_CONTROL_SECRET
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: VOICE_CONTROL_SECRET } }
+            - name: MEDIA_EVENT_SECRET
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: MEDIA_EVENT_SECRET } }
+            - name: MINIO_SECRET_KEY
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: MINIO_SECRET_KEY } }
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: "1", memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: concord
+spec:
+  selector: { app: api }
+  ports:
+    - { name: http, port: 8080, targetPort: http }

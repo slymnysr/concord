@@ -1,0 +1,37 @@
+# Web (React/Vite → nginx statik) — stateless, serbestçe ölçeklenir
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: concord
+  labels: { app: web }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: web }
+  template:
+    metadata:
+      labels: { app: web }
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/slymnysr/concord-web:latest
+          ports:
+            - { name: http, containerPort: 80 }
+          readinessProbe:
+            httpGet: { path: /index.html, port: http }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: 500m, memory: 256Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: concord
+spec:
+  selector: { app: web }
+  ports:
+    - { name: http, port: 80, targetPort: http }

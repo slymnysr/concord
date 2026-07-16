@@ -36,26 +36,62 @@ services:
       timeout: 5s
       retries: 5
 
-  scylla:
-    image: scylladb/scylla:5.4
-    container_name: concord-scylla
+  # NOT: ScyllaDB kaldırıldı (2026-07). Provisyonlanmıştı ama kod mesajları Postgres'e
+  # yazıyordu → atıl + tasarım/kod uyuşmazlığı. Mesaj-ölçek gerçek ihtiyaç olunca
+  # (metrikler gösterince) planlı bir faz olarak partition'lı store'a geçilir.
+  # Bkz. docs/ROADMAP-FAZLAR.md TIER 4.
+
+  # Virüs tarama — FAZ A internal/media.Scan bu adrese INSTREAM ile bağlanır.
+  clamav:
+    image: clamav/clamav:latest
+    container_name: concord-clamav
     restart: unless-stopped
     ports:
-      - "9042:9042"  # CQL
-      - "9160:9160"  # Thrift
-      - "10000:10000"  # REST API
-    volumes:
-      - scylla_data:/var/lib/scylla
-    command:
-      - --smp=1
-      - --memory=1G
-      - --overprovisioned=1
-      - --developer-mode=1
+      - "3310:3310"
     healthcheck:
-      test: ["CMD", "cqlsh", "-e", "describe cluster"]
-      interval: 10s
+      test: ["CMD-SHELL", "clamdscan --ping 1 || exit 1"]
+      interval: 30s
       timeout: 10s
       retries: 10
+      start_period: 120s  # ilk imza veritabanı indirmesi uzun sürer
+
+  # Metrik toplama — API'nin /metrics endpoint'ini kazır
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: concord-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    # DEV: API host'ta (WSL) çalışıyor. Docker Desktop'ta host.docker.internal VE
+    # host-gateway'in ikisi de WINDOWS host'una çıkar → WSL'deki API'ye ULAŞMAZ.
+    # Bu yüzden WSL IP'si .env'deki HOST_IP ile verilir (IP reboot'ta değişir, sabitleme!):
+    #   echo "HOST_IP=$(hostname -I | awk '{print $1}')" > infra/docker/.env
+    # PROD'da API container olur → prometheus.yml hedefi "api:8080" yapılır, bu satır silinir.
+    extra_hosts:
+      - "concord-host:${HOST_IP:-host-gateway}"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+
+  # Dashboard — Prometheus'u veri kaynağı olarak otomatik bağlar
+  grafana:
+    image: grafana/grafana:latest
+    container_name: concord-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - "3001:3000"  # web :3000'i tuttuğu için 3001
+    environment:
+      GF_SECURITY_ADMIN_USER: concord
+      GF_SECURITY_ADMIN_PASSWORD: concord_dev
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
 
   # Yerel obje deposu (S3 uyumlu) — geliştirmede Cloudflare R2 yerine
   minio:
@@ -89,5 +125,6 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  scylla_data:
   minio_data:
+  prometheus_data:
+  grafana_data:

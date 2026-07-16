@@ -12,18 +12,25 @@
                   │                      │
               HTTPS/REST              WSS
                   │                      │
-            ┌─────▼─────┐         ┌──────▼──────┐
-            │   Go API  │         │   Phoenix   │
-            │  (chi)    │◄─gRPC──►│  Gateway    │
-            └─────┬─────┘         └──────┬──────┘
+            ┌─────▼─────┐  Redis  ┌──────▼──────┐
+            │   Go API  │ PubSub  │   Phoenix   │
+            │   (chi)   │────────►│   Gateway   │
+            └─────┬─────┘ (olay)  └──────┬──────┘
                   │                      │
        ┌──────────┼──────────┐           │
        │          │          │           │
-   ┌───▼───┐  ┌──▼───┐  ┌───▼────┐  ┌───▼────┐
-   │  PG   │  │Redis │  │ Scylla │  │ Voice  │
-   │(meta) │  │cache │  │(msgs)  │  │(mediasoup)
-   └───────┘  └──────┘  └────────┘  └────────┘
+   ┌───▼───┐  ┌──▼───┐  ┌───▼────┐  ┌───▼──────┐
+   │  PG   │  │Redis │  │ MinIO  │  │  Voice   │
+   │(meta+ │  │cache+│  │(medya) │  │(mediasoup)│
+   │ msgs) │  │pubsub│  └────────┘  └──────────┘
+   └───────┘  └──────┘
 ```
+
+> **Doğruluk notu (2026-07):** Diyagram önceden API↔Gateway arasını *gRPC*, mesajları da
+> *ScyllaDB* gösteriyordu — ikisi de gerçeği yansıtmıyordu. Gerçek: iletişim **Redis PubSub**
+> (`concord:guild:*` kanalları, `RedisBridge`), mesajlar **PostgreSQL**'de (`messages` tablosu,
+> `search_vector` ile FTS). ScyllaDB provisyonlanmış ama hiç kullanılmıyordu → **kaldırıldı**.
+> Mesaj-ölçek gerçek ihtiyaç olunca planlı bir faz olarak ele alınacak (bkz. `ROADMAP-FAZLAR.md` TIER 4).
 
 ## Servisler ve Sorumluluklar
 

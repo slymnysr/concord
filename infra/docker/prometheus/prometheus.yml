@@ -1,0 +1,24 @@
+# Concord — Prometheus kazıma yapılandırması
+# API'nin /metrics endpoint'i (FAZ A: middleware/metrics.go) RED metriklerini yayar:
+#   concord_http_requests_total{method,route,status}
+#   concord_http_request_duration_seconds{method,route}
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    env: dev
+
+scrape_configs:
+  - job_name: concord-api
+    metrics_path: /metrics
+    static_configs:
+      # concord-host → compose'daki extra_hosts ile çözülür (bkz. .env HOST_IP).
+      # PROD: API container olur → burada "api:8080" yazılır.
+      - targets: ["concord-host:8080"]
+        labels:
+          service: api
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

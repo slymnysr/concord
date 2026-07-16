@@ -1,0 +1,63 @@
+# Gateway (Phoenix) — WebSocket + presence
+#
+# ⚠️ replicas: 1 — ŞU AN ÖLÇEKLENEMEZ.
+# Phoenix.PubSub varsayılan `:pg` adaptörü yalnızca AYNI BEAM kümesi içinde çalışır;
+# libcluster ile node keşfi + distributed Presence yapılmadan 2. replica'daki kullanıcı
+# 1. replica'daki olayları ALMAZ (sessiz bölünme). Çok-replica için önce ROADMAP FAZ D.
+# Yanlış ölçekleme sessizce mesaj kaybı demek → bilerek 1'de sabit.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: concord
+  labels: { app: gateway }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: gateway }
+  template:
+    metadata:
+      labels: { app: gateway }
+    spec:
+      containers:
+        - name: gateway
+          image: ghcr.io/slymnysr/concord-gateway:latest
+          ports:
+            - { name: http, containerPort: 4000 }
+          envFrom:
+            - configMapRef: { name: concord-config }
+          env:
+            - name: PHX_SERVER
+              value: "true"
+            - name: PHX_HOST
+              value: "concord.example.com"
+            - name: PORT
+              value: "4000"
+            # JWT doğrulaması API ile AYNI secret'ı kullanmalı, yoksa WS 403 verir.
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: JWT_SECRET } }
+            - name: SECRET_KEY_BASE
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: SECRET_KEY_BASE } }
+            - name: REDIS_URL
+              value: "redis://redis:6379"
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: "2", memory: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: concord
+spec:
+  selector: { app: gateway }
+  ports:
+    - { name: http, port: 4000, targetPort: http }
