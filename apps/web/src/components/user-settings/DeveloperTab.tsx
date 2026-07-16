@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Trash2, Bot, Copy, RefreshCw, Plus } from 'lucide-react';
 import { api, type APIApplication } from '../../api';
 import { useAppDispatch, useAppSelector, addToast } from '../../store';
+import { t } from '../../i18n';
 
 export function DeveloperTab() {
   const dispatch = useAppDispatch();
@@ -41,7 +42,7 @@ export function DeveloperTab() {
         );
       })
       .catch((e: any) =>
-        dispatch(addToast({ kind: 'error', message: e?.message || 'Oluşturulamadı' })),
+        dispatch(addToast({ kind: 'error', message: e?.message || t('common.createFailed') })),
       )
       .finally(() => setBusy(false));
   };
@@ -51,9 +52,9 @@ export function DeveloperTab() {
       .resetToken(id)
       .then(({ token }) => {
         setFreshTokens((p) => ({ ...p, [id]: token }));
-        dispatch(addToast({ kind: 'success', message: 'Token sıfırlandı — eskisi geçersiz' }));
+        dispatch(addToast({ kind: 'success', message: t('dev.tokenReset') }));
       })
-      .catch(() => dispatch(addToast({ kind: 'error', message: 'Sıfırlanamadı' })));
+      .catch(() => dispatch(addToast({ kind: 'error', message: t('dev.resetFailed') })));
   };
 
   const remove = (id: string) => {
@@ -70,9 +71,9 @@ export function DeveloperTab() {
           return n;
         });
         load();
-        dispatch(addToast({ kind: 'success', message: 'Uygulama silindi' }));
+        dispatch(addToast({ kind: 'success', message: t('dev.appDeleted') }));
       })
-      .catch(() => dispatch(addToast({ kind: 'error', message: 'Silinemedi' })));
+      .catch(() => dispatch(addToast({ kind: 'error', message: t('common.deleteFailed') })));
   };
 
   const addToGuild = (appId: string, guildId: string) => {
@@ -80,13 +81,13 @@ export function DeveloperTab() {
       .addToGuild(guildId, appId)
       .then(() => {
         setAddingGuildFor(null);
-        dispatch(addToast({ kind: 'success', message: 'Bot sunucuya eklendi' }));
+        dispatch(addToast({ kind: 'success', message: t('dev.botAdded') }));
       })
       .catch((e: any) =>
         dispatch(
           addToast({
             kind: 'error',
-            message: e?.message || 'Eklenemedi (Sunucuyu Yönet yetkin var mı?)',
+            message: e?.message || t('dev.addFailed'),
           }),
         ),
       );
@@ -95,12 +96,12 @@ export function DeveloperTab() {
   const copy = (text: string) => {
     navigator.clipboard
       ?.writeText(text)
-      .then(() => dispatch(addToast({ kind: 'success', message: 'Kopyalandı' })));
+      .then(() => dispatch(addToast({ kind: 'success', message: t('common.copied') })));
   };
 
   return (
     <div className="max-w-2xl">
-      <h2 className="text-lg font-bold text-ink-primary mb-1">Bot Uygulamaları</h2>
+      <h2 className="text-lg font-bold text-ink-primary mb-1">{t('dev.botApps')}</h2>
       <p className="text-sm text-ink-tertiary mb-4">
         Bot oluştur, token al, sunucuna ekle. Bot REST API'ye{' '}
         <code className="bg-surface-2 px-1 rounded text-xs">Authorization: Bot &lt;token&gt;</code>{' '}
@@ -114,7 +115,7 @@ export function DeveloperTab() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && create()}
-          placeholder="Uygulama adı (örn. Müzik Botu)"
+          placeholder={t('dev.appNamePlaceholder')}
           maxLength={32}
           className="flex-1 bg-surface-2 border border-line rounded-lg px-3 py-2 text-sm text-ink-primary outline-none focus:border-brand-500/50"
         />
@@ -128,7 +129,7 @@ export function DeveloperTab() {
       </div>
 
       {loading ? (
-        <div className="text-sm text-ink-tertiary">Yükleniyor...</div>
+        <div className="text-sm text-ink-tertiary">{t('common.loading')}</div>
       ) : apps.length === 0 ? (
         <div className="text-sm text-ink-tertiary border border-dashed border-line rounded-xl p-6 text-center">
           Henüz bot uygulaman yok.
@@ -159,16 +160,16 @@ export function DeveloperTab() {
                 <button
                   onClick={() => resetToken(a.id)}
                   className="w-8 h-8 rounded-lg hover:bg-surface-3 text-ink-tertiary hover:text-ink-primary flex items-center justify-center"
-                  title="Token'ı sıfırla"
-                  aria-label="Token'ı sıfırla"
+                  title={t('dev.resetToken')}
+                  aria-label={t('dev.resetToken')}
                 >
                   <RefreshCw size={14} />
                 </button>
                 <button
                   onClick={() => remove(a.id)}
                   className="w-8 h-8 rounded-lg hover:bg-accent-500/15 text-ink-tertiary hover:text-accent-500 flex items-center justify-center"
-                  title="Uygulamayı sil"
-                  aria-label="Uygulamayı sil"
+                  title={t('dev.deleteApp')}
+                  aria-label={t('dev.deleteApp')}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -186,8 +187,8 @@ export function DeveloperTab() {
                     <button
                       onClick={() => copy(freshTokens[a.id])}
                       className="w-7 h-7 rounded-md hover:bg-surface-3 text-ink-secondary flex items-center justify-center shrink-0"
-                      title="Kopyala"
-                      aria-label="Token'ı kopyala"
+                      title={t('common.copy')}
+                      aria-label={t('dev.copyToken')}
                     >
                       <Copy size={13} />
                     </button>

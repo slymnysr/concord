@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AudioToggle } from './shared';
+import { t } from '../../i18n';
 
 export function VoiceTab() {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
@@ -56,58 +57,58 @@ export function VoiceTab() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-ink-primary mb-5">Ses & Video</h2>
+      <h2 className="text-2xl font-bold text-ink-primary mb-5">{t('voice.title')}</h2>
 
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-3">
-        <h3 className="text-sm font-bold text-ink-primary">Giriş Cihazı (Mikrofon)</h3>
+        <h3 className="text-sm font-bold text-ink-primary">{t('voice.inputDevice')}</h3>
         <select
           value={inputId}
           onChange={(e) => saveDevice('input', e.target.value)}
           className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
         >
-          <option value="default">Varsayılan</option>
+          <option value="default">{t('common.default')}</option>
           {inputs.map((d) => (
             <option key={d.deviceId} value={d.deviceId}>
-              {d.label || 'Mikrofon ' + d.deviceId.slice(0, 6)}
+              {d.label || t('voice.micPrefix') + d.deviceId.slice(0, 6)}
             </option>
           ))}
         </select>
       </div>
 
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-3">
-        <h3 className="text-sm font-bold text-ink-primary">Çıkış Cihazı (Hoparlör)</h3>
+        <h3 className="text-sm font-bold text-ink-primary">{t('voice.outputDevice')}</h3>
         <select
           value={outputId}
           onChange={(e) => saveDevice('output', e.target.value)}
           className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
         >
-          <option value="default">Varsayılan</option>
+          <option value="default">{t('common.default')}</option>
           {outputs.map((d) => (
             <option key={d.deviceId} value={d.deviceId}>
-              {d.label || 'Çıkış ' + d.deviceId.slice(0, 6)}
+              {d.label || t('voice.outputPrefix') + d.deviceId.slice(0, 6)}
             </option>
           ))}
         </select>
       </div>
 
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-3">
-        <h3 className="text-sm font-bold text-ink-primary">Kamera</h3>
+        <h3 className="text-sm font-bold text-ink-primary">{t('voice.camera')}</h3>
         <select
           value={videoId}
           onChange={(e) => saveDevice('video', e.target.value)}
           className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
         >
-          <option value="default">Varsayılan</option>
+          <option value="default">{t('common.default')}</option>
           {videos.map((d) => (
             <option key={d.deviceId} value={d.deviceId}>
-              {d.label || 'Kamera ' + d.deviceId.slice(0, 6)}
+              {d.label || t('voice.cameraPrefix') + d.deviceId.slice(0, 6)}
             </option>
           ))}
         </select>
       </div>
 
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-3">
-        <h3 className="text-sm font-bold text-ink-primary">Giriş Modu</h3>
+        <h3 className="text-sm font-bold text-ink-primary">{t('voice.inputMode')}</h3>
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="radio"
@@ -136,37 +137,37 @@ export function VoiceTab() {
             onClick={() => setCapturing(true)}
             className="mt-2 px-3 py-2 rounded-lg bg-surface-3 hover:bg-surface-1 text-ink-primary text-sm font-semibold border border-line"
           >
-            {capturing ? 'Tuşa bas...' : `Tuş: ${pttKey}`}
+            {capturing ? t('voice.pressKey') : `Tuş: ${pttKey}`}
           </button>
         )}
       </div>
 
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-1">
-        <h3 className="text-sm font-bold text-ink-primary mb-2">Ses İşleme</h3>
+        <h3 className="text-sm font-bold text-ink-primary mb-2">{t('voice.processing')}</h3>
         <AudioToggle
           storageKey="concord_echo_cancel"
-          label="Yankı engelleme"
+          label={t('voice.echoCancel')}
           desc="Hoparlör sesinin mikrofona geri dönmesini önler"
         />
         <AudioToggle
           storageKey="concord_noise_suppress"
-          label="Gürültü engelleme"
+          label={t('voice.noiseSuppress')}
           desc="Arka plan gürültüsünü bastırır (tarayıcı yerleşik)"
         />
         <AudioToggle
           storageKey="concord_rnnoise"
-          label="🤖 Gelişmiş gürültü engelleme (RNNoise)"
+          label={t('voice.rnnoise')}
           desc="Yapay zekâ tabanlı — klavye/fan gibi gürültüleri çok daha iyi temizler, cihazında çalışır"
           defaultOn={false}
         />
         <AudioToggle
           storageKey="concord_auto_gain"
-          label="Otomatik kazanç"
+          label={t('voice.autoGain')}
           desc="Mikrofon seviyesini otomatik dengeler"
         />
         <AudioToggle
           storageKey="concord_music_mode"
-          label="🎵 Müzik modu"
+          label={t('voice.musicMode')}
           desc="Stereo + yüksek bitrate; tüm ses işleme kapatılır (enstrüman/müzik paylaşımı için)"
           defaultOn={false}
         />
@@ -176,10 +177,10 @@ export function VoiceTab() {
       </div>
 
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-1">
-        <h3 className="text-sm font-bold text-ink-primary mb-2">Görüntü</h3>
+        <h3 className="text-sm font-bold text-ink-primary mb-2">{t('voice.video')}</h3>
         <AudioToggle
           storageKey="concord_video_blur"
-          label="✨ Arka planı bulanıklaştır"
+          label={t('voice.blurBackground')}
           desc="Kamerada sadece sen net görünürsün (cihazında işlenir, ilk açılışta model indirilir)"
           defaultOn={false}
         />
@@ -196,7 +197,7 @@ export function VoiceTab() {
               defaultValue={localStorage.getItem('concord_stream_res') ?? '720'}
               onChange={(e) => localStorage.setItem('concord_stream_res', e.target.value)}
               className="w-full bg-surface-1 border border-line rounded-lg px-2 py-1.5 text-sm text-ink-primary outline-none focus:border-brand-500/50"
-              aria-label="Yayın çözünürlüğü"
+              aria-label={t('voice.streamResolution')}
             >
               <option value="480">480p</option>
               <option value="720">720p (önerilen)</option>
