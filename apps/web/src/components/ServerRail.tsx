@@ -48,7 +48,7 @@ export function ServerRail() {
       <div className="flex flex-col gap-2.5 flex-1 overflow-y-auto w-full items-center">
         {guilds.length === 0 && (
           <p className="text-[10px] text-ink-tertiary text-center px-2 pt-3">
-            Henüz sunucun yok
+            {t('guild.noneYet')}
           </p>
         )}
 

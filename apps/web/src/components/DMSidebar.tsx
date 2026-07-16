@@ -4,6 +4,7 @@ import { api, type APIDMChannel, type APIPublicUser } from '../api';
 import { useAppDispatch, useAppSelector, openModal, selectDM, selectChannel, setPendingDM, switchToGuild } from '../store';
 import { VoiceStatusBar } from './VoiceStatusBar';
 import { SavedMessagesModal } from './SavedMessagesModal';
+import { t } from '../i18n';
 
 export function DMSidebar() {
   const dispatch = useAppDispatch();
@@ -64,12 +65,12 @@ export function DMSidebar() {
 
   function dmTitle(dm: APIDMChannel): string {
     if (dm.type === 'group_dm') {
-      if (dm.name && dm.name !== 'Grup Sohbeti') return dm.name;
+      if (dm.name && dm.name !== t('dm.groupChat')) return dm.name;
       // İsimsiz grup: katılımcı adlarından otomatik başlık üret
       const names = dm.participants
         .filter((p) => p !== me?.id)
         .map((p) => partners[p]?.display_name ?? `Kullanıcı ${p.slice(-4)}`);
-      return names.length > 0 ? names.join(', ') : dm.name || 'Grup Sohbeti';
+      return names.length > 0 ? names.join(', ') : dm.name || t('dm.groupChat');
     }
     const other = dm.participants.find((p) => p !== me?.id);
     if (!other) return dm.name || 'DM';
@@ -85,7 +86,7 @@ export function DMSidebar() {
   return (
     <aside className="w-64 bg-surface-1 flex flex-col border-r border-line">
       <header className="h-14 px-4 flex items-center border-b border-line">
-        <h2 className="text-ink-primary font-semibold text-[15px]">Direkt Mesajlar</h2>
+        <h2 className="text-ink-primary font-semibold text-[15px]">{t('dm.title')}</h2>
       </header>
 
       <div className="px-2.5 py-3 border-b border-line space-y-1.5">
@@ -119,7 +120,7 @@ export function DMSidebar() {
           <button
             onClick={() => dispatch(openModal('new_dm'))}
             className="relative group w-5 h-5 rounded flex items-center justify-center text-ink-tertiary hover:text-ink-primary hover:bg-surface-2 transition-colors"
-            aria-label="Mesaj Oluştur"
+            aria-label={t('dm.createMessage')}
           >
             <Plus size={15} />
             <span className="pointer-events-none absolute right-0 top-full mt-1.5 z-20 whitespace-nowrap rounded-md bg-surface-3 px-2 py-1 text-[11px] font-semibold text-ink-primary shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
@@ -149,7 +150,7 @@ export function DMSidebar() {
                   ? 'bg-brand-500/10 text-ink-primary'
                   : 'text-ink-secondary hover:bg-surface-2 hover:text-ink-primary')
               }
-              title="Henüz mesaj atılmadı" aria-label="Henüz mesaj atılmadı"
+              title={t('dm.noMessagesYet')} aria-label={t('dm.noMessagesYet')}
             >
               <div
                 className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 ring-1 ring-brand-500/40"
@@ -158,7 +159,7 @@ export function DMSidebar() {
                 {title.slice(0, 1).toUpperCase()}
               </div>
               <span className="text-sm truncate font-medium flex-1">{title}</span>
-              <span className="text-[9px] uppercase font-bold text-brand-500 tracking-wider">Yeni</span>
+              <span className="text-[9px] uppercase font-bold text-brand-500 tracking-wider">{t('common.new')}</span>
             </button>
           );
         })()}

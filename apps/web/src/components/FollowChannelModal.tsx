@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Hash, Megaphone, Check } from 'lucide-react';
 import { api, type APIChannel } from '../api';
 import { useAppDispatch, useAppSelector, closeModal, addToast } from '../store';
+import { t } from '../i18n';
 
 // Duyuru kanalını takip et: kendi sunucularından birinin metin kanalını seç,
 // kaynakta "Yayınla"nan mesajlar oraya otomatik iletilir.
@@ -48,7 +49,7 @@ export function FollowChannelModal() {
         dispatch(closeModal());
       })
       .catch((e: any) => {
-        dispatch(addToast({ kind: 'error', message: e?.message || 'Takip edilemedi' }));
+        dispatch(addToast({ kind: 'error', message: e?.message || t('follow.failed') }));
         setBusy(false);
       });
   };
@@ -57,7 +58,7 @@ export function FollowChannelModal() {
     <div className="p-6">
       <div className="flex items-center gap-2 mb-1">
         <Megaphone size={20} className="text-brand-400" />
-        <h2 className="text-lg font-bold text-ink-primary">Kanalı Takip Et</h2>
+        <h2 className="text-lg font-bold text-ink-primary">{t('follow.title')}</h2>
       </div>
       <p className="text-sm text-ink-tertiary mb-4">
         <span className="font-semibold text-ink-secondary">#{sourceChannel?.name}</span> kanalında yayınlanan
@@ -71,9 +72,9 @@ export function FollowChannelModal() {
         value={targetGuildId}
         onChange={(e) => setTargetGuildId(e.target.value)}
         className="w-full bg-surface-2 border border-line rounded-lg px-3 py-2 text-ink-primary outline-none focus:border-brand-500/50 mb-4"
-        aria-label="Hedef sunucu seç"
+        aria-label={t('follow.pickGuild')}
       >
-        <option value="">Sunucu seç...</option>
+        <option value="">{t('follow.selectGuild')}</option>
         {guilds.map((g) => (
           <option key={g.id} value={g.id}>
             {g.name}
@@ -88,7 +89,7 @@ export function FollowChannelModal() {
           </label>
           <div className="max-h-48 overflow-y-auto rounded-lg border border-line divide-y divide-line mb-4">
             {channels.length === 0 && (
-              <div className="px-3 py-2.5 text-sm text-ink-tertiary">Uygun metin kanalı yok</div>
+              <div className="px-3 py-2.5 text-sm text-ink-tertiary">{t('follow.noTextChannel')}</div>
             )}
             {channels.map((c) => (
               <button
@@ -115,7 +116,7 @@ export function FollowChannelModal() {
         disabled={!targetChannelId || busy}
         className="w-full h-10 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold transition-colors"
       >
-        {busy ? 'Takip ediliyor...' : 'Takip Et'}
+        {busy ? t('follow.following') : t('channel.followBtn')}
       </button>
     </div>
   );

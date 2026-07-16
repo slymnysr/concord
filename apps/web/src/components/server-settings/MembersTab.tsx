@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 import { useAppSelector, useAppDispatch, fetchGuilds } from '../../store';
 import { api, type APIRole, type APIMember } from '../../api';
+import { t } from '../../i18n';
 
 export function MembersTab({ guildId }: { guildId: string }) {
   const [members, setMembers] = useState<APIMember[]>([]);
@@ -30,7 +31,7 @@ export function MembersTab({ guildId }: { guildId: string }) {
     setMembers((ms) => ms.filter((x) => x.user_id !== m.user_id));
   }
   async function timeoutMember(m: APIMember) {
-    const mins = prompt('Timeout süresi (dakika)?', '10');
+    const mins = prompt(t('member.timeoutPrompt'), '10');
     if (!mins) return;
     const sec = parseInt(mins, 10) * 60;
     if (!sec) return;
@@ -47,7 +48,7 @@ export function MembersTab({ guildId }: { guildId: string }) {
       await api.guilds.update(guildId, { owner_id: m.user_id });
       await dispatch(fetchGuilds());
     } catch (e: any) {
-      alert(e?.message || 'Devredilemedi');
+      alert(e?.message || t('member.transferFailed'));
     }
   }
 
@@ -92,7 +93,7 @@ export function MembersTab({ guildId }: { guildId: string }) {
       <input
         value={mq}
         onChange={(e) => setMq(e.target.value)}
-        placeholder="Üye ara..."
+        placeholder={t('member.searchDots')}
         className="w-full mb-3 bg-surface-2 border border-line rounded-lg px-3 py-2 text-sm text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-brand-500/50"
       />
       <div className="bg-surface-2 rounded-xl border border-line divide-y divide-line">
@@ -151,8 +152,8 @@ export function MembersTab({ guildId }: { guildId: string }) {
                     <button
                       onClick={() => transferOwnership(m)}
                       className="px-2 py-1 rounded text-xs bg-surface-3 hover:bg-yellow-500/20 hover:text-yellow-400 text-ink-secondary"
-                      title="Sunucu sahipliğini devret"
-                      aria-label="Sunucu sahipliğini devret"
+                      title={t('member.transferOwnership')}
+                      aria-label={t('member.transferOwnership')}
                     >
                       Sahip Yap
                     </button>

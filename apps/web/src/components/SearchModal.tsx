@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Search, Hash, MessageSquare } from 'lucide-react';
 import { api, type APISearchResult } from '../api';
 import { useAppDispatch, useAppSelector, selectGuild, selectChannel, closeModal } from '../store';
+import { t } from '../i18n';
 
 export function SearchModal() {
   const [q, setQ] = useState('');
@@ -119,7 +120,7 @@ export function SearchModal() {
         <div className="w-10 h-10 rounded-xl bg-brand-500/15 text-brand-500 flex items-center justify-center">
           <Search size={20} />
         </div>
-        <h2 className="text-xl font-bold text-ink-primary">Mesaj ara</h2>
+        <h2 className="text-xl font-bold text-ink-primary">{t('search.title')}</h2>
       </div>
 
       <div className="flex gap-2 mb-3">
@@ -133,7 +134,7 @@ export function SearchModal() {
               : 'bg-surface-2 text-ink-secondary hover:bg-surface-3 disabled:opacity-40')
           }
         >
-          {mode === 'dm' ? 'Bu sohbet' : 'Bu kanal'}
+          {mode === 'dm' ? t('search.thisConversation') : t('search.thisChannel')}
         </button>
         <button
           onClick={() => setScope('guild')}
@@ -194,7 +195,7 @@ export function SearchModal() {
       )}
 
       <div className="max-h-96 overflow-y-auto space-y-2">
-        {loading && <p className="text-sm text-ink-tertiary">Aranıyor...</p>}
+        {loading && <p className="text-sm text-ink-tertiary">{t('search.searching')}</p>}
         {!loading && q && results.length === 0 && (
           <p className="text-sm text-ink-tertiary text-center py-6">
             "{q}" için sonuç bulunamadı.
@@ -215,7 +216,7 @@ export function SearchModal() {
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2 mb-0.5">
                 <span className="font-semibold text-ink-primary text-sm truncate">
-                  {r.author?.display_name ?? 'Bilinmeyen'}
+                  {r.author?.display_name ?? t('common.unknown')}
                 </span>
                 <span className="text-[10px] text-ink-tertiary flex items-center gap-0.5">
                   {r.channel.guild_id ? <Hash size={10} /> : <MessageSquare size={10} />}

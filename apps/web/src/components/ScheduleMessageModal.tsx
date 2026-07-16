@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, Clock, Trash2 } from 'lucide-react';
 import { api, type APIScheduledMessage } from '../api';
+import { t } from '../i18n';
 
 interface Props {
   channelId: string;
@@ -14,7 +15,7 @@ const QUICK: { label: string; mins: number }[] = [
   { label: '10 dakika', mins: 10 },
   { label: '1 saat', mins: 60 },
   { label: '3 saat', mins: 180 },
-  { label: 'Yarın', mins: 60 * 24 },
+  { label: t('date.tomorrow'), mins: 60 * 24 },
 ];
 
 function toLocalInput(d: Date): string {
@@ -54,7 +55,7 @@ export function ScheduleMessageModal({ channelId, initialContent, onClose, onSch
       loadExisting();
       onScheduled?.();
     } catch (e: any) {
-      setErr(e?.message ?? 'Zamanlanamadı');
+      setErr(e?.message ?? t('sched.failed'));
     } finally {
       setBusy(false);
     }
@@ -86,12 +87,12 @@ export function ScheduleMessageModal({ channelId, initialContent, onClose, onSch
             onChange={(e) => setContent(e.target.value)}
             maxLength={4000}
             rows={3}
-            placeholder="Gönderilecek mesaj…"
+            placeholder={t('sched.msgPlaceholder')}
             className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2 text-sm text-ink-primary resize-none"
           />
 
           <div>
-            <label className="text-xs font-semibold uppercase text-ink-tertiary">Ne zaman</label>
+            <label className="text-xs font-semibold uppercase text-ink-tertiary">{t('sched.when')}</label>
             <div className="flex flex-wrap gap-1.5 mt-1.5 mb-2">
               {QUICK.map((q) => (
                 <button
@@ -115,7 +116,7 @@ export function ScheduleMessageModal({ channelId, initialContent, onClose, onSch
 
           {existing.length > 0 && (
             <div>
-              <label className="text-xs font-semibold uppercase text-ink-tertiary">Bu kanalda zamanlanmış</label>
+              <label className="text-xs font-semibold uppercase text-ink-tertiary">{t('sched.inChannel')}</label>
               <ul className="mt-1.5 space-y-1">
                 {existing.map((m) => (
                   <li key={m.id} className="flex items-center gap-2 bg-surface-2 rounded-lg px-3 py-2 text-sm">
@@ -142,7 +143,7 @@ export function ScheduleMessageModal({ channelId, initialContent, onClose, onSch
             disabled={!content.trim() || busy}
             className="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold"
           >
-            {busy ? 'Zamanlanıyor…' : 'Zamanla'}
+            {busy ? t('sched.scheduling') : t('sched.submit')}
           </button>
         </div>
       </div>
