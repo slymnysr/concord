@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Trash2, Plus, Play, X } from 'lucide-react';
 import { api } from '../../api';
+import { t } from '../../i18n';
 
 export function SoundboardTab({ guildId }: { guildId: string }) {
   const [sounds, setSounds] = useState<Awaited<ReturnType<typeof api.sounds.list>>>([]);
@@ -49,13 +50,13 @@ export function SoundboardTab({ guildId }: { guildId: string }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-ink-primary">Soundboard</h2>
+        <h2 className="text-2xl font-bold text-ink-primary">{t('sb.title')}</h2>
         <button
           onClick={() => setAdding((v) => !v)}
           className="bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5"
         >
           {adding ? <X size={14} /> : <Plus size={14} />}
-          {adding ? 'Vazgeç' : 'Ses Ekle'}
+          {adding ? t('common.discard') : t('sb.addSound')}
         </button>
       </div>
 
@@ -64,14 +65,14 @@ export function SoundboardTab({ guildId }: { guildId: string }) {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ses adı (örn. 'Tada')"
+            placeholder={t('sb.namePlaceholder')}
             maxLength={32}
             className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
           />
           <input
             value={emoji}
             onChange={(e) => setEmoji(e.target.value)}
-            placeholder="Emoji (isteğe bağlı, örn. 🎺)"
+            placeholder={t('sb.emojiPlaceholder')}
             maxLength={4}
             className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
           />
@@ -86,13 +87,13 @@ export function SoundboardTab({ guildId }: { guildId: string }) {
             disabled={!file || !name.trim() || uploading}
             className="w-full py-2 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 text-white font-semibold"
           >
-            {uploading ? 'Yükleniyor...' : 'Yükle'}
+            {uploading ? t('sb.uploading') : t('common.upload')}
           </button>
         </div>
       )}
 
       {sounds.length === 0 ? (
-        <p className="text-ink-tertiary text-sm">Henüz ses yok.</p>
+        <p className="text-ink-tertiary text-sm">{t('sb.none')}</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {sounds.map((s) => (

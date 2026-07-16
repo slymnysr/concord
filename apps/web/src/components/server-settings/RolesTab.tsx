@@ -3,6 +3,7 @@ import { Trash2, Plus } from 'lucide-react';
 import { useAppSelector } from '../../store';
 import { api, type APIRole } from '../../api';
 import { PERM, PERM_LABELS, has, toggle } from '../../perms';
+import { t } from '../../i18n';
 
 export function RolesTab({ guildId }: { guildId: string }) {
   const [roles, setRoles] = useState<APIRole[]>([]);
@@ -25,7 +26,7 @@ export function RolesTab({ guildId }: { guildId: string }) {
   const selected = roles.find((r) => r.id === selectedId);
 
   async function createRole() {
-    const name = prompt('Yeni rolün adı?');
+    const name = prompt(t('role.newNamePrompt'));
     if (!name?.trim()) return;
     const r = await api.guilds.createRole(guildId, { name: name.trim(), permissions: '0' });
     await refresh();
@@ -76,12 +77,12 @@ export function RolesTab({ guildId }: { guildId: string }) {
     }
   }
 
-  if (loading) return <p className="text-ink-tertiary">Yükleniyor...</p>;
+  if (loading) return <p className="text-ink-tertiary">{t('common.loading')}</p>;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-ink-primary">Roller</h2>
+        <h2 className="text-2xl font-bold text-ink-primary">{t('role.title')}</h2>
         <button
           onClick={createRole}
           className="bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5"
@@ -121,8 +122,8 @@ export function RolesTab({ guildId }: { guildId: string }) {
                   <button
                     onClick={() => moveRole(i, -1)}
                     disabled={i === 0 || roles[i - 1]?.is_everyone}
-                    title="Yukarı taşı"
-                    aria-label="Yukarı taşı"
+                    title={t('role.moveUp')}
+                    aria-label={t('role.moveUp')}
                     className="text-ink-tertiary hover:text-ink-primary disabled:opacity-30 leading-none text-[10px]"
                   >
                     ▲
@@ -130,8 +131,8 @@ export function RolesTab({ guildId }: { guildId: string }) {
                   <button
                     onClick={() => moveRole(i, 1)}
                     disabled={i >= roles.length - 1 || roles[i + 1]?.is_everyone}
-                    title="Aşağı taşı"
-                    aria-label="Aşağı taşı"
+                    title={t('role.moveDown')}
+                    aria-label={t('role.moveDown')}
                     className="text-ink-tertiary hover:text-ink-primary disabled:opacity-30 leading-none text-[10px]"
                   >
                     ▼
@@ -169,7 +170,7 @@ export function RolesTab({ guildId }: { guildId: string }) {
                 <div className="flex items-center gap-2">
                   <input
                     value={selected.icon ?? ''}
-                    placeholder="Emoji (ör. 👑) veya görsel URL"
+                    placeholder={t('role.iconPlaceholder')}
                     onChange={(e) =>
                       setRoles((rs) =>
                         rs.map((r) => (r.id === selected.id ? { ...r, icon: e.target.value } : r)),
@@ -185,7 +186,7 @@ export function RolesTab({ guildId }: { guildId: string }) {
                       <span className="text-xl">{selected.icon}</span>
                     ))}
                 </div>
-                <p className="text-[11px] text-ink-tertiary mt-1">Üye adlarının yanında görünür.</p>
+                <p className="text-[11px] text-ink-tertiary mt-1">{t('role.iconHint')}</p>
               </div>
             )}
 

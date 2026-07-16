@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { X, Hash, Volume2, Search, Send, Check } from 'lucide-react';
 import { api, type APIDMChannel } from '../api';
 import { useAppSelector } from '../store';
+import { t } from '../i18n';
 
 interface Props {
   content: string;
@@ -63,7 +64,7 @@ export function ForwardModal({ content, messageId, onClose }: Props) {
 
   const q = query.trim().toLowerCase();
   function dmTitle(dm: APIDMChannel): string {
-    if (dm.type === 'group_dm') return dm.name || 'Grup';
+    if (dm.type === 'group_dm') return dm.name || t('fwd.group');
     const other = dm.participants.find((p) => p !== me?.id);
     return partners[other ?? ''] ?? 'DM';
   }
@@ -77,7 +78,7 @@ export function ForwardModal({ content, messageId, onClose }: Props) {
       targets.push({ id: c.id, label: `#${c.name}`, sub: g.name });
     }
   }
-  for (const dm of dms) targets.push({ id: dm.id, label: dmTitle(dm), sub: 'Direkt Mesaj' });
+  for (const dm of dms) targets.push({ id: dm.id, label: dmTitle(dm), sub: t('fwd.dm') });
   const filtered = q ? targets.filter((t) => t.label.toLowerCase().includes(q) || t.sub.toLowerCase().includes(q)) : targets;
 
   return (
@@ -90,31 +91,31 @@ export function ForwardModal({ content, messageId, onClose }: Props) {
         {/* İletilecek mesajın önizleme kartı */}
         <div className="px-4 pt-3">
           <div className="bg-surface-2 border-l-2 border-brand-500 rounded-r-lg px-3 py-2">
-            <div className="text-[10px] uppercase font-bold text-ink-tertiary mb-0.5">İletilen mesaj</div>
+            <div className="text-[10px] uppercase font-bold text-ink-tertiary mb-0.5">{t('fwd.forwarded')}</div>
             <div className="text-xs text-ink-secondary line-clamp-2 break-words">{content?.trim() || '(ek/medya)'}</div>
           </div>
         </div>
         <div className="p-3 border-b border-line">
           <div className="relative">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-tertiary" />
-            <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Kanal veya kişi ara..." className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg pl-8 pr-2 py-1.5 text-sm text-ink-primary" />
+            <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('fwd.searchPlaceholder')} className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg pl-8 pr-2 py-1.5 text-sm text-ink-primary" />
           </div>
         </div>
         <div className="overflow-y-auto flex-1 p-2">
           {filtered.length === 0 ? (
-            <p className="text-sm text-ink-tertiary text-center py-8">Hedef bulunamadı.</p>
+            <p className="text-sm text-ink-tertiary text-center py-8">{t('fwd.noTarget')}</p>
           ) : (
-            filtered.slice(0, 50).map((t) => (
+            filtered.slice(0, 50).map((tgt) => (
               <button
-                key={t.id}
-                onClick={() => toggle(t.id)}
-                className={'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left ' + (selected.has(t.id) ? 'bg-brand-500/10' : 'hover:bg-surface-2')}
+                key={tgt.id}
+                onClick={() => toggle(tgt.id)}
+                className={'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left ' + (selected.has(tgt.id) ? 'bg-brand-500/10' : 'hover:bg-surface-2')}
               >
-                <input type="checkbox" readOnly checked={selected.has(t.id)} className="w-4 h-4 accent-brand-500 shrink-0 pointer-events-none" />
-                {t.sub === 'Direkt Mesaj' ? <Volume2 size={15} className="text-ink-tertiary opacity-0" /> : <Hash size={15} className="text-ink-tertiary shrink-0" />}
+                <input type="checkbox" readOnly checked={selected.has(tgt.id)} className="w-4 h-4 accent-brand-500 shrink-0 pointer-events-none" />
+                {tgt.sub === t('fwd.dm') ? <Volume2 size={15} className="text-ink-tertiary opacity-0" /> : <Hash size={15} className="text-ink-tertiary shrink-0" />}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-ink-primary truncate">{t.label}</div>
-                  <div className="text-[11px] text-ink-tertiary truncate">{t.sub}</div>
+                  <div className="text-sm text-ink-primary truncate">{tgt.label}</div>
+                  <div className="text-[11px] text-ink-tertiary truncate">{tgt.sub}</div>
                 </div>
               </button>
             ))
@@ -125,7 +126,7 @@ export function ForwardModal({ content, messageId, onClose }: Props) {
           <input
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Bir mesaj ekle (opsiyonel)"
+            placeholder={t('fwd.notePlaceholder')}
             className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2 text-sm text-ink-primary"
           />
           <button
@@ -133,7 +134,7 @@ export function ForwardModal({ content, messageId, onClose }: Props) {
             disabled={selected.size === 0 || busy}
             className={'w-full py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 ' + (done ? 'bg-emerald-500/15 text-emerald-400' : 'bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white')}
           >
-            {done ? <><Check size={15} /> İletildi</> : busy ? 'Gönderiliyor…' : `İlet${selected.size > 0 ? ` (${selected.size})` : ''}`}
+            {done ? <><Check size={15} /> İletildi</> : busy ? t('common.sending') : `İlet${selected.size > 0 ? ` (${selected.size})` : ''}`}
           </button>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Hash, Volume2 } from 'lucide-react';
 import { api, type APIChannel } from '../api';
 import { useAppDispatch, useAppSelector, closeModal, fetchChannels } from '../store';
+import { t } from '../i18n';
 
 interface Props {
   channel: APIChannel;
@@ -38,7 +39,7 @@ export function ChannelEditModal({ channel }: Props) {
       await dispatch(fetchChannels(guildId));
       dispatch(closeModal());
     } catch (e: any) {
-      setErr(e?.message || 'Güncellenemedi');
+      setErr(e?.message || t('common.updateFailed'));
     } finally {
       setBusy(false);
     }
@@ -48,11 +49,11 @@ export function ChannelEditModal({ channel }: Props) {
 
   return (
     <div className="p-6">
-      <h2 className="text-xl font-bold text-ink-primary mb-1">Kanalı Düzenle</h2>
+      <h2 className="text-xl font-bold text-ink-primary mb-1">{t('channel.edit')}</h2>
       <p className="text-sm text-ink-secondary mb-5">#{channel.name}</p>
 
       <form onSubmit={submit}>
-        <label className="block text-sm font-semibold text-ink-primary mb-1.5">Kanal Adı</label>
+        <label className="block text-sm font-semibold text-ink-primary mb-1.5">{t('channel.nameLabel')}</label>
         <div className="relative mb-4">
           {isVoice ? (
             <Volume2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-tertiary" />
@@ -69,12 +70,12 @@ export function ChannelEditModal({ channel }: Props) {
 
         {!isVoice && (
           <>
-            <label className="block text-sm font-semibold text-ink-primary mb-1.5">Konu</label>
+            <label className="block text-sm font-semibold text-ink-primary mb-1.5">{t('channel.topic')}</label>
             <input
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               maxLength={1024}
-              placeholder="Bu kanal ne hakkında?"
+              placeholder={t('channel.aboutPlaceholder')}
               className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2.5 text-ink-primary placeholder:text-ink-tertiary mb-4"
             />
 
@@ -133,7 +134,7 @@ export function ChannelEditModal({ channel }: Props) {
               value={bitrate}
               onChange={(e) => setBitrate(parseInt(e.target.value, 10))}
               className="w-full accent-brand-500 mb-1"
-              aria-label="Ses bitrate"
+              aria-label={t('channel.bitrate')}
             />
             <p className="text-xs text-ink-tertiary mb-4">
               Yüksek değer daha iyi ses, daha çok bant genişliği. Varsayılan 64 kbps.
@@ -156,7 +157,7 @@ export function ChannelEditModal({ channel }: Props) {
             disabled={busy}
             className="flex-1 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 disabled:text-ink-tertiary text-white font-semibold"
           >
-            {busy ? 'Kaydediliyor...' : 'Kaydet'}
+            {busy ? t('common.saving') : t('common.save')}
           </button>
         </div>
       </form>

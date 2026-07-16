@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 import { api } from '../api';
 import { useAppSelector } from '../store';
 import { loadEmojiGroups, type EmojiGroup } from '../emojiData';
+import { t } from '../i18n';
 
 // Unicode emoji isim/anahtar kelime araması için (Türkçe + İngilizce)
 const EMOJI_KEYWORDS: Record<string, string[]> = {
@@ -175,7 +176,7 @@ export function EmojiPicker({ onPick, onClose }: Props) {
         }
       }
     }
-    return matches.length > 0 ? [{ name: 'Arama Sonuçları', emojis: matches }] : [];
+    return matches.length > 0 ? [{ name: t('member.searchResults'), emojis: matches }] : [];
   }, [groups, q]);
 
   const filteredCustom = q.trim()
@@ -191,7 +192,7 @@ export function EmojiPicker({ onPick, onClose }: Props) {
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Emoji ara..."
+            placeholder={t('emoji.searchPlaceholder')}
             className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-md pl-8 pr-20 py-1.5 text-sm text-ink-primary placeholder:text-ink-tertiary"
           />
           {/* Ten rengi seçici */}
@@ -200,7 +201,7 @@ export function EmojiPicker({ onPick, onClose }: Props) {
               <button
                 key={i}
                 onClick={() => { setTone(i); try { localStorage.setItem('concord_skin_tone', String(i)); } catch { /* yoksay */ } }}
-                title={i === 0 ? 'Varsayılan ten' : 'Ten rengi ' + i}
+                title={i === 0 ? t('emoji.defaultSkin') : t('emoji.skinPrefix') + i}
                 className={'w-4 h-4 text-xs leading-none rounded-sm ' + (tone === i ? 'ring-1 ring-brand-500' : 'opacity-60 hover:opacity-100')}
               >
                 {sw}
@@ -221,7 +222,7 @@ export function EmojiPicker({ onPick, onClose }: Props) {
                   key={e + i}
                   onClick={() => pick(e)}
                   onContextMenu={(ev) => { ev.preventDefault(); toggleFav(e); }}
-                  title="Sağ tık: favorilerden çıkar" aria-label="Sağ tık: favorilerden çıkar"
+                  title={t('emoji.unfavHint')} aria-label={t('emoji.unfavHint')}
                   className="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-2 text-lg"
                 >
                   {e}
@@ -273,7 +274,7 @@ export function EmojiPicker({ onPick, onClose }: Props) {
         )}
         {groups === null && (
           <div className="py-8 flex justify-center">
-            <div className="w-5 h-5 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" aria-label="Emojiler yükleniyor" />
+            <div className="w-5 h-5 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" aria-label={t('emoji.loading')} />
           </div>
         )}
         {visibleCategories.map((cat) => (
