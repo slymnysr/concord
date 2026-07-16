@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch, fetchGuilds } from '../../store';
 import { api, type APIRole } from '../../api';
+import { t } from '../../i18n';
 
 export function OverviewTab({ guildId }: { guildId: string }) {
   const guild = useAppSelector((s) => s.guilds.list.find((g) => g.id === guildId));
@@ -39,7 +40,7 @@ export function OverviewTab({ guildId }: { guildId: string }) {
       await api.guilds.deleteGuild(guild.id);
       await dispatch(fetchGuilds());
     } catch (e: any) {
-      alert(e?.message || 'Silinemedi');
+      alert(e?.message || t('common.deleteFailed'));
     }
   }
 
@@ -100,7 +101,7 @@ export function OverviewTab({ guildId }: { guildId: string }) {
   const iconUrl = guild.icon_url_v2;
   return (
     <div>
-      <h2 className="text-2xl font-bold text-ink-primary mb-4">Genel Bilgi</h2>
+      <h2 className="text-2xl font-bold text-ink-primary mb-4">{t('guild.overview')}</h2>
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-4">
         <div className="flex items-center gap-4">
           <label
@@ -130,13 +131,13 @@ export function OverviewTab({ guildId }: { guildId: string }) {
           </label>
           <div>
             <div className="text-base font-semibold text-ink-primary">{guild.name}</div>
-            <div className="text-xs text-ink-tertiary">İkona tıkla → resim seç</div>
+            <div className="text-xs text-ink-tertiary">{t('guild.clickIcon')}</div>
           </div>
         </div>
-        <Row label="Sunucu ID" value={guild.id} mono />
-        <Row label="Oluşturulma" value={new Date(guild.created_at).toLocaleString('tr-TR')} />
+        <Row label={t('guild.serverId')} value={guild.id} mono />
+        <Row label={t('guild.createdAt')} value={new Date(guild.created_at).toLocaleString('tr-TR')} />
         <div className="pt-3 border-t border-line">
-          <div className="text-sm font-semibold text-ink-primary mb-1.5">Sunucu Banner'ı</div>
+          <div className="text-sm font-semibold text-ink-primary mb-1.5">{t('guild.banner')}</div>
           <label
             className={
               'block w-full h-24 rounded-xl border border-dashed border-line hover:border-brand-500/60 cursor-pointer overflow-hidden relative ' +
@@ -191,7 +192,7 @@ export function OverviewTab({ guildId }: { guildId: string }) {
               <input
                 value={vanity}
                 onChange={(e) => setVanity(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                placeholder="ozel-link"
+                placeholder={t('guild.vanityPlaceholder')}
                 className="flex-1 bg-transparent py-1.5 text-ink-primary focus:outline-none text-sm"
               />
             </div>
@@ -213,10 +214,10 @@ export function OverviewTab({ guildId }: { guildId: string }) {
             onChange={(e) => patch({ verification_level: parseInt(e.target.value, 10) })}
             className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary text-sm"
           >
-            <option value={0}>Yok — kısıtlama yok</option>
-            <option value={1}>Düşük — doğrulanmış e-posta</option>
-            <option value={2}>Orta — 5 dk üyelik</option>
-            <option value={3}>Yüksek — 10 dk üyelik</option>
+            <option value={0}>{t('verify.none')}</option>
+            <option value={1}>{t('verify.low')}</option>
+            <option value={2}>{t('verify.medium')}</option>
+            <option value={3}>{t('verify.high')}</option>
           </select>
         </div>
 
@@ -229,9 +230,9 @@ export function OverviewTab({ guildId }: { guildId: string }) {
             onChange={(e) => patch({ explicit_content_filter: parseInt(e.target.value, 10) })}
             className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary text-sm"
           >
-            <option value={0}>Kapalı</option>
-            <option value={1}>Rolsüz üyeleri tara</option>
-            <option value={2}>Herkesi tara</option>
+            <option value={0}>{t('common.off')}</option>
+            <option value={1}>{t('filter.scanNoRole')}</option>
+            <option value={2}>{t('filter.scanAll')}</option>
           </select>
         </div>
 
@@ -245,7 +246,7 @@ export function OverviewTab({ guildId }: { guildId: string }) {
               onChange={(e) => patch({ afk_channel_id: e.target.value })}
               className="w-full bg-surface-1 border border-line rounded-lg px-2 py-2 text-ink-primary text-sm"
             >
-              <option value="">Yok</option>
+              <option value="">{t('common.none')}</option>
               {voiceChannels.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -257,7 +258,7 @@ export function OverviewTab({ guildId }: { guildId: string }) {
                 value={guild.afk_timeout_sec ?? 300}
                 onChange={(e) => patch({ afk_timeout_sec: parseInt(e.target.value, 10) } as any)}
                 className="w-full mt-2 bg-surface-1 border border-line rounded-lg px-2 py-2 text-ink-primary text-sm"
-                aria-label="AFK süresi"
+                aria-label={t('guild.afkTimeout')}
               >
                 <option value={60}>1 dakika sonra</option>
                 <option value={300}>5 dakika sonra</option>
@@ -276,7 +277,7 @@ export function OverviewTab({ guildId }: { guildId: string }) {
               onChange={(e) => patch({ system_channel_id: e.target.value })}
               className="w-full bg-surface-1 border border-line rounded-lg px-2 py-2 text-ink-primary text-sm"
             >
-              <option value="">Yok</option>
+              <option value="">{t('common.none')}</option>
               {textChannels.map((c) => (
                 <option key={c.id} value={c.id}>
                   #{c.name}
@@ -298,7 +299,7 @@ export function OverviewTab({ guildId }: { guildId: string }) {
             onChange={(e) => patch({ auto_role_id: e.target.value })}
             className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary text-sm"
           >
-            <option value="">Yok</option>
+            <option value="">{t('common.none')}</option>
             {roles
               .filter((r) => r.name !== '@everyone')
               .map((r) => (

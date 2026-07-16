@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Trash2, Plus, Check, X } from 'lucide-react';
+import { t } from '../../i18n';
 import {
   api,
   type APIRole,
@@ -30,7 +31,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
     refresh();
   }, [guildId]);
 
-  if (!w) return <p className="text-ink-tertiary text-sm">Yükleniyor...</p>;
+  if (!w) return <p className="text-ink-tertiary text-sm">{t('common.loading')}</p>;
 
   function patch(p: Partial<APIGuildWelcome>) {
     setW((prev) => (prev ? { ...prev, ...p } : prev));
@@ -57,7 +58,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
   const prompts = w.onboarding_prompts ?? [];
   const rid = () => Math.random().toString(36).slice(2, 9);
   function addPrompt() {
-    patch({ onboarding_prompts: [...prompts, { id: rid(), title: 'Yeni soru', options: [] }] });
+    patch({ onboarding_prompts: [...prompts, { id: rid(), title: t('welcome.newQuestion'), options: [] }] });
   }
   function updatePrompt(i: number, p: Partial<APIOnboardingPrompt>) {
     patch({ onboarding_prompts: prompts.map((x, idx) => (idx === i ? { ...x, ...p } : x)) });
@@ -70,7 +71,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
       idx === pi
         ? {
             ...p,
-            options: [...p.options, { id: rid(), label: 'Seçenek', emoji: '', role_ids: [] }],
+            options: [...p.options, { id: rid(), label: t('welcome.option'), emoji: '', role_ids: [] }],
           }
         : p,
     );
@@ -111,7 +112,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
 
   return (
     <div className="max-w-2xl">
-      <h2 className="text-2xl font-bold text-ink-primary mb-1">Karşılama & Onboarding</h2>
+      <h2 className="text-2xl font-bold text-ink-primary mb-1">{t('welcome.title')}</h2>
       <p className="text-sm text-ink-secondary mb-4">
         Yeni üyeler sunucuya katıldığında gösterilecek karşılama ekranını ayarla.
       </p>
@@ -124,7 +125,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
           className="w-4 h-4 accent-brand-500"
         />
         <div>
-          <div className="text-sm font-semibold text-ink-primary">Karşılama ekranı etkin</div>
+          <div className="text-sm font-semibold text-ink-primary">{t('welcome.enabled')}</div>
           <div className="text-xs text-ink-tertiary">
             Kapalıysa yeni üyelere hiçbir şey gösterilmez.
           </div>
@@ -136,19 +137,19 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
         style={{ opacity: w.enabled ? 1 : 0.5, pointerEvents: w.enabled ? 'auto' : 'none' }}
       >
         <div>
-          <label className="block text-xs font-semibold text-ink-tertiary mb-1">Açıklama</label>
+          <label className="block text-xs font-semibold text-ink-tertiary mb-1">{t('welcome.description')}</label>
           <textarea
             value={w.description}
             onChange={(e) => patch({ description: e.target.value })}
             rows={2}
-            placeholder="Sunucumuza hoş geldin! Burada..."
+            placeholder={t('welcome.descPlaceholder')}
             className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none resize-none"
           />
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-xs font-semibold text-ink-tertiary">Öne çıkan kanallar</label>
+            <label className="text-xs font-semibold text-ink-tertiary">{t('welcome.featuredChannels')}</label>
             <button
               onClick={addChannel}
               className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1"
@@ -158,7 +159,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
           </div>
           <div className="space-y-2">
             {w.welcome_channels.length === 0 && (
-              <p className="text-xs text-ink-tertiary">Henüz öne çıkan kanal yok.</p>
+              <p className="text-xs text-ink-tertiary">{t('welcome.noFeatured')}</p>
             )}
             {w.welcome_channels.map((wc, i) => (
               <div key={i} className="flex gap-2 items-center">
@@ -176,7 +177,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
                 <input
                   value={wc.description ?? ''}
                   onChange={(e) => updateChannel(i, { description: e.target.value })}
-                  placeholder="Bu kanalda neler var?"
+                  placeholder={t('welcome.channelDescPlaceholder')}
                   className="flex-1 bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary text-sm focus:border-brand-500/50 focus:outline-none"
                 />
                 <button
@@ -211,7 +212,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
             className="w-4 h-4 accent-brand-500"
           />
           <div>
-            <div className="text-sm font-semibold text-ink-primary">Kuralların kabulü zorunlu</div>
+            <div className="text-sm font-semibold text-ink-primary">{t('welcome.rulesRequired')}</div>
             <div className="text-xs text-ink-tertiary">
               Üye kabul edene kadar karşılama ekranı tam ekran gösterilir.
             </div>
@@ -222,7 +223,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
       {/* Onboarding soruları (ilgi → rol) */}
       <div className="bg-surface-2 rounded-xl border border-line p-4 mt-4">
         <div className="flex items-center justify-between mb-1">
-          <h3 className="text-sm font-bold text-ink-primary">Onboarding Soruları</h3>
+          <h3 className="text-sm font-bold text-ink-primary">{t('welcome.onboardingQuestions')}</h3>
           <button onClick={addPrompt} className="text-xs text-brand-500 hover:underline">
             + Soru ekle
           </button>
@@ -231,14 +232,14 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
           Yeni üyeye ilgi alanlarını sor; seçtiği seçeneğe bağlı roller otomatik atanır.
         </p>
         <div className="space-y-3">
-          {prompts.length === 0 && <p className="text-xs text-ink-tertiary">Henüz soru yok.</p>}
+          {prompts.length === 0 && <p className="text-xs text-ink-tertiary">{t('welcome.noQuestions')}</p>}
           {prompts.map((p, pi) => (
             <div key={p.id} className="bg-surface-1 border border-line rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
                 <input
                   value={p.title}
                   onChange={(e) => updatePrompt(pi, { title: e.target.value })}
-                  placeholder="Soru başlığı (ör. Hangi konularla ilgilisin?)"
+                  placeholder={t('welcome.questionPlaceholder')}
                   className="flex-1 bg-surface-2 border border-line rounded-lg px-2 py-1.5 text-sm text-ink-primary focus:outline-none focus:border-brand-500/50"
                 />
                 <button
@@ -260,7 +261,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
                     <input
                       value={o.label}
                       onChange={(e) => updateOption(pi, oi, { label: e.target.value })}
-                      placeholder="Seçenek adı"
+                      placeholder={t('welcome.optionPlaceholder')}
                       className="flex-1 bg-surface-2 border border-line rounded-lg px-2 py-1 text-sm text-ink-primary focus:outline-none focus:border-brand-500/50"
                     />
                     <select
@@ -270,7 +271,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
                       }
                       className="bg-surface-2 border border-line rounded-lg px-2 py-1 text-sm text-ink-primary max-w-[120px]"
                     >
-                      <option value="">Rol yok</option>
+                      <option value="">{t('welcome.noRole')}</option>
                       {roles.map((r) => (
                         <option key={r.id} value={r.id}>
                           {r.name}
@@ -303,7 +304,7 @@ export function WelcomeTab({ guildId }: { guildId: string }) {
           disabled={saving}
           className="px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 text-white font-semibold"
         >
-          {saving ? 'Kaydediliyor...' : 'Kaydet'}
+          {saving ? t('common.saving') : t('common.save')}
         </button>
         {saved && (
           <span className="text-sm text-emerald-400 flex items-center gap-1">
