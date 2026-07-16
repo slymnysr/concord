@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link as LinkIcon, Copy, Check, Clock, Users, Trash2 } from 'lucide-react';
 import { useAppSelector } from '../store';
 import { api, type APIInvite } from '../api';
+import { t } from '../i18n';
 
 const DURATIONS: { label: string; sec?: number }[] = [
   { label: '30 dakika', sec: 30 * 60 },
@@ -9,7 +10,7 @@ const DURATIONS: { label: string; sec?: number }[] = [
   { label: '6 saat', sec: 6 * 60 * 60 },
   { label: '1 gün', sec: 24 * 60 * 60 },
   { label: '7 gün', sec: 7 * 24 * 60 * 60 },
-  { label: 'Asla', sec: undefined },
+  { label: t('invite.never'), sec: undefined },
 ];
 
 const MAX_USES: { label: string; n?: number }[] = [
@@ -52,7 +53,7 @@ export function InviteLinkModal() {
       });
       await refresh();
     } catch (e: any) {
-      setError(e?.message || 'Davet üretilemedi');
+      setError(e?.message || t('invite.genFailed'));
     } finally {
       setLoading(false);
     }
@@ -65,7 +66,7 @@ export function InviteLinkModal() {
   }
 
   async function remove(code: string) {
-    if (!confirm('Bu daveti silmek istediğinden emin misin?')) return;
+    if (!confirm(t('invite.deleteConfirm'))) return;
     await api.invites.delete(code);
     refresh();
   }
@@ -78,7 +79,7 @@ export function InviteLinkModal() {
         <div className="w-10 h-10 rounded-xl bg-brand-500/15 text-brand-500 flex items-center justify-center">
           <LinkIcon size={20} />
         </div>
-        <h2 className="text-xl font-bold text-ink-primary">Davet oluştur</h2>
+        <h2 className="text-xl font-bold text-ink-primary">{t('invite.create')}</h2>
       </div>
       <p className="text-sm text-ink-secondary mb-5">
         <span className="font-semibold text-ink-primary">{guild.name}</span> için yeni davet üret.
@@ -87,14 +88,14 @@ export function InviteLinkModal() {
       <div className="grid grid-cols-2 gap-3 mb-4">
         <Select
           icon={<Clock size={14} />}
-          label="Geçerlilik süresi"
+          label={t('invite.expiry')}
           value={duration.label}
           options={DURATIONS.map((d) => d.label)}
           onSelect={(label) => setDuration(DURATIONS.find((d) => d.label === label)!)}
         />
         <Select
           icon={<Users size={14} />}
-          label="Maks. kullanım"
+          label={t('invite.maxUses')}
           value={maxUses.label}
           options={MAX_USES.map((m) => m.label)}
           onSelect={(label) => setMaxUses(MAX_USES.find((m) => m.label === label)!)}
@@ -106,7 +107,7 @@ export function InviteLinkModal() {
         disabled={loading}
         className="w-full py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 disabled:text-ink-tertiary text-white font-semibold transition-colors"
       >
-        {loading ? 'Oluşturuluyor...' : 'Yeni Davet Oluştur'}
+        {loading ? t('common.creating') : t('invite.createNew')}
       </button>
       {error && <p className="text-accent-500 text-sm mt-2">{error}</p>}
 
@@ -115,7 +116,7 @@ export function InviteLinkModal() {
           Aktif Davetler ({invites.length})
         </h3>
         {invites.length === 0 && (
-          <p className="text-sm text-ink-tertiary">Henüz davet yok.</p>
+          <p className="text-sm text-ink-tertiary">{t('invite.none')}</p>
         )}
         <ul className="space-y-2">
           {invites.map((inv) => (
@@ -130,21 +131,21 @@ export function InviteLinkModal() {
                     {inv.uses} / {inv.max_uses ?? '∞'} kullanım
                   </span>
                   <span>
-                    {inv.expires_at ? `${formatRelative(inv.expires_at)} sonra dolar` : 'Süresiz'}
+                    {inv.expires_at ? `${formatRelative(inv.expires_at)} sonra dolar` : t('invite.unlimited')}
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => copy(inv.code)}
                 className="w-9 h-9 rounded-lg bg-surface-3 hover:bg-brand-500 hover:text-white text-ink-secondary flex items-center justify-center transition-colors"
-                title="Kopyala" aria-label="Kopyala"
+                title={t('common.copy')} aria-label={t('common.copy')}
               >
                 {copied === inv.code ? <Check size={16} /> : <Copy size={16} />}
               </button>
               <button
                 onClick={() => remove(inv.code)}
                 className="w-9 h-9 rounded-lg bg-surface-3 hover:bg-accent-500 hover:text-white text-ink-secondary flex items-center justify-center transition-colors"
-                title="Sil" aria-label="Sil"
+                title={t('common.delete')} aria-label={t('common.delete')}
               >
                 <Trash2 size={16} />
               </button>

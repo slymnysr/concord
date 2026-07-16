@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { api } from '../../api';
 import { useAppDispatch, fetchMe, addToast } from '../../store';
 import { setActivity, getMyActivity } from '../../gateway';
+import { t } from '../../i18n';
 
 const STATUS_DURATIONS: { label: string; seconds: number }[] = [
-  { label: 'Bugün boyunca', seconds: -2 }, // sentinel: gün sonuna kadar (save'de hesaplanır)
+  { label: t('status.today'), seconds: -2 }, // sentinel: gün sonuna kadar (save'de hesaplanır)
   { label: '30 dakika', seconds: 30 * 60 },
   { label: '1 saat', seconds: 60 * 60 },
   { label: '4 saat', seconds: 4 * 60 * 60 },
@@ -68,7 +69,7 @@ export function CustomStatusTab() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-ink-primary mb-5">Özel Durum</h2>
+      <h2 className="text-2xl font-bold text-ink-primary mb-5">{t('settings.status')}</h2>
       <div className="bg-surface-2 rounded-xl border border-line p-4">
         <p className="text-sm text-ink-secondary mb-4">
           Kullanıcı adının yanında görünecek geçici bir mesaj ayarla.
@@ -83,7 +84,7 @@ export function CustomStatusTab() {
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Ne yapıyorsun?"
+            placeholder={t('status.whatDoing')}
             maxLength={128}
             className="flex-1 bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
           />
@@ -97,7 +98,7 @@ export function CustomStatusTab() {
             onChange={(e) => setDuration(parseInt(e.target.value, 10))}
             className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-sm text-ink-primary focus:border-brand-500/50 focus:outline-none"
           >
-            <option value={-1}>Süresiz (ben temizleyene dek)</option>
+            <option value={-1}>{t('status.indefinite')}</option>
             {STATUS_DURATIONS.map((d) => (
               <option key={d.label} value={d.seconds}>
                 {d.label}
@@ -122,7 +123,7 @@ export function CustomStatusTab() {
             disabled={saving}
             className="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 text-white font-semibold flex-1"
           >
-            {saving ? 'Kaydediliyor...' : ok ? 'Kaydedildi ✓' : 'Kaydet'}
+            {saving ? t('common.saving') : ok ? t('common.savedCheck') : t('common.save')}
           </button>
           <button
             onClick={clear}
@@ -154,18 +155,18 @@ function ActivitySection() {
     if (!name) return;
     setActivity({ type: actType, name });
     setActive(true);
-    dispatch(addToast({ kind: 'success', message: 'Aktivite ayarlandı' }));
+    dispatch(addToast({ kind: 'success', message: t('activity.set') }));
   };
   const stop = () => {
     setActivity(null);
     setActive(false);
     setActName('');
-    dispatch(addToast({ kind: 'success', message: 'Aktivite temizlendi' }));
+    dispatch(addToast({ kind: 'success', message: t('activity.cleared') }));
   };
 
   return (
     <div className="mt-8 pt-6 border-t border-line max-w-md">
-      <h3 className="text-base font-bold text-ink-primary mb-1">Aktivite</h3>
+      <h3 className="text-base font-bold text-ink-primary mb-1">{t('activity.title')}</h3>
       <p className="text-sm text-ink-tertiary mb-3">
         Ne yaptığını göster — üye listesinde ve profilinde "Oynuyor: …" olarak görünür.
       </p>
@@ -174,7 +175,7 @@ function ActivitySection() {
           value={actType}
           onChange={(e) => setActType(e.target.value as any)}
           className="bg-surface-2 border border-line rounded-lg px-2 py-2 text-sm text-ink-primary outline-none focus:border-brand-500/50"
-          aria-label="Aktivite türü"
+          aria-label={t('activity.type')}
         >
           <option value="playing">🎮 Oynuyor</option>
           <option value="streaming">🔴 Yayında</option>
@@ -185,7 +186,7 @@ function ActivitySection() {
           value={actName}
           onChange={(e) => setActName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && start()}
-          placeholder="örn. Valorant"
+          placeholder={t('activity.placeholder')}
           maxLength={128}
           className="flex-1 bg-surface-2 border border-line rounded-lg px-3 py-2 text-sm text-ink-primary outline-none focus:border-brand-500/50"
         />
@@ -196,7 +197,7 @@ function ActivitySection() {
           disabled={!actName.trim()}
           className="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:opacity-40 text-white text-sm font-semibold flex-1"
         >
-          {active ? 'Güncelle' : 'Başlat'}
+          {active ? t('common.update') : t('common.start')}
         </button>
         {active && (
           <button

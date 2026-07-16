@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
+import { t } from '../../i18n';
 
 export function InsightsTab({ guildId }: { guildId: string }) {
   const [data, setData] = useState<Awaited<ReturnType<typeof api.guilds.insights>> | null>(null);
@@ -15,33 +16,33 @@ export function InsightsTab({ guildId }: { guildId: string }) {
       .catch(() => setLoading(false));
   }, [guildId]);
 
-  if (loading) return <p className="text-ink-tertiary text-sm">Yükleniyor…</p>;
-  if (!data) return <p className="text-ink-tertiary text-sm">İstatistikler alınamadı.</p>;
+  if (loading) return <p className="text-ink-tertiary text-sm">{t('common.loading')}</p>;
+  if (!data) return <p className="text-ink-tertiary text-sm">{t('insights.statsFailed')}</p>;
 
   const maxGrowth = Math.max(1, ...data.member_growth.map((p) => p.count));
   const maxAct = Math.max(1, ...data.message_activity.map((p) => p.count));
 
   return (
     <div className="max-w-2xl">
-      <h2 className="text-2xl font-bold text-ink-primary mb-4">Sunucu İstatistikleri</h2>
+      <h2 className="text-2xl font-bold text-ink-primary mb-4">{t('insights.title')}</h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-        <Stat label="Toplam Üye" value={data.member_count} />
-        <Stat label="Yeni Üye (7g)" value={data.new_members_7d} accent />
-        <Stat label="Mesaj (7g)" value={data.messages_7d} />
-        <Stat label="Mesaj (30g)" value={data.messages_30d} />
+        <Stat label={t('insights.totalMembers')} value={data.member_count} />
+        <Stat label={t('insights.newMembers7d')} value={data.new_members_7d} accent />
+        <Stat label={t('insights.messages7d')} value={data.messages_7d} />
+        <Stat label={t('insights.messages30d')} value={data.messages_30d} />
       </div>
 
       <ChartCard
-        title="Üye Büyümesi (son 14 gün)"
-        aria-label="Üye Büyümesi (son 14 gün)"
+        title={t('insights.memberGrowth')}
+        aria-label={t('insights.memberGrowth')}
         points={data.member_growth}
         max={maxGrowth}
         color="bg-brand-500"
       />
       <ChartCard
-        title="Mesaj Aktivitesi (son 14 gün)"
-        aria-label="Mesaj Aktivitesi (son 14 gün)"
+        title={t('insights.msgActivity')}
+        aria-label={t('insights.msgActivity')}
         points={data.message_activity}
         max={maxAct}
         color="bg-accent-500"
@@ -49,12 +50,12 @@ export function InsightsTab({ guildId }: { guildId: string }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
         <TopList
-          title="En Aktif Kanallar"
-          aria-label="En Aktif Kanallar"
+          title={t('insights.topChannels')}
+          aria-label={t('insights.topChannels')}
           items={data.top_channels}
           prefix="#"
         />
-        <TopList title="En Aktif Üyeler" aria-label="En Aktif Üyeler" items={data.top_members} />
+        <TopList title={t('insights.topMembers')} aria-label={t('insights.topMembers')} items={data.top_members} />
       </div>
     </div>
   );
@@ -119,7 +120,7 @@ function TopList({
     <div className="bg-surface-2 border border-line rounded-xl p-4">
       <h3 className="text-sm font-bold text-ink-primary mb-3">{title}</h3>
       {items.length === 0 ? (
-        <p className="text-xs text-ink-tertiary">Veri yok.</p>
+        <p className="text-xs text-ink-tertiary">{t('common.noData')}</p>
       ) : (
         <div className="space-y-2">
           {items.map((i) => (
