@@ -3,8 +3,12 @@
 > FAZ A yeni/değişen endpoint'leri BURAYA yazar; FAZ B buna kodlar. İki AI dosya
 > paylaşmadan, sadece bu kontrat üzerinden buluşur. Şekil: method, path, istek, yanıt.
 
-## Medya
-_(FAZ A doldurur: thumbnail URL alanı, attachment durumu ready/rejected vb.)_
+## Medya — KISMİ (işleme kütüphanesi hazır, wiring F'e bağlı)
+FAZ A `internal/media` HAZIR (doğrulama+EXIF+thumbnail+ClamAV, testli). Ama presigned upload
+MinIO'ya doğrudan gittiği için işleme MinIO-event'iyle tetiklenir → **webhook wiring F sonrası** yazılacak.
+⚠️ **FAZ F bitince** (MinIO-event + ClamAV) FAZ A tamamlar: webhook + storage variant + attachment
+şeması + route → sonra bu bölüm FAZ B için doldurulur (thumbnail URL, attachment status ready/rejected).
+Bkz. ROADMAP FAZ F "⚠️ SONRA" notu.
 
 ## Arama
 _(FAZ A doldurur: GET /search endpoint şekli, filtreler, yanıt.)_

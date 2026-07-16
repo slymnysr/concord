@@ -78,9 +78,20 @@ bu dosyada `## API-KONTRAT` başlığı altında yayınla ki FAZ B ona kodlasın
 - `gateway/voice/web` için prod **Dockerfile** (şu an sadece api var).
 - **Prometheus + Grafana** (FAZ A'nın `/metrics`'ini tüketir) + dashboard'lar.
 - **k8s** manifest'leri (tüm servisler).
-- **Meilisearch + ClamAV** container'ları; **MinIO bucket-notification** → FAZ A medya webhook'u.
+- **ClamAV** container (`CLAMAV_ADDR` env → FAZ A `internal/media.Scan` bunu kullanır).
+- **MinIO bucket-notification** (`s3:ObjectCreated:*`) → FAZ A medya webhook'una POST.
 - **ScyllaDB'yi KALDIR** (atıl + tasarım-kod uyuşmazlığı) + `docs/architecture.md` düzelt. _Yapma: atıl bırakma._
 - Prod secret yönetimi (vault/env).
+
+> ### ⚠️ SONRA — F BİTİNCE FAZ A MEDYA WIRING'İ (unutma!)
+> FAZ A'nın medya **işleme kütüphanesi** (`internal/media`: doğrulama+EXIF+thumbnail+ClamAV,
+> testli) **HAZIR** ama **webhook wiring'i yazılmadı** — bilerek F'e bırakıldı (gerçek MinIO/ClamAV
+> olmadan doğrulanamaz). **F, ClamAV + MinIO-event'i kurduktan SONRA**, FAZ A'da şunlar yazılıp
+> **gerçek altyapıya karşı test edilecek:** (1) `handlers/media_events.go` webhook (MinIO event JSON
+> parse + `X-Media-Secret` doğrula), (2) `storage.GetObject/PutVariant`, (3) attachment durum+variant
+> **migration**, (4) `router/routes_media.go` self-registered route. Bu, F ile A arasında **son bir
+> koordinasyon adımı** — F'siz A "eksiksiz" sayılmaz. (Detay: `apps/api/internal/media/media.go` baş yorum.)
+
 **Sözleşme (dışarıya):** FAZ A/C/D'ye servis adresleri (env). **Bağımlılık:** Grafana←FAZ A metrics (mantıksal, dosya değil).
 
 ## FAZ G — Test & CI (`.github/` + `e2e/`)
