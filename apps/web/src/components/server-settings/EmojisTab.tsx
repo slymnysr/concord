@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { api } from '../../api';
+import { t } from '../../i18n';
 
 export function EmojisTab({ guildId }: { guildId: string }) {
   const [emojis, setEmojis] = useState<Awaited<ReturnType<typeof api.emojis.list>>>([]);
@@ -55,7 +56,7 @@ export function EmojisTab({ guildId }: { guildId: string }) {
           <input
             value={name}
             onChange={(e) => setName(e.target.value.replace(/[^\w]/g, ''))}
-            placeholder="emoji_adi"
+            placeholder={t('emoji.namePlaceholder')}
             maxLength={32}
             className="flex-1 bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
           />
@@ -70,13 +71,13 @@ export function EmojisTab({ guildId }: { guildId: string }) {
             disabled={!file || !name.trim() || uploading}
             className="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 text-white font-semibold"
           >
-            {uploading ? 'Yükleniyor...' : 'Ekle'}
+            {uploading ? t('sb.uploading') : t('common.add')}
           </button>
         </div>
       </div>
 
       {emojis.length === 0 ? (
-        <p className="text-ink-tertiary text-sm">Henüz özel emoji yok.</p>
+        <p className="text-ink-tertiary text-sm">{t('emoji.none')}</p>
       ) : (
         <div className="grid grid-cols-6 md:grid-cols-8 gap-2">
           {emojis.map((e) => (

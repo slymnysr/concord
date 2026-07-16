@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import { api, type APIBan } from '../../api';
+import { t } from '../../i18n';
 
 export function BansTab({ guildId }: { guildId: string }) {
   const [bans, setBans] = useState<APIBan[]>([]);
@@ -19,7 +20,7 @@ export function BansTab({ guildId }: { guildId: string }) {
   }, [guildId]);
 
   async function unban(userId: string) {
-    if (!confirm('Banı kaldırmak istiyor musun?')) return;
+    if (!confirm(t('ban.removeConfirm'))) return;
     await api.guilds.unban(guildId, userId);
     refresh();
   }
@@ -37,7 +38,7 @@ export function BansTab({ guildId }: { guildId: string }) {
     });
   }
 
-  if (loading) return <p className="text-ink-tertiary">Yükleniyor...</p>;
+  if (loading) return <p className="text-ink-tertiary">{t('common.loading')}</p>;
 
   const q = query.trim().toLowerCase();
   const filtered = q
@@ -68,14 +69,14 @@ export function BansTab({ guildId }: { guildId: string }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Kullanıcı ID veya sebebe göre ara..."
+            placeholder={t('ban.searchPlaceholder')}
             className="w-full bg-surface-1 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg pl-9 pr-3 py-2 text-sm text-ink-primary"
           />
         </div>
       )}
-      {bans.length === 0 && <p className="text-ink-tertiary text-sm">Banlanmış kullanıcı yok.</p>}
+      {bans.length === 0 && <p className="text-ink-tertiary text-sm">{t('ban.none')}</p>}
       {bans.length > 0 && filtered.length === 0 && (
-        <p className="text-ink-tertiary text-sm">Eşleşen ban yok.</p>
+        <p className="text-ink-tertiary text-sm">{t('ban.noMatch')}</p>
       )}
       <ul className="space-y-2">
         {filtered.map((b) => (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useAppSelector } from '../../store';
 import { api } from '../../api';
+import { t } from '../../i18n';
 
 export function GuildInvitesTab({ guildId }: { guildId: string }) {
   const [invites, setInvites] = useState<Awaited<ReturnType<typeof api.guilds.invites>>>([]);
@@ -26,7 +27,7 @@ export function GuildInvitesTab({ guildId }: { guildId: string }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-ink-primary">Davetler</h2>
+        <h2 className="text-2xl font-bold text-ink-primary">{t('invite.listTitle')}</h2>
         <button
           onClick={create}
           className="px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold"
@@ -35,9 +36,9 @@ export function GuildInvitesTab({ guildId }: { guildId: string }) {
         </button>
       </div>
       {loading ? (
-        <p className="text-ink-tertiary text-sm">Yükleniyor...</p>
+        <p className="text-ink-tertiary text-sm">{t('common.loading')}</p>
       ) : invites.length === 0 ? (
-        <p className="text-ink-tertiary text-sm">Aktif davet yok.</p>
+        <p className="text-ink-tertiary text-sm">{t('invite.noActive')}</p>
       ) : (
         <ul className="space-y-2">
           {invites.map((inv) => (

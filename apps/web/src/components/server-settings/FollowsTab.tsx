@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Trash2, Megaphone } from 'lucide-react';
 import { api } from '../../api';
+import { t } from '../../i18n';
 
 export function FollowsTab({ guildId }: { guildId: string }) {
   const [follows, setFollows] = useState<
@@ -34,13 +35,13 @@ export function FollowsTab({ guildId }: { guildId: string }) {
 
   return (
     <div>
-      <h2 className="text-lg font-bold text-ink-primary mb-1">Takip Edilen Kanallar</h2>
+      <h2 className="text-lg font-bold text-ink-primary mb-1">{t('follow.channelsTitle')}</h2>
       <p className="text-sm text-ink-tertiary mb-4">
         Başka sunucuların duyuru kanallarından bu sunucuya iletilen yayınlar. Bir duyuru kanalını
         takip etmek için kanalın başlığındaki "Takip Et" düğmesini kullan.
       </p>
       {loading ? (
-        <div className="text-sm text-ink-tertiary">Yükleniyor...</div>
+        <div className="text-sm text-ink-tertiary">{t('common.loading')}</div>
       ) : follows.length === 0 ? (
         <div className="text-sm text-ink-tertiary border border-dashed border-line rounded-xl p-6 text-center">
           Henüz takip edilen duyuru kanalı yok.
@@ -65,8 +66,8 @@ export function FollowsTab({ guildId }: { guildId: string }) {
               <button
                 onClick={() => remove(f.id)}
                 className="w-8 h-8 rounded-lg hover:bg-accent-500/15 text-ink-tertiary hover:text-accent-500 flex items-center justify-center shrink-0"
-                title="Takibi bırak"
-                aria-label="Takibi bırak"
+                title={t('follow.unfollow')}
+                aria-label={t('follow.unfollow')}
               >
                 <Trash2 size={15} />
               </button>

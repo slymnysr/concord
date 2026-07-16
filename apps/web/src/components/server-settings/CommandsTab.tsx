@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { api } from '../../api';
+import { t } from '../../i18n';
 
 export function CommandsTab({ guildId }: { guildId: string }) {
   const [list, setList] = useState<Awaited<ReturnType<typeof api.commands.list>>>([]);
@@ -40,7 +41,7 @@ export function CommandsTab({ guildId }: { guildId: string }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-ink-primary mb-4">Slash Komutları</h2>
+      <h2 className="text-2xl font-bold text-ink-primary mb-4">{t('cmd.title')}</h2>
       <p className="text-sm text-ink-secondary mb-4">
         Bir kanalda <span className="font-mono text-ink-primary">/komut</span> yazıldığında otomatik
         yanıt verir.
@@ -51,7 +52,7 @@ export function CommandsTab({ guildId }: { guildId: string }) {
           <input
             value={name}
             onChange={(e) => setName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-            placeholder="kurallar"
+            placeholder={t('cmd.namePlaceholder')}
             maxLength={32}
             className="flex-1 bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary font-mono focus:border-brand-500/50 focus:outline-none"
           />
@@ -59,7 +60,7 @@ export function CommandsTab({ guildId }: { guildId: string }) {
         <input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Kısa açıklama (en fazla 100 karakter)"
+          placeholder={t('cmd.descPlaceholder')}
           maxLength={100}
           className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
         />
@@ -101,7 +102,7 @@ export function CommandsTab({ guildId }: { guildId: string }) {
                     ),
                   )
                 }
-                placeholder="ad"
+                placeholder={t('cmd.optName')}
                 className="w-28 bg-surface-1 border border-line rounded-lg px-2 py-1.5 text-sm font-mono text-ink-primary focus:outline-none focus:border-brand-500/50"
               />
               <input
@@ -111,7 +112,7 @@ export function CommandsTab({ guildId }: { guildId: string }) {
                     arr.map((x, j) => (j === i ? { ...x, description: e.target.value } : x)),
                   )
                 }
-                placeholder="açıklama"
+                placeholder={t('cmd.optDesc')}
                 className="flex-1 bg-surface-1 border border-line rounded-lg px-2 py-1.5 text-sm text-ink-primary focus:outline-none focus:border-brand-500/50"
               />
               <label className="flex items-center gap-1 text-[11px] text-ink-tertiary cursor-pointer shrink-0">
@@ -147,7 +148,7 @@ export function CommandsTab({ guildId }: { guildId: string }) {
       </div>
 
       {list.length === 0 ? (
-        <p className="text-ink-tertiary text-sm">Henüz komut yok.</p>
+        <p className="text-ink-tertiary text-sm">{t('cmd.none')}</p>
       ) : (
         <ul className="space-y-2">
           {list.map((c) => (
