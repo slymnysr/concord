@@ -172,6 +172,14 @@ func (h *Handler) CreateMessage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Ekleri mesaj YAZILMADAN önce doğrula: enfekte/işlenmemiş ek varsa mesaj hiç oluşmasın
+	// (sonra doğrulamak, eki sessizce düşürülmüş yetim bir mesaj bırakırdı).
+	resolvedAtt, err := h.resolveAttachments(r.Context(), req.Attachments)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_attachment", err.Error())
+		return
+	}
+
 	m := &repo.Message{
 		ID:          h.IDs.Next(),
 		ChannelID:   channelID,
@@ -205,23 +213,18 @@ func (h *Handler) CreateMessage(w http.ResponseWriter, r *http.Request) {
 	// Kanalın last_message_id'sini güncelle (unread badge için)
 	_, _ = h.Pool.Exec(r.Context(), `UPDATE channels SET last_message_id = $1 WHERE id = $2`, m.ID, channelID)
 
-	// Attachment'ları ekle
-	for _, a := range req.Attachments {
-		if a.URL == "" || a.Filename == "" {
-			continue
-		}
-		ct := a.ContentType
-		var ctp *string
-		if ct != "" {
-			ctp = &ct
-		}
+	// Attachment'ları ekle — metadata resolveAttachments'tan (sunucu tespiti), istemciden DEĞİL
+	for _, ra := range resolvedAtt {
 		_ = h.Attachments.Create(r.Context(), &repo.Attachment{
 			ID:          h.IDs.Next(),
 			MessageID:   m.ID,
-			Filename:    a.Filename,
-			URL:         a.URL,
-			ContentType: ctp,
-			SizeBytes:   a.SizeBytes,
+			Filename:    ra.in.Filename,
+			URL:         ra.in.URL,
+			ContentType: ra.contentT,
+			SizeBytes:   ra.size,
+			Width:       ra.width,
+			Height:      ra.height,
+			ThumbURL:    ra.thumbURL,
 		})
 	}
 

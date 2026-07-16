@@ -27,6 +27,9 @@ type Config struct {
 	AllowedOrigins []string
 	// Voice server → API çağrılarını koruyan paylaşılan secret
 	VoiceControlSecret string
+	// MinIO bucket-notification webhook'unu koruyan secret. BOŞSA webhook KAPALIDIR
+	// (kimliksiz açık bırakmak, herkesin işleme tetiklemesi demek olurdu).
+	MediaEventSecret string
 	// Rate limit (istek/dakika, PER-IP kaba tavan). Asıl brute-force savunması hesap kapsamlıdır
 	// (handlers/auth.go: maxFailPerEmailIP/Email/IP) — bu çit yalnızca kaba kötüye kullanımı keser
 	// ve paylaşımlı çıkış IP'lerini (operatör CGNAT'ı) boğmayacak kadar gevşek tutulur.
@@ -59,6 +62,7 @@ func Load() *Config {
 		WorkerID:            parseInt64(getEnv("WORKER_ID", "1")),
 		AllowedOrigins:      splitCSV(getEnv("ALLOWED_ORIGINS", "http://localhost:3000")),
 		VoiceControlSecret:  getEnv("VOICE_CONTROL_SECRET", devVoiceSecret),
+		MediaEventSecret:    getEnv("MEDIA_EVENT_SECRET", ""),
 		AuthRateLimitPerMin: parseIntDefault(getEnv("AUTH_RATE_LIMIT_PER_MIN", "60"), 60),
 		APIRateLimitPerMin:  parseIntDefault(getEnv("API_RATE_LIMIT_PER_MIN", "600"), 600),
 		GitHubClientID:      getEnv("GITHUB_CLIENT_ID", ""),
@@ -88,6 +92,11 @@ func (c *Config) MustSecure() error {
 	}
 	if len(bad) > 0 {
 		return fmt.Errorf("üretimde dev-default secret KULLANILAMAZ: %s (güçlü değer ata)", strings.Join(bad, ", "))
+	}
+	// Boşsa medya webhook'u kapalı olur → yüklenen dosyalar TARANMADAN iliştirilebilir
+	// (handlers.resolveAttachments doğrulamayı atlar). Üretimde bu kabul edilemez.
+	if c.MediaEventSecret == "" {
+		return fmt.Errorf("üretimde MEDIA_EVENT_SECRET ZORUNLU: boşsa dosyalar virüs taramasından geçmeden iliştirilebilir")
 	}
 	return nil
 }

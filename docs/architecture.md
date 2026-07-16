@@ -45,7 +45,7 @@
 ### API (Go)
 - Kullanıcı kaydı, giriş, JWT üretimi
 - Guild/Channel/Role CRUD
-- Mesaj yazma (Scylla'ya yazar, ardından Gateway PubSub'a yayar)
+- Mesaj yazma (PostgreSQL'e yazar, ardından Redis PubSub'a yayar)
 - Dosya yükleme (MinIO/R2'ye)
 - Arkadaşlık sistemi
 - Moderasyon endpoint'leri
@@ -61,7 +61,7 @@
 
 1. İstemci → `POST /api/v1/channels/{id}/messages` (Go API)
 2. API → JWT doğrular, izin kontrolü yapar
-3. API → ScyllaDB'ye mesajı yazar (snowflake ID üretir)
+3. API → PostgreSQL'e mesajı yazar (snowflake ID üretir)
 4. API → Redis PubSub'a `MESSAGE_CREATE` event'i yayar
 5. Gateway → ilgili `guild:{id}` topic'ine subscribe olan tüm istemcilere WebSocket üzerinden iletir
 

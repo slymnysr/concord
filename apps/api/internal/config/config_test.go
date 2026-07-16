@@ -8,9 +8,11 @@ func TestMustSecure(t *testing.T) {
 		cfg     Config
 		wantErr bool
 	}{
-		{"prod+default JWT reddedilir", Config{Environment: "production", JWTSecret: devJWTSecret, VoiceControlSecret: "strong"}, true},
-		{"prod+default voice reddedilir", Config{Environment: "production", JWTSecret: "strong", VoiceControlSecret: devVoiceSecret}, true},
-		{"prod+güçlü secret geçer", Config{Environment: "production", JWTSecret: "strong-secret-32chars-min-xxxxxx", VoiceControlSecret: "strong"}, false},
+		{"prod+default JWT reddedilir", Config{Environment: "production", JWTSecret: devJWTSecret, VoiceControlSecret: "strong", MediaEventSecret: "s"}, true},
+		{"prod+default voice reddedilir", Config{Environment: "production", JWTSecret: "strong", VoiceControlSecret: devVoiceSecret, MediaEventSecret: "s"}, true},
+		// Boş MEDIA_EVENT_SECRET → webhook kapalı → dosyalar taranmadan iliştirilebilir
+		{"prod+medya secret'ı yoksa reddedilir", Config{Environment: "production", JWTSecret: "strong-secret-32chars-min-xxxxxx", VoiceControlSecret: "strong"}, true},
+		{"prod+güçlü secret geçer", Config{Environment: "production", JWTSecret: "strong-secret-32chars-min-xxxxxx", VoiceControlSecret: "strong", MediaEventSecret: "media-secret"}, false},
 		{"dev'de default sorun değil", Config{Environment: "development", JWTSecret: devJWTSecret, VoiceControlSecret: devVoiceSecret}, false},
 	}
 	for _, c := range cases {

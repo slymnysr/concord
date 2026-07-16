@@ -63,7 +63,20 @@ func Scan(data []byte) (ScanResult, error) {
 	if err != nil {
 		return ScanResult{}, err
 	}
-	s := strings.TrimSpace(string(resp[:n]))
+	return parseScanResponse(string(resp[:n]))
+}
+
+// parseScanResponse — ClamAV yanıtını çözer.
+//
+// NUL KESME ŞART: "z" önekli komutlar (zINSTREAM) NUL ile sonlanan yanıt döndürür ve
+// strings.TrimSpace NUL'u BOŞLUK SAYMAZ → imza "Eicar-Test-Signature FOUND\x00" kalırdı.
+// Postgres text NUL baytı saklayamaz (SQLSTATE 22021) → enfekte kaydın INSERT'i patlıyor,
+// virüslü dosya DENETİM İZİ BIRAKMADAN geçiyordu. Gerçek ClamAV'a karşı E2E'de yakalandı.
+func parseScanResponse(raw string) (ScanResult, error) {
+	if i := strings.IndexByte(raw, 0); i >= 0 {
+		raw = raw[:i]
+	}
+	s := strings.TrimSpace(raw)
 	switch {
 	case strings.Contains(s, "FOUND"):
 		sig := strings.TrimSuffix(strings.TrimPrefix(s, "stream: "), " FOUND")

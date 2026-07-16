@@ -5,8 +5,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redis/go-redis/v9"
 	"github.com/concord/api/internal/auth"
 	"github.com/concord/api/internal/automod"
 	"github.com/concord/api/internal/config"
@@ -15,6 +13,8 @@ import (
 	"github.com/concord/api/internal/repo"
 	"github.com/concord/api/internal/snowflake"
 	"github.com/concord/api/internal/storage"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -43,6 +43,7 @@ type Handler struct {
 	Moderation    *repo.Moderation
 	DMs           *repo.DMs
 	Reactions     *repo.Reactions
+	MediaObjects  *repo.MediaObjects
 	Attachments   *repo.Attachments
 	Mentions      *repo.Mentions
 	Notifications *repo.Notifications
@@ -77,6 +78,7 @@ func New(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool, rdb *redis.
 		Moderation:    repo.NewModeration(pool),
 		DMs:           repo.NewDMs(pool),
 		Reactions:     repo.NewReactions(pool),
+		MediaObjects:  repo.NewMediaObjects(pool),
 		Attachments:   repo.NewAttachments(pool),
 		Mentions:      repo.NewMentions(pool),
 		Notifications: repo.NewNotifications(pool),
@@ -117,6 +119,20 @@ func readJSON(r *http.Request, v any) error {
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(v); err != nil {
+		return errors.New("invalid JSON: " + err.Error())
+	}
+	return nil
+}
+
+// readJSONLenient — bilinmeyen alanları YOK SAYAR. Yalnızca şemasını BİZİM KONTROL ETMEDİĞİMİZ
+// dış kaynaklar için (ör. MinIO bucket-notification): readJSON'ın DisallowUnknownFields'ı
+// kullanıcı girdisinde doğrudur (yazım hatası/mass-assignment yakalar) ama üçüncü-parti
+// webhook'ta yanlıştır — MinIO'nun S3 olayı onlarca ek alan taşır ve sürümle yenileri eklenir;
+// katı çözücü tüm olayları 400'le reddediyordu (dosyalar sessizce taranmadan kalıyordu).
+// KULLANICI girdisinde ASLA kullanma.
+func readJSONLenient(r *http.Request, v any) error {
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
 		return errors.New("invalid JSON: " + err.Error())
 	}
 	return nil

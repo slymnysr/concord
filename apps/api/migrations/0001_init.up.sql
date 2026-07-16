@@ -90,9 +90,10 @@ CREATE TABLE member_roles (
     FOREIGN KEY (guild_id, user_id) REFERENCES guild_members(guild_id, user_id) ON DELETE CASCADE
 );
 
--- Mesaj METADATASI burada, mesaj İÇERİĞİ ScyllaDB'de
--- Discord 2017+ patterni: mesaj metadata Postgres'te değil tamamen Scylla'da
--- Ama biz şimdilik tek DB ile yaşıyoruz; gerektiğinde Scylla'ya migrate edeceğiz
+-- Mesaj metadatası VE içeriği burada (tek DB). Discord 2017+ mesajları ayrı bir
+-- geniş-kolon store'a taşır; bizde o ihtiyaç henüz yok — gelirse planlı bir faz
+-- olarak ele alınır (ROADMAP-FAZLAR.md TIER 4). Bu yorum eskiden var olmayan bir
+-- Scylla kurulumunu tarif ediyordu; kaldırıldı.
 CREATE TABLE messages (
     id              BIGINT PRIMARY KEY,
     channel_id      BIGINT NOT NULL REFERENCES channels(id) ON DELETE CASCADE,

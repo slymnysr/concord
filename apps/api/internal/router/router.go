@@ -49,6 +49,9 @@ func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 		})
 		r.Post("/auth/refresh", h.Refresh)
 		r.Get("/auth/verify-email", h.ConfirmEmailVerify)
+		// Altyapıdan gelen kimliksiz çağrılar (kullanıcı JWT'si yok) — bkz. routes_media.go
+		mountMediaRoutes(r, h)
+
 		// Voice server → API (x-voice-secret ile korunur, kullanıcı JWT'si yok)
 		r.Get("/voice-internal/state", h.GetPersistedVoiceStateInternal)
 		r.Get("/voice-internal/can-join", h.CanJoinVoiceInternal)

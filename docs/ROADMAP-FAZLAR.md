@@ -83,14 +83,23 @@ bu dosyada `## API-KONTRAT` başlığı altında yayınla ki FAZ B ona kodlasın
 - **ScyllaDB'yi KALDIR** (atıl + tasarım-kod uyuşmazlığı) + `docs/architecture.md` düzelt. _Yapma: atıl bırakma._
 - Prod secret yönetimi (vault/env).
 
-> ### ⚠️ SONRA — F BİTİNCE FAZ A MEDYA WIRING'İ (unutma!)
-> FAZ A'nın medya **işleme kütüphanesi** (`internal/media`: doğrulama+EXIF+thumbnail+ClamAV,
-> testli) **HAZIR** ama **webhook wiring'i yazılmadı** — bilerek F'e bırakıldı (gerçek MinIO/ClamAV
-> olmadan doğrulanamaz). **F, ClamAV + MinIO-event'i kurduktan SONRA**, FAZ A'da şunlar yazılıp
-> **gerçek altyapıya karşı test edilecek:** (1) `handlers/media_events.go` webhook (MinIO event JSON
-> parse + `X-Media-Secret` doğrula), (2) `storage.GetObject/PutVariant`, (3) attachment durum+variant
-> **migration**, (4) `router/routes_media.go` self-registered route. Bu, F ile A arasında **son bir
-> koordinasyon adımı** — F'siz A "eksiksiz" sayılmaz. (Detay: `apps/api/internal/media/media.go` baş yorum.)
+> ### ✅ MEDYA WIRING'İ TAMAM (F → A koordinasyonu kapandı)
+> FAZ A'nın medya kütüphanesi (`internal/media`) hazırdı ama webhook wiring'i bilerek F'e
+> bırakılmıştı (gerçek MinIO/ClamAV olmadan doğrulanamazdı). F altyapıyı kurunca yazıldı ve
+> **gerçek MinIO + gerçek ClamAV'a karşı uçtan uca doğrulandı:**
+> `handlers/media_events.go` (webhook), `storage.GetObject/PutVariant/KeyFromPublicURL`,
+> `migrations/0054_media_objects` (durum nesne ANAHTARINA bağlı — mesaj upload'dan sonra
+> oluştuğu için attachment satırı henüz yoktur), `router/routes_media.go`,
+> `handlers/attachments_guard.go` (zorlama).
+>
+> **Uçtan uca kanıtlanan:** EXIF'li JPEG → `clean`, tip magic-byte'tan, thumbnail EXIF'siz;
+> EICAR → `infected` + imza + depodan silindi; enfekte/dış-URL ek → mesaj reddedildi;
+> istemcinin yalan `content_type`/`size_bytes` beyanı yok sayıldı.
+>
+> **Bu iş sırasında bulunan 3 gerçek bug** (hiçbiri sahte altyapıyla yakalanamazdı):
+> ClamAV imzasındaki NUL baytı Postgres INSERT'ini patlatıyordu → enfekte dosya denetim izi
+> bırakmadan geçiyordu; `readJSON`'ın `DisallowUnknownFields`'ı tüm MinIO olaylarını 400'lüyordu;
+> `mc admin service restart` TTY'siz ortamda ölüyordu.
 
 **Sözleşme (dışarıya):** FAZ A/C/D'ye servis adresleri (env). **Bağımlılık:** Grafana←FAZ A metrics (mantıksal, dosya değil).
 

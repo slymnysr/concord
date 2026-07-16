@@ -6,10 +6,12 @@
 # virüs tarama) MinIO'nun ObjectCreated olayıyla asenkron tetiklenir.
 #
 # SÖZLEŞME (ROADMAP FAZ F ↔ FAZ A):
-#   MinIO → POST {API}/api/v1/internal/media/events   header: X-Media-Secret: $MEDIA_EVENT_SECRET
+#   MinIO → POST {API}/api/v1/internal/media/events
+#   header: Authorization: Bearer $MEDIA_EVENT_SECRET
+#   (MinIO `auth_token` config'ini Authorization olarak gönderir — X-Media-Secret DEĞİL.
+#    Bu betiğin ilk hali X-Media-Secret yazıyordu; gerçek davranışla uyumsuzdu, düzeltildi.)
 #
-# ⚠️ Bu betik, FAZ A'nın webhook endpoint'i YAZILDIKTAN SONRA anlamlıdır. Endpoint yoksa
-#    MinIO olayları 404 alır (zararsız; MinIO yeniden dener). Bkz. ROADMAP FAZ F "⚠️ SONRA".
+# DURUM: FAZ A webhook'u YAZILDI (handlers/media_events.go) ve bu betikle uçtan uca doğrulandı.
 #
 # Kullanım:
 #   MEDIA_EVENT_SECRET=... API_URL=http://concord-host:8080 ./setup-notifications.sh
@@ -36,7 +38,9 @@ mc admin config set "${MINIO_ALIAS}" "notify_webhook:${WEBHOOK_ID}" \
   queue_limit="1000"
 
 echo "→ MinIO yeniden başlatılıyor (config değişikliği için şart)"
-mc admin service restart "${MINIO_ALIAS}"
+# --json ŞART: bayraksız hali interaktif bir UI açmaya çalışır ve TTY'siz ortamlarda
+# ("could not open a new TTY") patlar → CI/otomasyonda betik burada ölürdü.
+mc admin service restart "${MINIO_ALIAS}" --json >/dev/null
 sleep 5
 
 echo "→ bucket olayı bağlanıyor: ${BUCKET} → ObjectCreated"
@@ -47,5 +51,3 @@ echo "→ mevcut olaylar:"
 mc event list "${MINIO_ALIAS}/${BUCKET}"
 
 echo "✓ tamam. Yüklenen her nesne ${ENDPOINT} adresine POST edilecek."
-echo "  NOT: MinIO 'auth_token'ı Authorization header'ı olarak gönderir."
-echo "  FAZ A webhook'u bunu doğrulamalı (Bearer/token karşılaştırması)."

@@ -101,6 +101,12 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    # MinIO, ObjectCreated olaylarını host'ta çalışan API'ye POST eder (medya webhook'u).
+    # NOT: Docker Desktop/WSL2'de host.docker.internal WINDOWS'u gösterir, WSL dağıtımını
+    # DEĞİL → API'ye ulaşmaz. Prometheus'ta aynı tuzağa düşülmüştü; aynı çözüm:
+    # HOST_IP=$(ip -4 addr show eth0 | grep -oP 'inet \K[0-9.]+') docker compose up -d
+    extra_hosts:
+      - "concord-host:${HOST_IP:-host-gateway}"
     environment:
       MINIO_ROOT_USER: concord
       MINIO_ROOT_PASSWORD: concord_dev_minio
