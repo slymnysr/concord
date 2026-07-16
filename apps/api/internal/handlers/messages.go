@@ -307,6 +307,21 @@ func (h *Handler) ListMessages(w http.ResponseWriter, r *http.Request) {
 	if list == nil {
 		list = []repo.Message{}
 	}
+	// Reaction'ları TEK sorguda getir + göm (web'in mesaj başına ayrı istek atmasını önler).
+	if len(list) > 0 {
+		ids := make([]int64, len(list))
+		for i := range list {
+			ids[i] = list[i].ID
+		}
+		viewer := middleware.UserIDFrom(r.Context())
+		if byMsg, rerr := h.Reactions.ForMessages(r.Context(), ids, viewer); rerr == nil {
+			for i := range list {
+				if rs := byMsg[list[i].ID]; len(rs) > 0 {
+					list[i].Reactions = rs
+				}
+			}
+		}
+	}
 	writeJSON(w, http.StatusOK, list)
 }
 

@@ -23,6 +23,8 @@ type Message struct {
 	Embeds          []json.RawMessage `json:"embeds,omitempty"` // zengin embed payload'ları
 	WebhookUsername *string      `json:"webhook_username,omitempty"`
 	WebhookAvatar   *string      `json:"webhook_avatar,omitempty"`
+	// Reactions — mesaj listesinde gömülü gelir (viewer'a göre "me"); N+1 önler.
+	Reactions       []ReactionSummary `json:"reactions,omitempty"`
 }
 
 type Messages struct{ pool *pgxpool.Pool }

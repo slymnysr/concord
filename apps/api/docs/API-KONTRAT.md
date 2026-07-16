@@ -9,5 +9,10 @@ _(FAZ A doldurur: thumbnail URL alanı, attachment durumu ready/rejected vb.)_
 ## Arama
 _(FAZ A doldurur: GET /search endpoint şekli, filtreler, yanıt.)_
 
-## Reactions (N+1 fix)
-_(FAZ A doldurur: batch/embed şekli — mesaj listesinde reaction nasıl gelir.)_
+## Reactions (N+1 fix) — TAMAM
+`GET /channels/{channelID}/messages?limit&before` artık her mesajda **gömülü** döndürür:
+```
+message.reactions: [{ "emoji": string, "count": int, "me": bool }]   // yoksa alan gelmez
+```
+**FAZ B yapacak:** MessageList mesaj başına `GET .../reactions` ATMAYACAK; listedeki
+`message.reactions`'ı kullanacak. Tekil ekle/çıkar endpoint'leri değişmedi (optimistic update aynı).
