@@ -5,6 +5,7 @@ package mailer
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"mime"
@@ -28,6 +29,11 @@ type Mailer struct {
 	// RequireTLS — şifresiz bağlantıda göndermeyi REDDET. Üretimde true olmalı:
 	// şifre sıfırlama bağlantısı düz metin olarak ağdan geçerse hesap ele geçirilir.
 	RequireTLS bool
+	// RootCAs — TLS sunucu sertifikasını doğrulamak için özel kök CA havuzu. nil ise
+	// sistemin güven deposu kullanılır (Gmail/Outlook/SES için doğru olan bu). Yalnızca
+	// özel CA'lı kurumsal SMTP relay'lerinde veya testte doldurulur. InsecureSkipVerify
+	// BİLEREK yok: sertifika doğrulamasını kapatmak MITM'e kapı açar.
+	RootCAs *x509.CertPool
 }
 
 func New(host, port, user, pass, from string, requireTLS bool) *Mailer {
@@ -90,7 +96,7 @@ func (m *Mailer) send(to string, msg []byte) error {
 
 	// Port 465 = IMPLICIT TLS: el sıkışma daha ilk baytta TLS'tir (STARTTLS yok).
 	if m.Port == "465" {
-		conn = tls.Client(conn, &tls.Config{ServerName: m.Host, MinVersion: tls.VersionTLS12})
+		conn = tls.Client(conn, &tls.Config{ServerName: m.Host, MinVersion: tls.VersionTLS12, RootCAs: m.RootCAs})
 	}
 
 	c, err := smtp.NewClient(conn, m.Host)
@@ -103,7 +109,7 @@ func (m *Mailer) send(to string, msg []byte) error {
 	// STARTTLS (port 587 ve çoğu sağlayıcı)
 	if m.Port != "465" {
 		if ok, _ := c.Extension("STARTTLS"); ok {
-			if err := c.StartTLS(&tls.Config{ServerName: m.Host, MinVersion: tls.VersionTLS12}); err != nil {
+			if err := c.StartTLS(&tls.Config{ServerName: m.Host, MinVersion: tls.VersionTLS12, RootCAs: m.RootCAs}); err != nil {
 				return fmt.Errorf("starttls: %w", err)
 			}
 		} else if m.RequireTLS {
