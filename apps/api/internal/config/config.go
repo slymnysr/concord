@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -51,16 +52,19 @@ type Config struct {
 	GitHubClientSecret string
 	PublicBaseURL      string
 	// İşlem mailleri (şifre sıfırlama/doğrulama) — dev default'u MailHog (localhost:1025)
-	SMTPHost   string
-	SMTPPort   string
-	SMTPUser   string
-	SMTPPass   string
-	MailFrom   string
-	WebBaseURL string
+	SMTPHost string
+	SMTPPort string
+	SMTPUser string
+	SMTPPass string
+	// Şifresiz SMTP bağlantısında göndermeyi reddet. Üretimde ZORUNLU: şifre sıfırlama
+	// bağlantısı düz metin olarak ağdan geçerse hesap ele geçirilir.
+	SMTPRequireTLS bool
+	MailFrom       string
+	WebBaseURL     string
 }
 
 func Load() *Config {
-	_ = godotenv.Load()
+	loadDotEnv()
 
 	return &Config{
 		Port:          getEnv("API_PORT", "8080"),
@@ -89,8 +93,37 @@ func Load() *Config {
 		SMTPPort:            getEnv("SMTP_PORT", "1025"),
 		SMTPUser:            getEnv("SMTP_USER", ""),
 		SMTPPass:            getEnv("SMTP_PASS", ""),
-		MailFrom:            getEnv("MAIL_FROM", "Concord <no-reply@concord.local>"),
-		WebBaseURL:          getEnv("WEB_BASE_URL", "http://localhost:3000"),
+		// Dev default false: MailHog TLS sunmaz. Üretimde MustSecure true olmasını şart koşar.
+		SMTPRequireTLS: getEnv("SMTP_REQUIRE_TLS", "false") == "true",
+		MailFrom:       getEnv("MAIL_FROM", "Concord <no-reply@concord.local>"),
+		WebBaseURL:     getEnv("WEB_BASE_URL", "http://localhost:3000"),
+	}
+}
+
+// loadDotEnv — .env dosyasını bulur ve yükler.
+//
+// NEDEN YUKARI ARAMA: godotenv.Load() yalnızca ÇALIŞMA DİZİNİNE bakar. API `apps/api`'den
+// çalışıyor, .env ise depo kökünde (tek dosya tüm yığını beslesin diye) → bulunamıyordu.
+// Kökten `apps/api`'ye kadar yukarı yürünür.
+//
+// Zaten set edilmiş değişkenler EZİLMEZ (godotenv davranışı): k8s/CI env'i .env'den
+// önce gelir — orada .env dosyası zaten yoktur ama bu kural açık olsun.
+func loadDotEnv() {
+	dir, err := os.Getwd()
+	if err != nil {
+		return
+	}
+	for i := 0; i < 5; i++ { // depo kökü en fazla birkaç seviye yukarıda
+		p := filepath.Join(dir, ".env")
+		if _, err := os.Stat(p); err == nil {
+			_ = godotenv.Load(p)
+			return
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return // dosya sisteminin köküne geldik
+		}
+		dir = parent
 	}
 }
 
@@ -119,6 +152,11 @@ func (c *Config) MustSecure() error {
 	// HİÇ çalışmaz (ölçüldü: docs/DENETIM-GLOBAL.md). Global üretimde bu kabul edilemez.
 	if c.MeiliAddr == "" {
 		return fmt.Errorf("üretimde MEILI_ADDR ZORUNLU: Postgres FTS yedeği CJK'da arama yapamaz (JP/ZH/KO kullanıcıları için arama ölür)")
+	}
+	// Şifresiz SMTP'de şifre sıfırlama bağlantısı düz metin olarak ağdan geçer → hesap
+	// ele geçirilir. Üretimde kabul edilemez.
+	if !c.SMTPRequireTLS {
+		return fmt.Errorf("üretimde SMTP_REQUIRE_TLS=true ZORUNLU: şifresiz SMTP'de şifre sıfırlama bağlantısı düz metin gider")
 	}
 	return nil
 }

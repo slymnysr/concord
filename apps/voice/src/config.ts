@@ -2,7 +2,41 @@
 import type { types as msTypes } from 'mediasoup';
 
 import os from 'node:os';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import dotenv from 'dotenv';
+
+// Depo kökündeki .env'i yükle — TEK dosya tüm yığını beslesin diye (apps/api'deki
+// config.loadDotEnv ve gateway'deki runtime.exs karşılığı).
+//
+// NEDEN GEREKLİ: voice `pnpm dev` ile apps/voice'tan çalışır; dotenv yalnızca ÇALIŞMA
+// DİZİNİNE bakar, .env ise depo kökündedir. Bu olmadan .env'de JWT_SECRET değiştirmek
+// API'yi günceller ama voice'u GÜNCELLEMEZ → voice aşağıdaki dev-default'a düşer,
+// API'nin imzaladığı token'ları doğrulayamaz ve HİÇ KİMSE sese katılamaz.
+//
+// BURADA (config.ts'te) yükleniyor, index.ts'te değil: ES import'ları hoist edilir, yani
+// index.ts'in ilk satırı çalışmadan ÖNCE bu modül değerlendirilir ve process.env okunur.
+// index.ts'e koymak GEÇ kalırdı.
+//
+// override YOK (dotenv varsayılanı): zaten set edilmiş değişkenler EZİLMEZ — k8s/CI env'i
+// .env'den önce gelir.
+function loadRootEnv(): void {
+  let dir = path.dirname(fileURLToPath(import.meta.url));
+  for (let i = 0; i < 6; i++) {
+    const p = path.join(dir, '.env');
+    if (fs.existsSync(p)) {
+      // quiet: dotenv aksi hâlde her açılışta reklam/ipucu satırı basar — log gürültüsü
+      dotenv.config({ path: p, quiet: true });
+      return;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) return; // dosya sisteminin kökü
+    dir = parent;
+  }
+}
+loadRootEnv();
 
 const httpPort = parseInt(process.env.VOICE_HTTP_PORT ?? '4444', 10);
 

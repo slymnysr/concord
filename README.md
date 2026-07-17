@@ -65,6 +65,13 @@ cd apps/api && go mod download && cd ../..
 
 ### 4. Servisler
 
+> **Ayarlar tek yerden:** dört servis de (API, gateway, voice, web) **depo kökündeki `.env`**
+> dosyasını kendi okur — servisi başlatırken env değişkeni export etmen gerekmez. Anahtar
+> değiştirdiğinde (`JWT_SECRET` vb.) **hepsini yeniden başlat**: biri eski secret'la kalırsa
+> HTTP çalışmaya devam eder ama WebSocket'ler 403 alır ve yalnızca realtime/ses sessizce ölür.
+> Zaten set edilmiş env değişkenleri `.env`'i EZER (k8s/CI böyle çalışır).
+> Yeni anahtar üretmek için: `cd apps/api && go run ./cmd/genkeys`
+
 ```bash
 # Gateway (4000)
 cd apps/gateway && mix phx.server

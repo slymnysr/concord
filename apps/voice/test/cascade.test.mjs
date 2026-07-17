@@ -33,6 +33,12 @@ function startNode(id, wsPort, httpPort, rtcMin, rtcMax) {
     cwd: VOICE_DIR,
     env: {
       ...process.env,
+      // Test token'larını SECRET_JWT ile imzalıyoruz → düğüm de AYNI secret'ı kullanmalı.
+      // Eskiden yazılmıyordu ve tesadüfen çalışıyordu: hiçbir yer JWT_SECRET set etmediği
+      // için düğüm dev-default'a düşüyor, o da SECRET_JWT ile aynı oluyordu. Depo kökündeki
+      // .env okunmaya başlayınca (config.ts) bu varsayım çöktü ve test "join zaman aşımı"
+      // veriyordu. Test kendi secret'ını AÇIKÇA bildirmeli, ortamın boşluğuna yaslanmamalı.
+      JWT_SECRET: SECRET_JWT,
       VOICE_CLUSTER_ENABLED: 'true',
       VOICE_NODE_ID: id,
       VOICE_PORT: String(wsPort),

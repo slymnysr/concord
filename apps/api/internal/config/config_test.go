@@ -14,7 +14,8 @@ func TestMustSecure(t *testing.T) {
 		{"prod+medya secret'ı yoksa reddedilir", Config{Environment: "production", JWTSecret: "strong-secret-32chars-min-xxxxxx", VoiceControlSecret: "strong"}, true},
 		// Postgres FTS CJK'da arama yapamaz → global üretimde MEILI_ADDR zorunlu
 		{"prod+arama motoru yoksa reddedilir", Config{Environment: "production", JWTSecret: "strong-secret-32chars-min-xxxxxx", VoiceControlSecret: "strong", MediaEventSecret: "s"}, true},
-		{"prod+güçlü secret geçer", Config{Environment: "production", JWTSecret: "strong-secret-32chars-min-xxxxxx", VoiceControlSecret: "strong", MediaEventSecret: "media-secret", MeiliAddr: "http://meilisearch:7700"}, false},
+		{"prod+SMTP TLS yoksa reddedilir", Config{Environment: "production", JWTSecret: "strong-secret-32chars-min-xxxxxx", VoiceControlSecret: "strong", MediaEventSecret: "s", MeiliAddr: "http://m:7700"}, true},
+		{"prod+güçlü secret geçer", Config{Environment: "production", JWTSecret: "strong-secret-32chars-min-xxxxxx", VoiceControlSecret: "strong", MediaEventSecret: "media-secret", MeiliAddr: "http://meilisearch:7700", SMTPRequireTLS: true}, false},
 		{"dev'de default sorun değil", Config{Environment: "development", JWTSecret: devJWTSecret, VoiceControlSecret: devVoiceSecret}, false},
 	}
 	for _, c := range cases {

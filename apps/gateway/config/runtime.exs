@@ -1,5 +1,53 @@
 import Config
 
+# Depo kökündeki .env'i yükle — TEK dosya tüm yığını beslesin diye (apps/api'deki
+# config.loadDotEnv'in Elixir karşılığı).
+#
+# NEDEN GEREKLİ: gateway `mix phx.server` ile apps/gateway'den çalışır ve Elixir env
+# dosyası okumaz. Bu olmadan .env'de JWT_SECRET değiştirmek API'yi günceller ama gateway'i
+# GÜNCELLEMEZ → gateway aşağıdaki dev-default'a düşer, API'nin imzaladığı token'ları
+# doğrulayamaz ve HER WS bağlantısı 403 alır. Belirti sinsi: HTTP çalışır, sadece realtime
+# ölür ("yeniden bağlanılıyor" banner'ı). Bu ölçüldü, varsayılmadı.
+#
+# ZATEN SET EDİLMİŞ değişkenler EZİLMEZ: k8s/CI env'i .env'den önce gelir (orada .env
+# zaten yoktur ama kural açık olsun).
+defmodule ConcordDotenv do
+  def load(dir, 0), do: dir
+
+  def load(dir, depth) do
+    path = Path.join(dir, ".env")
+
+    if File.exists?(path) do
+      path
+      |> File.read!()
+      |> String.split("\n")
+      |> Enum.each(&put_var/1)
+    else
+      parent = Path.dirname(dir)
+      if parent != dir, do: load(parent, depth - 1)
+    end
+  end
+
+  defp put_var(line) do
+    line = String.trim(line)
+
+    unless line == "" or String.starts_with?(line, "#") do
+      case String.split(line, "=", parts: 2) do
+        [k, v] ->
+          k = String.trim(k)
+          # Tırnaklı değerleri soy: SMTP_PASS="a b c" → a b c
+          v = v |> String.trim() |> String.trim(~s(")) |> String.trim("'")
+          if System.get_env(k) in [nil, ""], do: System.put_env(k, v)
+
+        _ ->
+          :ok
+      end
+    end
+  end
+end
+
+ConcordDotenv.load(File.cwd!(), 5)
+
 if config_env() == :prod do
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
