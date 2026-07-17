@@ -127,6 +127,14 @@ jobs:
       E2E_API_URL: http://localhost:8080
       E2E_VOICE_WS: ws://localhost:4443
       E2E_VOICE_HTTP: http://localhost:4444
+      # Medya boru hattı CI'da GERÇEKTEN koşsun: secret boşsa webhook kapanır ve
+      # attachments testi (thumbnail/tarama sözleşmesi) sessizce anlamsızlaşır.
+      MEDIA_EVENT_SECRET: ci_media_event_secret
+      MINIO_ENDPOINT: localhost:9000
+      MINIO_ACCESS_KEY: concord
+      MINIO_SECRET_KEY: concord_dev_minio
+      MINIO_BUCKET: concord-uploads
+      MINIO_PUBLIC_BASE: http://localhost:9000
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
@@ -159,6 +167,20 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
+      # MinIO: service container OLARAK tanımlanamıyor — minio image'i `server /data`
+      # komutunu ister, GitHub service container'ları command'ı geçersiz kılamaz.
+      - name: MinIO başlat (medya boru hattı)
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=concord \
+            -e MINIO_ROOT_PASSWORD=concord_dev_minio \
+            --add-host=host.docker.internal:host-gateway \
+            minio/minio:latest server /data
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9000/minio/health/live && break || sleep 1
+          done
+          curl -sf http://localhost:9000/minio/health/live || { echo "MinIO kalkmadı"; docker logs minio; exit 1; }
+
       # Şema: migration aracı yok → *.up.sql sırayla uygulanır (README ile aynı yöntem)
       - name: Apply migrations
         run: |
@@ -175,6 +197,15 @@ jobs:
             curl -sf http://localhost:8080/health && break || sleep 1
           done
           curl -sf http://localhost:8080/health || { echo "API ayağa kalkmadı"; cat /tmp/api.log; exit 1; }
+
+      # MinIO → API webhook'u: API ayağa kalktıktan SONRA bağlanmalı (webhook API'yi çağırır).
+      # API host'ta çalışıyor → MinIO container'ından host.docker.internal ile erişilir.
+      - name: MinIO bucket-notification bağla
+        run: |
+          docker exec -e MEDIA_EVENT_SECRET=ci_media_event_secret \
+            -e API_URL=http://host.docker.internal:8080 \
+            -e MINIO_URL=http://localhost:9000 \
+            minio sh -c "$(cat infra/docker/minio/setup-notifications.sh)"
 
       # Realtime (mesaj/tipografi olaylari) Gateway uzerinden akar → E2E icin ZORUNLU.
       # Yoksa "realtime CIFT YONLU" testi CI'da duser, yerelde gecer (yaniltici yesil).
