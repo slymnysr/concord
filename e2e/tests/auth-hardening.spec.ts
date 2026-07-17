@@ -83,7 +83,12 @@ test.describe('Auth sağlamlaştırma', () => {
 
     // Saldırganın oturumu ÖNCE çalışıyor
     expect(
-      (await request.post(`${API}/api/v1/auth/refresh`, { data: { refresh_token: saldirgan }, failOnStatusCode: false })).ok(),
+      (
+        await request.post(`${API}/api/v1/auth/refresh`, {
+          data: { refresh_token: saldirgan },
+          failOnStatusCode: false,
+        })
+      ).ok(),
     ).toBeTruthy();
 
     // Kurban parolasını değiştirir
