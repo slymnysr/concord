@@ -29,6 +29,7 @@
   "devDependencies": {
     "@types/phoenix": "^1.6.4",
     "@types/react": "~19.2.2",
+    "esbuild": "^0.28.0",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -36,7 +37,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "check:i18n": "node scripts/check-i18n.mjs"
+    "check:i18n": "node scripts/check-i18n.mjs && node scripts/check-i18n-runtime.mjs"
   },
   "private": true
 }
