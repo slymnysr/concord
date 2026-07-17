@@ -593,11 +593,21 @@ function isJumboEmoji(content: string): boolean {
   let stripped = trimmed.replace(/:([a-z0-9_]{2,32}):/gi, '');
   let emojiCount = (trimmed.match(/:([a-z0-9_]{2,32}):/gi) ?? []).length;
   try {
-    const unicodeEmoji = /[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}️‍]/gu;
-    emojiCount += (stripped.match(unicodeEmoji) ?? []).length;
-    stripped = stripped.replace(unicodeEmoji, '');
+    // GRAPHEME bazlı sayım: kullanıcının "tek emoji" gördüğü şey birden çok kod
+    // noktasından oluşabilir. Kod noktası saymak (eski hali) yanlış sonuç veriyordu:
+    //   👨‍👩‍👧 (ZWJ ailesi) → 5, 🇹🇷 (2 bölgesel gösterge) → 2, ❤️ (+VS16) → 2
+    // yani 6 aile emojisi 30 sayılıp jumbo eşiğini (27) aşıyor ve büyük render EDİLMİYORDU.
+    // ESLint no-misleading-character-class tam da bunu işaret ediyordu.
+    const seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+    const isEmoji = /\p{Extended_Pictographic}|\p{RI}/u;
+    let kalan = '';
+    for (const { segment } of seg.segment(stripped)) {
+      if (isEmoji.test(segment)) emojiCount++;
+      else kalan += segment;
+    }
+    stripped = kalan;
   } catch {
-    return false; // ortam unicode property escape desteklemiyorsa atla
+    return false; // ortam Intl.Segmenter / unicode property escape desteklemiyorsa atla
   }
   return emojiCount > 0 && emojiCount <= 27 && stripped.trim() === '';
 }

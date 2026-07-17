@@ -537,7 +537,6 @@ class VoiceClient {
     if (!this.sendTransport) throw new Error('not connected');
     if (this.screenStream) return this.screenStream;
     const q = streamQuality();
-    // @ts-ignore — getDisplayMedia
     this.screenStream = await navigator.mediaDevices.getDisplayMedia({
       video: { frameRate: q.fps, width: { ideal: q.width }, height: { ideal: q.height } },
       // Sekme/uygulama sesi de paylaşılsın (kullanıcı paylaşım penceresinde onaylarsa)

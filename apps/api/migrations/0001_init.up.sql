@@ -1,6 +1,13 @@
 -- Concord ilk şema
 -- Snowflake ID = BIGINT (64-bit), uygulamada üretilir
 
+-- Uzantılar BURADA kurulur: şema onlara bağımlı (users.username/email CITEXT).
+-- Eskiden hiçbir migration uzantı oluşturmuyordu; geliştirme veritabanında ELLE kurulu
+-- oldukları için fark edilmiyordu → SIFIRDAN kurulum (CI, yeni ortam, prod) daha ilk
+-- migration'da "type citext does not exist" ile patlıyordu. Migration seti kendi kendine
+-- yeterli olmalı: çalıştırıldığı yerde başka hiçbir elle adım gerektirmemeli.
+CREATE EXTENSION IF NOT EXISTS citext;
+
 CREATE TABLE users (
     id              BIGINT PRIMARY KEY,
     username        CITEXT NOT NULL UNIQUE,
