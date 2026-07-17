@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -8,12 +9,35 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/concord/api/internal/auth"
 	"github.com/concord/api/internal/mailer"
 	"github.com/concord/api/internal/middleware"
 	"go.uber.org/zap"
 )
+
+// mailCooldownWindow — aynı adrese arka arkaya mail arasındaki en kısa süre.
+const mailCooldownWindow = 60 * time.Second
+
+// mailCooldownGeçti — aynı e-posta adresine mail gönderimini pencere başına 1'e sınırlar
+// (MAIL BOMBING önleme). Saldırgan, kurbanın adresini forgot-password/change-email'e girip
+// tekrar tekrar mail tetikleyerek inbox'ını dolduramasın. Redis SetNX: ilk çağrı key'i kurar
+// → true (gönder); pencere içindeki sonraki çağrılar → false (atla). Bu, IP rate-limit'ten
+// BAĞIMSIZDIR: rotating IP'li (botnet/proxy) saldırgan da durur, çünkü anahtar e-postadır.
+//
+// Fail-open: Redis yoksa/hatalıysa engelleme. Redis arızası meşru şifre sıfırlamayı
+// kilitlememeli; kaba kötüye kullanımı IP rate-limit yine keser.
+func (h *Handler) mailCooldownGeçti(ctx context.Context, email string) bool {
+	if h.Redis == nil {
+		return true
+	}
+	ok, err := h.Redis.SetNX(ctx, "mail:cd:"+strings.ToLower(strings.TrimSpace(email)), "1", mailCooldownWindow).Result()
+	if err != nil {
+		return true
+	}
+	return ok
+}
 
 // === E-posta tabanlı hesap akışları ===
 // Şifre sıfırlama + e-posta doğrulama + e-posta değiştirme. Mailler SMTP (dev: MailHog)
@@ -53,6 +77,13 @@ func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	email := strings.TrimSpace(req.Email)
 	respond := func() { writeJSON(w, http.StatusOK, map[string]bool{"ok": true}) }
 	if !validEmail(email) {
+		respond()
+		return
+	}
+	// Mail bombing önleme — hesap SORGUSUNDAN ÖNCE: cooldown gerçek/sahte e-posta ayrımı
+	// yapmaz, yani saldırgan cooldown davranışından hesap varlığı çıkaramaz (enumeration
+	// korunur, yanıt hep 200). Pencere içinde ikinci istek sessizce atlanır.
+	if !h.mailCooldownGeçti(r.Context(), email) {
 		respond()
 		return
 	}
@@ -141,6 +172,12 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 // sendVerifyEmail — hedef adrese doğrulama bağlantısı yollar (newEmail boş = mevcut adresi doğrula).
 func (h *Handler) sendVerifyEmail(r *http.Request, userID int64, targetEmail, newEmail string) error {
+	// Mail bombing önleme — change-email hedefi SALDIRGANIN kontrolünde DEĞİL (başkasının
+	// adresini "yeni e-posta" diye girip mail bombalayabilir). Pencere içinde ikinci istek
+	// sessizce başarılı döner (token da üretilmez → boşuna satır birikmez).
+	if !h.mailCooldownGeçti(r.Context(), targetEmail) {
+		return nil
+	}
 	raw, hash := newEmailToken()
 	var newEmailArg *string
 	if newEmail != "" {
