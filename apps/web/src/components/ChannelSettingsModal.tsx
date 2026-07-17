@@ -9,7 +9,7 @@ import {
   openChannelPerms,
   addToast,
 } from '../store';
-import { t } from '../i18n';
+import { t, errText, localeTag } from '../i18n';
 
 type Tab = 'overview' | 'permissions' | 'invites' | 'integrations';
 
@@ -342,7 +342,7 @@ function ForumTagsManager({ channelId }: { channelId: string }) {
       setNewName('');
       setNewEmoji('');
     } catch (e: any) {
-      setErr(e?.detail || e?.message || t('forum.tagAddFailed'));
+      setErr(errText(e, t('forum.tagAddFailed')));
     } finally {
       setBusy(false);
     }
@@ -457,7 +457,7 @@ function PermissionsTab({ channel }: { channel: APIChannel }) {
         }),
       );
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || t('common.updateFailed') }));
+      dispatch(addToast({ kind: 'error', message: errText(e, t('common.updateFailed')) }));
     } finally {
       setBusy(false);
     }
@@ -494,7 +494,7 @@ function PermissionsTab({ channel }: { channel: APIChannel }) {
         className="mt-4 w-full flex items-center justify-between px-4 py-3 rounded-xl border border-line hover:border-brand-500/50 hover:bg-surface-2 transition-colors"
       >
         <span className="text-sm font-semibold text-ink-primary">{t('channel.advancedPerms')}</span>
-        <span className="text-xs text-ink-tertiary">Roller / Üyeler →</span>
+        <span className="text-xs text-ink-tertiary">{t('ui.rollerUyeler')}</span>
       </button>
     </div>
   );
@@ -513,7 +513,7 @@ function InvitesTab({ channel }: { channel: APIChannel }) {
       const inv = await api.guilds.createInvite(guildId, { max_uses: 0, expires_in_sec: 604800 });
       setLink(`${location.host}/davet/${inv.code}`);
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Davet oluşturulamadı' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Davet oluşturulamadı') }));
     } finally {
       setBusy(false);
     }
@@ -590,7 +590,7 @@ function IntegrationsTab({ channel }: { channel: APIChannel }) {
       setNewUrl(`${location.origin}/api/v1/webhooks/${wh.id}/${wh.token}`);
       await refresh();
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Webhook oluşturulamadı' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Webhook oluşturulamadı') }));
     } finally {
       setCreating(false);
     }
@@ -602,7 +602,7 @@ function IntegrationsTab({ channel }: { channel: APIChannel }) {
       await api.webhooks.delete(id);
       await refresh();
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Silinemedi' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Silinemedi') }));
     }
   }
 
@@ -647,9 +647,9 @@ function IntegrationsTab({ channel }: { channel: APIChannel }) {
       )}
 
       {loading ? (
-        <p className="text-sm text-ink-tertiary">Yükleniyor...</p>
+        <p className="text-sm text-ink-tertiary">{t('ui.yukleniyor')}</p>
       ) : hooks.length === 0 ? (
-        <p className="text-sm text-ink-tertiary">Henüz webhook yok.</p>
+        <p className="text-sm text-ink-tertiary">{t('ui.henuzWebhookYok')}</p>
       ) : (
         <ul className="space-y-2">
           {hooks.map((wh) => (
@@ -663,7 +663,7 @@ function IntegrationsTab({ channel }: { channel: APIChannel }) {
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-ink-primary truncate">{wh.name}</div>
                 <div className="text-xs text-ink-tertiary">
-                  {new Date(wh.created_at).toLocaleDateString('tr-TR')}
+                  {new Date(wh.created_at).toLocaleDateString(localeTag())}
                 </div>
               </div>
               <button
@@ -690,7 +690,7 @@ function DeleteChannelButton({ channel }: { channel: APIChannel }) {
       if (guildId) await dispatch(fetchChannels(guildId));
       dispatch(closeModal());
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Silinemedi' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Silinemedi') }));
     }
   }
   return (

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { api } from '../api';
 import { useAppDispatch, useAppSelector, addToast, fetchMembers } from '../store';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 export function GuildProfileModal({ guildId, onClose }: { guildId: string; onClose: () => void }) {
   const dispatch = useAppDispatch();
@@ -52,9 +52,7 @@ export function GuildProfileModal({ guildId, onClose }: { guildId: string; onClo
       dispatch(addToast({ kind: 'success', message: t('guild.profileUpdated') }));
       onClose();
     } catch (e: any) {
-      dispatch(
-        addToast({ kind: 'error', message: e?.detail || e?.message || t('common.saveFailed') }),
-      );
+      dispatch(addToast({ kind: 'error', message: errText(e, t('common.saveFailed')) }));
     } finally {
       setBusy(false);
     }

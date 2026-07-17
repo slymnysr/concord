@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { PERM } from '../perms';
 import clsx from 'clsx';
 import { voice } from '../voice';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 import { setPresenceStatus } from '../gateway';
 import {
   Hash,
@@ -1075,7 +1075,7 @@ function GuildHeader() {
       await dispatch(fetchGuilds());
       dispatch(switchToDM());
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || t('guild.leaveFailed') }));
+      dispatch(addToast({ kind: 'error', message: errText(e, t('guild.leaveFailed')) }));
     }
     setOpen(false);
   }
@@ -1136,7 +1136,7 @@ function GuildHeader() {
             className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface-2 text-ink-primary flex items-center gap-2"
           >
             <UserPlus size={16} className="text-brand-500" />
-            <span className="text-sm font-medium">Arkadaşları Davet Et</span>
+            <span className="text-sm font-medium">{t('ui.arkadaslariDavetEt')}</span>
           </button>
           <button
             type="button"
@@ -1147,7 +1147,7 @@ function GuildHeader() {
             className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface-2 text-ink-primary flex items-center gap-2"
           >
             <Settings size={16} className="text-brand-500" />
-            <span className="text-sm font-medium">Sunucu Ayarları</span>
+            <span className="text-sm font-medium">{t('ui.sunucuAyarlari')}</span>
           </button>
           {muted ? (
             <button
@@ -1156,7 +1156,7 @@ function GuildHeader() {
               className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface-2 text-ink-primary flex items-center gap-2"
             >
               <Bell size={16} className="text-brand-500" />
-              <span className="text-sm font-medium">Bildirimleri Aç</span>
+              <span className="text-sm font-medium">{t('ui.bildirimleriAc')}</span>
             </button>
           ) : (
             <>
@@ -1200,7 +1200,7 @@ function GuildHeader() {
             className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface-2 text-ink-primary flex items-center gap-2"
           >
             <Pencil size={16} className="text-brand-500" />
-            <span className="text-sm font-medium">Sunucu Profilini Düzenle</span>
+            <span className="text-sm font-medium">{t('ui.sunucuProfiliniDuzenle')}</span>
           </button>
           <button
             type="button"
@@ -1208,7 +1208,7 @@ function GuildHeader() {
             className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface-2 text-ink-primary flex items-center gap-2"
           >
             <Check size={16} className="text-brand-500" />
-            <span className="text-sm font-medium">Tümünü Okundu İşaretle</span>
+            <span className="text-sm font-medium">{t('ui.tumunuOkunduIsaretle')}</span>
           </button>
           <button
             type="button"
@@ -1229,7 +1229,7 @@ function GuildHeader() {
             className="w-full text-left px-3 py-2 rounded-lg hover:bg-accent-500/10 text-accent-500 flex items-center gap-2"
           >
             <LogOut size={16} />
-            <span className="text-sm font-medium">Sunucudan Ayrıl</span>
+            <span className="text-sm font-medium">{t('ui.sunucudanAyril')}</span>
           </button>
         </div>
       )}
@@ -1423,7 +1423,7 @@ function ChannelInvitePopover({
       setSent((s) => ({ ...s, [userId]: true }));
       dispatch(addToast({ kind: 'success', message: t('invite.sent') }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || t('common.sendFailed') }));
+      dispatch(addToast({ kind: 'error', message: errText(e, t('common.sendFailed')) }));
     }
   }
 
@@ -1446,7 +1446,9 @@ function ChannelInvitePopover({
       </div>
       <div className="max-h-52 overflow-y-auto -mx-1 px-1 space-y-0.5">
         {friends.length === 0 ? (
-          <p className="text-xs text-ink-tertiary py-3 text-center">Davet edilecek arkadaş yok.</p>
+          <p className="text-xs text-ink-tertiary py-3 text-center">
+            {t('ui.davetEdilecekArkadasYok')}
+          </p>
         ) : (
           friends.map((f) => (
             <div
@@ -1477,7 +1479,9 @@ function ChannelInvitePopover({
         )}
       </div>
       <div className="mt-2 pt-2 border-t border-line">
-        <div className="text-[11px] text-ink-tertiary mb-1">veya bir davet bağlantısı yolla</div>
+        <div className="text-[11px] text-ink-tertiary mb-1">
+          {t('ui.veyaBirDavetBaglantisiYolla')}
+        </div>
         <div className="flex gap-1.5">
           <input
             readOnly

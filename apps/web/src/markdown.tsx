@@ -1,3 +1,4 @@
+import { localeTag } from './i18n';
 import React from 'react';
 
 // Concord mesaj markdown — Discord-stiline yakın hafif parser
@@ -478,30 +479,30 @@ function TimestampChip({ unix, style }: { unix: number; style: string }) {
     else if (abs < 31536000) label = fmt(Math.round(abs / 2592000), 'ay');
     else label = fmt(Math.round(abs / 31536000), 'yıl');
   } else if (style === 't')
-    label = d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-  else if (style === 'T') label = d.toLocaleTimeString('tr-TR');
-  else if (style === 'd') label = d.toLocaleDateString('tr-TR');
+    label = d.toLocaleTimeString(localeTag(), { hour: '2-digit', minute: '2-digit' });
+  else if (style === 'T') label = d.toLocaleTimeString(localeTag());
+  else if (style === 'd') label = d.toLocaleDateString(localeTag());
   else if (style === 'D')
-    label = d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+    label = d.toLocaleDateString(localeTag(), { day: 'numeric', month: 'long', year: 'numeric' });
   else if (style === 'F')
     label =
-      d.toLocaleDateString('tr-TR', {
+      d.toLocaleDateString(localeTag(), {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
         year: 'numeric',
       }) +
       ' ' +
-      d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+      d.toLocaleTimeString(localeTag(), { hour: '2-digit', minute: '2-digit' });
   else
     label =
-      d.toLocaleDateString('tr-TR') +
+      d.toLocaleDateString(localeTag()) +
       ' ' +
-      d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+      d.toLocaleTimeString(localeTag(), { hour: '2-digit', minute: '2-digit' });
   return (
     <span
       className="bg-surface-2 rounded px-1 text-ink-secondary"
-      title={d.toLocaleString('tr-TR')}
+      title={d.toLocaleString(localeTag())}
     >
       {label}
     </span>

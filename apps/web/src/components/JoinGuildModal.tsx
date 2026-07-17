@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Compass } from 'lucide-react';
 import { useAppDispatch, acceptInviteThunk, closeModal, selectGuild } from '../store';
 import { api, type APIInvitePreview } from '../api';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 export function JoinGuildModal() {
   const dispatch = useAppDispatch();
@@ -27,7 +27,7 @@ export function JoinGuildModal() {
       setPreview(p);
     } catch (e: any) {
       setPreview(null);
-      setError(e?.message || t('invite.notFound'));
+      setError(errText(e, t('invite.notFound')));
     } finally {
       setLoading(false);
     }
@@ -42,7 +42,7 @@ export function JoinGuildModal() {
       dispatch(selectGuild(guild.id));
       dispatch(closeModal());
     } catch (e: any) {
-      setError(typeof e === 'string' ? e : e?.message || t('invite.joinFailed2'));
+      setError(typeof e === 'string' ? e : errText(e, t('invite.joinFailed2')));
     } finally {
       setLoading(false);
     }

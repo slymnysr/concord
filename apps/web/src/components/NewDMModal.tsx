@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Check, Search, Users } from 'lucide-react';
 import { api } from '../api';
 import { useAppDispatch, closeModal, selectDM, selectChannel, setMode } from '../store';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 interface Friend {
   user_id: string;
@@ -75,7 +75,7 @@ export function NewDMModal() {
       dispatch(selectChannel(channelId));
       dispatch(closeModal());
     } catch (e: any) {
-      setError(e?.message || t('dm.createFailed'));
+      setError(errText(e, t('dm.createFailed')));
     } finally {
       setBusy(false);
     }

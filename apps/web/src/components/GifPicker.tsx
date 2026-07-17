@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Search } from 'lucide-react';
 import { api } from '../api';
 import { useAppDispatch } from '../store';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 // Giphy public API. Kendi anahtarınızı localStorage 'concord_giphy_key' ile override edebilirsiniz.
 const GIPHY_KEY =
@@ -54,7 +54,7 @@ export function GifPicker({ channelId, onClose }: Props) {
       if (!res.ok) throw new Error(t('gif.serviceError', { status: res.status }));
       setGifs(parse(await res.json()));
     } catch (e: any) {
-      setErr(e?.message ?? t('gif.loadFailed'));
+      setErr(errText(e, t('gif.loadFailed')));
       setGifs([]);
     } finally {
       setLoading(false);

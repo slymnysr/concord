@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 import { useAppSelector, useAppDispatch, fetchGuilds } from '../../store';
 import { api, type APIRole, type APIMember } from '../../api';
-import { t } from '../../i18n';
+import { t, errText } from '../../i18n';
 
 export function MembersTab({ guildId }: { guildId: string }) {
   const [members, setMembers] = useState<APIMember[]>([]);
@@ -43,7 +43,7 @@ export function MembersTab({ guildId }: { guildId: string }) {
       await api.guilds.update(guildId, { owner_id: m.user_id });
       await dispatch(fetchGuilds());
     } catch (e: any) {
-      alert(e?.message || t('member.transferFailed'));
+      alert(errText(e, t('member.transferFailed')));
     }
   }
 

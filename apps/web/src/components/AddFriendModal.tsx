@@ -3,7 +3,7 @@ import { httpUrl } from '../serverConfig';
 import { UserPlus, Check, X, Mail } from 'lucide-react';
 import { api } from '../api';
 import { useAppDispatch, useAppSelector, openModal } from '../store';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 interface FriendItem {
   user_id: string;
@@ -63,7 +63,7 @@ export function AddFriendModal() {
       setUsername('');
       refresh();
     } catch (e: any) {
-      setError(e?.message ?? 'hata');
+      setError(errText(e, 'hata'));
     } finally {
       setBusy(false);
     }

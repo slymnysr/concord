@@ -418,7 +418,7 @@ function TargetPicker({
             </>
           )}
           {filteredRoles.length === 0 && filteredMembers.length === 0 && (
-            <p className="text-sm text-ink-tertiary p-4 text-center">Sonuç bulunamadı.</p>
+            <p className="text-sm text-ink-tertiary p-4 text-center">{t('ui.sonucBulunamadi')}</p>
           )}
         </div>
       </div>

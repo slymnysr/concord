@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Trash2, Plus, ShieldAlert } from 'lucide-react';
 import { api, type APIAutomodRule } from '../../api';
-import { t } from '../../i18n';
+import { t, errText } from '../../i18n';
 
 const AUTOMOD_TRIGGERS: {
   value: string;
@@ -131,7 +131,7 @@ export function AutomodTab({ guildId }: { guildId: string }) {
       setCreating(false);
       load();
     } catch (e: any) {
-      alert(t('automod.createFailed') + (e?.message ?? ''));
+      alert(errText(e, t('automod.createFailed')));
     } finally {
       setBusy(false);
     }
@@ -248,7 +248,7 @@ export function AutomodTab({ guildId }: { guildId: string }) {
                   <option value={300}>5 dk</option>
                   <option value={600}>10 dk</option>
                   <option value={3600}>1 saat</option>
-                  <option value={86400}>1 gün</option>
+                  <option value={86400}>{t('ui.1Gun')}</option>
                 </select>
               )}
             </label>
@@ -276,7 +276,7 @@ export function AutomodTab({ guildId }: { guildId: string }) {
       ) : rules.length === 0 ? (
         <div className="text-center py-10 text-ink-tertiary">
           <ShieldAlert size={36} className="mx-auto mb-2 opacity-40" />
-          <p className="text-sm">Henüz otomatik moderasyon kuralı yok.</p>
+          <p className="text-sm">{t('ui.henuzOtomatikModerasyonKuraliYok')}</p>
         </div>
       ) : (
         <ul className="space-y-2">

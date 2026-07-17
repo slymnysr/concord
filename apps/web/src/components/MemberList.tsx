@@ -104,7 +104,9 @@ export function MemberList() {
       </div>
 
       {members.length === 0 && (
-        <p className="px-4 text-sm text-ink-tertiary text-center py-6">Üye listesi yükleniyor...</p>
+        <p className="px-4 text-sm text-ink-tertiary text-center py-6">
+          {t('ui.uyeListesiYukleniyor')}
+        </p>
       )}
 
       {/* Arama modu: düz filtrelenmiş liste */}
@@ -149,7 +151,7 @@ export function MemberList() {
                 }}
                 className="w-full px-3 mt-2 mb-1 text-[11px] font-bold text-ink-tertiary uppercase tracking-[0.08em] hover:text-ink-secondary flex items-center justify-between"
               >
-                <span>Çevrimdışı — {offlineMembers.length}</span>
+                <span>{t('member.offlineCount', { n: offlineMembers.length })}</span>
                 <span>{hideOffline ? t('common.show') : t('common.hide')}</span>
               </button>
               {!hideOffline && (

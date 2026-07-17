@@ -21,7 +21,7 @@ export function KeyboardTab() {
   ];
   return (
     <div>
-      <h2 className="text-2xl font-bold text-ink-primary mb-5">Klavye Kısayolları</h2>
+      <h2 className="text-2xl font-bold text-ink-primary mb-5">{t('ui.klavyeKisayollari')}</h2>
       <div className="bg-surface-2 rounded-xl border border-line p-4 space-y-2">
         {shortcuts.map((s, i) => (
           <div

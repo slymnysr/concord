@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Search, Hash, MessageSquare } from 'lucide-react';
 import { api, type APISearchResult } from '../api';
 import { useAppDispatch, useAppSelector, selectGuild, selectChannel, closeModal } from '../store';
-import { t } from '../i18n';
+import { t, localeTag } from '../i18n';
 
 export function SearchModal() {
   const [q, setQ] = useState('');
@@ -231,7 +231,7 @@ export function SearchModal() {
                   {r.channel.name}
                 </span>
                 <span className="text-[10px] text-ink-tertiary ml-auto">
-                  {new Date(r.message.created_at).toLocaleString('tr-TR', {
+                  {new Date(r.message.created_at).toLocaleString(localeTag(), {
                     day: '2-digit',
                     month: '2-digit',
                     hour: '2-digit',

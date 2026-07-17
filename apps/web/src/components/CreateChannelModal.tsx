@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { api } from '../api';
 import { useAppDispatch, useAppSelector, closeModal, fetchChannels, selectChannel } from '../store';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 type ChannelType = 'text' | 'voice' | 'forum' | 'stage' | 'announcement' | 'category' | 'media';
 
@@ -108,7 +108,7 @@ export function CreateChannelModal() {
       dispatch(selectChannel(created.id));
       dispatch(closeModal());
     } catch (e: any) {
-      setError(e?.message || t('channel.createFailed'));
+      setError(errText(e, t('channel.createFailed')));
     } finally {
       setLoading(false);
     }

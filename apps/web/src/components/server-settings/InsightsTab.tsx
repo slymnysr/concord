@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
-import { t } from '../../i18n';
+import { t, localeTag } from '../../i18n';
 
 export function InsightsTab({ guildId }: { guildId: string }) {
   const [data, setData] = useState<Awaited<ReturnType<typeof api.guilds.insights>> | null>(null);
@@ -69,7 +69,7 @@ function Stat({ label, value, accent }: { label: string; value: number; accent?:
   return (
     <div className="bg-surface-2 border border-line rounded-xl p-3">
       <div className={'text-2xl font-bold ' + (accent ? 'text-brand-500' : 'text-ink-primary')}>
-        {value.toLocaleString('tr-TR')}
+        {value.toLocaleString(localeTag())}
       </div>
       <div className="text-xs text-ink-tertiary mt-0.5">{label}</div>
     </div>

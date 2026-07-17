@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAppDispatch, useAppSelector, loginThunk, registerThunk } from '../store';
 import { SERVER_BASE, setServerBase } from '../serverConfig';
 import { api } from '../api';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 type Mode = 'login' | 'register' | 'forgot' | 'reset';
 
@@ -70,7 +70,7 @@ export function AuthPage() {
         history.replaceState(null, '', location.pathname);
         setMode('login');
       } catch (err: any) {
-        setFlowMsg({ kind: 'err', text: err?.message || t('auth.flow.linkInvalid') });
+        setFlowMsg({ kind: 'err', text: errText(err, t('auth.flow.linkInvalid')) });
       } finally {
         setFlowBusy(false);
       }

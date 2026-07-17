@@ -12,7 +12,7 @@ import {
   Camera,
 } from 'lucide-react';
 import { api } from '../api';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 import {
   useAppDispatch,
   createGuildThunk,
@@ -120,7 +120,7 @@ export function CreateGuildModal() {
       }
       dispatch(closeModal());
     } catch (e: any) {
-      setError(e?.message || t('guild.createFailed'));
+      setError(errText(e, t('guild.createFailed')));
     } finally {
       setLoading(false);
     }
@@ -141,7 +141,7 @@ export function CreateGuildModal() {
       dispatch(addToast({ kind: 'success', message: t('guild.joined', { name: guild.name }) }));
       dispatch(closeModal());
     } catch (e: any) {
-      setError(e?.message || t('invite.joinFailed'));
+      setError(errText(e, t('invite.joinFailed')));
     } finally {
       setLoading(false);
     }
@@ -211,7 +211,7 @@ export function CreateGuildModal() {
             }}
             className="w-full py-2.5 rounded-xl bg-surface-3 hover:bg-surface-2 text-ink-primary font-semibold transition-colors"
           >
-            Bir Sunucuya Katıl
+            {t('ui.birSunucuyaKatil')}
           </button>
         </div>
       </div>
@@ -348,7 +348,7 @@ export function CreateGuildModal() {
       >
         <ArrowLeft size={16} /> Geri
       </button>
-      <h2 className="text-xl font-bold text-ink-primary mb-1">Bir Sunucuya Katıl</h2>
+      <h2 className="text-xl font-bold text-ink-primary mb-1">{t('ui.birSunucuyaKatil')}</h2>
       <p className="text-sm text-ink-secondary mb-5">
         Aşağıya bir davet bağlantısı girerek mevcut bir sunucuya katıl.
       </p>

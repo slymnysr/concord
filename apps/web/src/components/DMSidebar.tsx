@@ -136,7 +136,7 @@ export function DMSidebar() {
           </button>
         </div>
         {dms.length === 0 && !showPending && (
-          <p className="px-2 text-xs text-ink-tertiary">Henüz DM yok. "Arkadaş Ekle" ile başla.</p>
+          <p className="px-2 text-xs text-ink-tertiary">{t('ui.henuzDmYokArkadasEkleIle')}</p>
         )}
         {showPending &&
           (() => {

@@ -1,3 +1,4 @@
+import { errText } from './i18n';
 import { useEffect, useRef, useState } from 'react';
 import { Volume2, ScreenShare, Video, PhoneCall, Mic, Users, MessageCircle, X } from 'lucide-react';
 import { voice } from './voice';
@@ -862,7 +863,7 @@ function VoiceStage() {
       await voice.connect(channelId);
       setConnected(true);
     } catch (e: any) {
-      setError(e?.message || t('voice.joinFailed'));
+      setError(errText(e, t('voice.joinFailed')));
     } finally {
       setBusy(false);
     }
@@ -885,7 +886,7 @@ function VoiceStage() {
       await voice.unpublishCamera().catch(() => {});
       setCameraOn(false);
       if (e?.name !== 'NotAllowedError') {
-        setError(e?.message || t('voice.cameraFailed'));
+        setError(errText(e, t('voice.cameraFailed')));
       }
     } finally {
       setBusy(false);
@@ -900,7 +901,7 @@ function VoiceStage() {
       await voice.setVideoBlur(!blurOn);
       setBlurOn(!blurOn);
     } catch (e: any) {
-      setError(e?.message || 'Bulanıklaştırma başlatılamadı (model indirilemedi olabilir)');
+      setError(errText(e, 'Bulanıklaştırma başlatılamadı (model indirilemedi olabilir)'));
     } finally {
       setBusy(false);
     }
@@ -922,7 +923,7 @@ function VoiceStage() {
       await voice.unpublishScreen().catch(() => {});
       setScreenOn(false);
       if (e?.name !== 'NotAllowedError') {
-        setError(e?.message || t('voice.screenFailed'));
+        setError(errText(e, t('voice.screenFailed')));
       }
     } finally {
       setBusy(false);

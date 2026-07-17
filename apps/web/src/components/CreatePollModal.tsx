@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Plus, Trash2, BarChart3 } from 'lucide-react';
 import { api } from '../api';
 import { useAppDispatch } from '../store';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 interface Props {
   channelId: string;
@@ -60,7 +60,7 @@ export function CreatePollModal({ channelId, onClose }: Props) {
       });
       onClose();
     } catch (e: any) {
-      setErr(e?.message ?? t('poll.createFailed'));
+      setErr(errText(e, t('poll.createFailed')));
     } finally {
       setBusy(false);
     }

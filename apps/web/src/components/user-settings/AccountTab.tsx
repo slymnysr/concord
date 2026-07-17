@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Shield } from 'lucide-react';
 import { api, tokenStore } from '../../api';
 import { useAppDispatch, useAppSelector, fetchMe, addToast, logout } from '../../store';
-import { t } from '../../i18n';
+import { t, errText, localeTag } from '../../i18n';
 
 export function AccountTab() {
   const dispatch = useAppDispatch();
@@ -31,7 +31,7 @@ export function AccountTab() {
       setNewEmail('');
       setEmailPass('');
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || t('account.emailChangeFailed') }));
+      dispatch(addToast({ kind: 'error', message: errText(e, t('account.emailChangeFailed')) }));
     } finally {
       setEmailBusy(false);
     }
@@ -55,7 +55,7 @@ export function AccountTab() {
       setNext('');
       setConfirm('');
     } catch (e: any) {
-      setErr(e?.message ?? t('common.error'));
+      setErr(errText(e, t('common.error')));
     }
   }
 
@@ -125,7 +125,7 @@ export function AccountTab() {
           className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
         />
         {err && <p className="text-accent-500 text-sm">{err}</p>}
-        {ok && <p className="text-status-online text-sm">Parola başarıyla değiştirildi.</p>}
+        {ok && <p className="text-status-online text-sm">{t('ui.parolaBasariylaDegistirildi')}</p>}
         <button
           onClick={submit}
           disabled={!current || !next || !confirm}
@@ -159,7 +159,7 @@ function TwoFactorSection() {
       setOtpauth(r.otpauth_url);
       setStep('setup');
     } catch (e: any) {
-      setErr(e?.message ?? 'Başlatılamadı');
+      setErr(errText(e, 'Başlatılamadı'));
     } finally {
       setBusy(false);
     }
@@ -174,7 +174,7 @@ function TwoFactorSection() {
       setStep('idle');
       setCode('');
     } catch (e: any) {
-      setErr(e?.message ?? 'Kod hatalı');
+      setErr(errText(e, 'Kod hatalı'));
     } finally {
       setBusy(false);
     }
@@ -189,7 +189,7 @@ function TwoFactorSection() {
       await api.twofa.disable(c.trim());
       await dispatch(fetchMe());
     } catch (e: any) {
-      setErr(e?.message ?? 'Kapatılamadı');
+      setErr(errText(e, 'Kapatılamadı'));
     } finally {
       setBusy(false);
     }
@@ -197,7 +197,7 @@ function TwoFactorSection() {
 
   return (
     <div className="mt-6">
-      <h3 className="text-base font-bold text-ink-primary mb-2">İki Adımlı Doğrulama (2FA)</h3>
+      <h3 className="text-base font-bold text-ink-primary mb-2">{t('ui.ikiAdimliDogrulama2fa')}</h3>
       <div className="bg-surface-2 rounded-xl border border-line p-4">
         {me.totp_enabled ? (
           <div className="flex items-center justify-between gap-3">
@@ -304,7 +304,7 @@ function PrivacySection() {
           "Sadece arkadaşlar" seçilirse, arkadaşın olmayanlar seninle DM başlatamaz.
         </p>
         {loading ? (
-          <p className="text-xs text-ink-tertiary">Yükleniyor…</p>
+          <p className="text-xs text-ink-tertiary">{t('ui.yukleniyor')}</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             <button
@@ -328,7 +328,9 @@ function PrivacySection() {
                   : 'border-line bg-surface-1 hover:border-brand-500/40')
               }
             >
-              <div className="font-semibold text-ink-primary text-sm">Sadece Arkadaşlar</div>
+              <div className="font-semibold text-ink-primary text-sm">
+                {t('ui.sadeceArkadaslar')}
+              </div>
               <div className="text-xs text-ink-tertiary">{t('privacy.friendsOnly')}</div>
             </button>
           </div>
@@ -356,14 +358,14 @@ function DeleteAccountSection() {
       tokenStore.clear();
       location.reload();
     } catch (e: any) {
-      setErr(e?.detail || e?.message || 'Hesap silinemedi');
+      setErr(errText(e, t('account.deleteFailed')));
       setBusy(false);
     }
   }
 
   return (
     <div className="mt-6 pt-5 border-t border-accent-500/30">
-      <h3 className="text-base font-bold text-accent-500 mb-2">Tehlikeli Bölge</h3>
+      <h3 className="text-base font-bold text-accent-500 mb-2">{t('ui.tehlikeliBolge')}</h3>
       {!open ? (
         <button
           onClick={() => setOpen(true)}
@@ -374,9 +376,9 @@ function DeleteAccountSection() {
       ) : (
         <div className="bg-surface-2 rounded-xl border border-accent-500/40 p-4 space-y-3">
           <p className="text-sm text-ink-secondary">
-            Bu işlem <span className="font-semibold text-ink-primary">geri alınamaz</span>. Profilin
-            anonimleştirilir, tüm oturumların kapatılır ve bir daha giriş yapamazsın. Onaylamak için
-            parolanı gir.
+            Bu işlem <span className="font-semibold text-ink-primary">{t('ui.geriAlinamaz')}</span>.
+            Profilin anonimleştirilir, tüm oturumların kapatılır ve bir daha giriş yapamazsın.
+            Onaylamak için parolanı gir.
           </p>
           <input
             type="password"
@@ -478,7 +480,7 @@ function SessionsSection() {
       </div>
       <div className="bg-surface-2 rounded-xl border border-line divide-y divide-line">
         {loading ? (
-          <p className="text-sm text-ink-tertiary p-4">Yükleniyor…</p>
+          <p className="text-sm text-ink-tertiary p-4">{t('ui.yukleniyor')}</p>
         ) : sessions.length === 0 ? (
           <p className="text-sm text-ink-tertiary p-4">Aktif oturum yok.</p>
         ) : (
@@ -498,7 +500,7 @@ function SessionsSection() {
                     )}
                   </div>
                   <div className="text-xs text-ink-tertiary">
-                    {new Date(s.created_at).toLocaleString('tr-TR', {
+                    {new Date(s.created_at).toLocaleString(localeTag(), {
                       day: 'numeric',
                       month: 'short',
                       year: 'numeric',

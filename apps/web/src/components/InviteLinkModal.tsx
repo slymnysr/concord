@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link as LinkIcon, Copy, Check, Clock, Users, Trash2 } from 'lucide-react';
 import { useAppSelector } from '../store';
 import { api, type APIInvite } from '../api';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 const DURATIONS: { label: string; sec?: number }[] = [
   { label: '30 dakika', sec: 30 * 60 },
@@ -53,7 +53,7 @@ export function InviteLinkModal() {
       });
       await refresh();
     } catch (e: any) {
-      setError(e?.message || t('invite.genFailed'));
+      setError(errText(e, t('invite.genFailed')));
     } finally {
       setLoading(false);
     }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Eye, EyeOff, Trash2, BadgeCheck } from 'lucide-react';
 import { api, type APIConnection } from '../../api';
 import { useAppDispatch, addToast } from '../../store';
-import { t } from '../../i18n';
+import { t, errText } from '../../i18n';
 
 export function ConnectionsTab() {
   const dispatch = useAppDispatch();
@@ -46,7 +46,7 @@ export function ConnectionsTab() {
         dispatch(addToast({ kind: 'success', message: t('conn.added') }));
       })
       .catch((e: any) =>
-        dispatch(addToast({ kind: 'error', message: e?.message || t('common.addFailed') })),
+        dispatch(addToast({ kind: 'error', message: errText(e, t('common.addFailed')) })),
       )
       .finally(() => setBusy(false));
   };

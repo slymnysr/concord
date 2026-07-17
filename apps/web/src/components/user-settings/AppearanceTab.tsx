@@ -72,7 +72,7 @@ export function AppearanceTab() {
             }
           >
             <div className="font-semibold text-ink-primary mb-1">Rahat (Cozy)</div>
-            <div className="text-xs text-ink-tertiary">Geniş aralık, büyük avatarlar</div>
+            <div className="text-xs text-ink-tertiary">{t('ui.genisAralikBuyukAvatarlar')}</div>
           </button>
           <button
             onClick={() => applyDensity('compact')}
@@ -83,8 +83,8 @@ export function AppearanceTab() {
                 : 'border-line bg-surface-1 hover:border-brand-500/40')
             }
           >
-            <div className="font-semibold text-ink-primary mb-1">Yoğun (Compact)</div>
-            <div className="text-xs text-ink-tertiary">Dar satırlar, IRC tarzı</div>
+            <div className="font-semibold text-ink-primary mb-1">{t('ui.yogunCompact')}</div>
+            <div className="text-xs text-ink-tertiary">{t('ui.darSatirlarIrcTarzi')}</div>
           </button>
         </div>
       </div>
@@ -139,10 +139,10 @@ export function AppearanceTab() {
 
       <div className="bg-surface-2 rounded-xl border border-line p-4">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-bold text-ink-primary">Yakınlaştırma Düzeyi</h3>
+          <h3 className="text-sm font-bold text-ink-primary">{t('ui.yakinlastirmaDuzeyi')}</h3>
           <span className="text-sm font-mono text-ink-secondary">{zoom}%</span>
         </div>
-        <p className="text-xs text-ink-secondary mb-3">Tüm arayüzü büyütür veya küçültür.</p>
+        <p className="text-xs text-ink-secondary mb-3">{t('ui.tumArayuzuBuyuturVeyaKucultur')}</p>
         <div className="flex items-center gap-3">
           <button
             onClick={() => applyZoom(Math.max(50, zoom - 10))}

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Compass, Search, Users, Hash } from 'lucide-react';
 import { api } from '../api';
 import { useAppDispatch, addToast, selectGuild, setMode } from '../store';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 interface DiscoverGuild {
   id: string;
@@ -71,7 +71,7 @@ export function DiscoverContent() {
       dispatch(setMode('guild'));
       dispatch(selectGuild(g.id));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || t('invite.joinFailed') }));
+      dispatch(addToast({ kind: 'error', message: errText(e, t('invite.joinFailed')) }));
     } finally {
       setJoiningId(null);
     }
@@ -87,7 +87,7 @@ export function DiscoverContent() {
       {/* Hero */}
       <div className="bg-gradient-to-br from-brand-600 to-brand-900 px-8 py-10 text-center">
         <h1 className="text-3xl font-extrabold text-white">{t('discover.title')}</h1>
-        <p className="text-white/80 mt-2">Herkese açık sunucuları bul ve sana uygun olana katıl.</p>
+        <p className="text-white/80 mt-2">{t('ui.herkeseAcikSunuculariBulVeSana')}</p>
         <div className="relative max-w-md mx-auto mt-5">
           <Search
             size={16}

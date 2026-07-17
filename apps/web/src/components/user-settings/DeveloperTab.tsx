@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Trash2, Bot, Copy, RefreshCw, Plus } from 'lucide-react';
 import { api, type APIApplication } from '../../api';
 import { useAppDispatch, useAppSelector, addToast } from '../../store';
-import { t } from '../../i18n';
+import { t, errText } from '../../i18n';
 
 export function DeveloperTab() {
   const dispatch = useAppDispatch();
@@ -42,7 +42,7 @@ export function DeveloperTab() {
         );
       })
       .catch((e: any) =>
-        dispatch(addToast({ kind: 'error', message: e?.message || t('common.createFailed') })),
+        dispatch(addToast({ kind: 'error', message: errText(e, t('common.createFailed')) })),
       )
       .finally(() => setBusy(false));
   };
@@ -87,7 +87,7 @@ export function DeveloperTab() {
         dispatch(
           addToast({
             kind: 'error',
-            message: e?.message || t('dev.addFailed'),
+            message: errText(e, t('dev.addFailed')),
           }),
         ),
       );

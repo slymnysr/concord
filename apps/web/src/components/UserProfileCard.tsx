@@ -14,7 +14,7 @@ import {
 import { ProfileBadges } from './ProfileBadges';
 import { ConnectionChips } from './connectionMeta';
 import { activityVerb, activityElapsed } from '../activity';
-import { t } from '../i18n';
+import { t, errText, localeTag } from '../i18n';
 
 type AnchorRect = {
   top: number;
@@ -48,7 +48,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
     api.users
       .user(userId)
       .then(setUser)
-      .catch((e) => setError(e?.message ?? t('common.loadFailed')));
+      .catch((e) => setError(errText(e, t('common.loadFailed'))));
   }, [userId]);
 
   useEffect(() => {
@@ -273,7 +273,7 @@ export function UserProfileCard({ userId, onClose, anchorRect }: Props) {
                     Concord Üye
                   </h3>
                   <p className="text-xs text-ink-secondary">
-                    {new Date(user.created_at).toLocaleDateString('tr-TR', {
+                    {new Date(user.created_at).toLocaleDateString(localeTag(), {
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric',

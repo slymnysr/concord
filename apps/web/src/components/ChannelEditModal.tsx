@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Hash, Volume2 } from 'lucide-react';
 import { api, type APIChannel } from '../api';
 import { useAppDispatch, useAppSelector, closeModal, fetchChannels } from '../store';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 interface Props {
   channel: APIChannel;
@@ -37,7 +37,7 @@ export function ChannelEditModal({ channel }: Props) {
       await dispatch(fetchChannels(guildId));
       dispatch(closeModal());
     } catch (e: any) {
-      setErr(e?.message || t('common.updateFailed'));
+      setErr(errText(e, t('common.updateFailed')));
     } finally {
       setBusy(false);
     }
@@ -109,7 +109,7 @@ export function ChannelEditModal({ channel }: Props) {
                 onChange={(e) => setNsfw(e.target.checked)}
                 className="w-4 h-4 accent-brand-500"
               />
-              <span className="text-sm text-ink-primary">+18 (NSFW) içerik</span>
+              <span className="text-sm text-ink-primary">{t('ui.18NsfwIcerik')}</span>
             </label>
           </>
         )}

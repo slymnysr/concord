@@ -117,7 +117,7 @@ export function VoiceTab() {
             className="accent-brand-500"
           />
           <span className="text-sm text-ink-primary">
-            Ses Aktivitesi <span className="text-ink-tertiary">(her zaman açık)</span>
+            Ses Aktivitesi <span className="text-ink-tertiary">{t('ui.herZamanAcik')}</span>
           </span>
         </label>
         <label className="flex items-center gap-3 cursor-pointer">
@@ -128,7 +128,7 @@ export function VoiceTab() {
             className="accent-brand-500"
           />
           <span className="text-sm text-ink-primary">
-            Bas-Konuş <span className="text-ink-tertiary">(sadece tuşa basılıyken)</span>
+            Bas-Konuş <span className="text-ink-tertiary">{t('ui.sadeceTusaBasiliyken')}</span>
           </span>
         </label>
         {ptt && (
@@ -200,7 +200,7 @@ export function VoiceTab() {
               aria-label={t('voice.streamResolution')}
             >
               <option value="480">480p</option>
-              <option value="720">720p (önerilen)</option>
+              <option value="720">{t('ui.720pOnerilen')}</option>
               <option value="1080">1080p</option>
             </select>
           </div>

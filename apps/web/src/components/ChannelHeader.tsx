@@ -28,7 +28,7 @@ import {
   selectDM,
 } from '../store';
 import { api, type APIPublicUser } from '../api';
-import { t } from '../i18n';
+import { t, localeTag } from '../i18n';
 
 const Icon: Record<string, LucideIcon> = {
   text: Hash,
@@ -371,7 +371,7 @@ function formatRel(d: Date): string {
   if (h < 24) return t('time.hourAgo', { n: h });
   const days = Math.floor(h / 24);
   if (days < 7) return t('time.dayAgo', { n: days });
-  return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
+  return d.toLocaleDateString(localeTag(), { day: '2-digit', month: 'short' });
 }
 
 function PinsButton({ channelId }: { channelId: string }) {
@@ -427,7 +427,9 @@ function PinsButton({ channelId }: { channelId: string }) {
       {open && (
         <div className="absolute right-0 top-11 w-96 max-h-[500px] flex flex-col bg-surface-1 border border-line rounded-xl shadow-2xl z-30">
           <div className="px-4 py-3 border-b border-line">
-            <h3 className="font-semibold text-ink-primary text-sm">Sabitlenmiş Mesajlar</h3>
+            <h3 className="font-semibold text-ink-primary text-sm">
+              {t('ui.sabitlenmisMesajlar')}
+            </h3>
           </div>
           <div className="overflow-y-auto flex-1">
             {items.length === 0 ? (
@@ -466,7 +468,7 @@ function PinsButton({ channelId }: { channelId: string }) {
                           <div className="flex items-baseline gap-2">
                             <span className="text-sm font-semibold text-ink-primary">{name}</span>
                             <span className="text-[10px] text-ink-tertiary">
-                              {new Date(m.created_at).toLocaleDateString('tr-TR', {
+                              {new Date(m.created_at).toLocaleDateString(localeTag(), {
                                 day: '2-digit',
                                 month: 'short',
                               })}

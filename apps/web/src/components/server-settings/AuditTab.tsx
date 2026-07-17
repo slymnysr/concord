@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ScrollText } from 'lucide-react';
 import { useAppSelector } from '../../store';
 import { api } from '../../api';
-import { t } from '../../i18n';
+import { t, localeTag } from '../../i18n';
 
 const AUDIT_LABELS: Record<string, string> = {
   guild_update: t('audit.guildUpdate'),
@@ -79,7 +79,7 @@ export function AuditTab({ guildId }: { guildId: string }) {
                     {l.reason ? <span className="text-ink-tertiary"> — {l.reason}</span> : null}
                   </div>
                   <div className="text-[11px] text-ink-tertiary">
-                    {new Date(l.created_at).toLocaleString('tr-TR')}
+                    {new Date(l.created_at).toLocaleString(localeTag())}
                   </div>
                 </div>
               </li>

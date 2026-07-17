@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Trash2, Plus, Calendar, X } from 'lucide-react';
 import { useAppSelector } from '../../store';
 import { api } from '../../api';
-import { t } from '../../i18n';
+import { t, localeTag } from '../../i18n';
 
 export function EventsTab({ guildId }: { guildId: string }) {
   const [events, setEvents] = useState<Awaited<ReturnType<typeof api.events.list>>>([]);
@@ -111,7 +111,7 @@ export function EventsTab({ guildId }: { guildId: string }) {
               onChange={(e) => setChannelId(e.target.value)}
               className="w-full bg-surface-1 border border-line rounded-lg px-3 py-2 text-ink-primary"
             >
-              <option value="">— Kanal seç —</option>
+              <option value="">{t('ui.kanalSec')}</option>
               {voiceOrStage.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.type === 'stage' ? '🎤 ' : '🔊 '}
@@ -153,8 +153,8 @@ export function EventsTab({ guildId }: { guildId: string }) {
                   <div className="text-xs text-ink-secondary mt-0.5">{e.description}</div>
                 )}
                 <div className="text-xs text-ink-tertiary mt-1">
-                  📅 {new Date(e.scheduled_start_at).toLocaleString('tr-TR')} · {e.subscriber_count}{' '}
-                  ilgilenen
+                  📅 {new Date(e.scheduled_start_at).toLocaleString(localeTag())} ·{' '}
+                  {e.subscriber_count} ilgilenen
                 </div>
                 {e.entity_location && (
                   <div className="text-xs text-ink-tertiary mt-0.5">📍 {e.entity_location}</div>

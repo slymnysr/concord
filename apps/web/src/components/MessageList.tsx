@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { EmojiPicker } from './EmojiPicker';
 import { ForwardModal } from './ForwardModal';
-import { getLocale, t } from '../i18n';
+import { getLocale, t, errText, localeTag } from '../i18n';
 import {
   useAppDispatch,
   useAppSelector,
@@ -204,7 +204,9 @@ export function MessageList() {
 
   if (!channel) {
     return (
-      <div className="flex-1 flex items-center justify-center text-ink-tertiary">Bir kanal seç</div>
+      <div className="flex-1 flex items-center justify-center text-ink-tertiary">
+        {t('ui.birKanalSec')}
+      </div>
     );
   }
 
@@ -278,8 +280,7 @@ export function MessageList() {
             </div>
             <h1 className="text-2xl font-bold text-ink-primary tracking-tight">#{channel.name}</h1>
             <p className="text-ink-secondary text-sm mt-1">
-              Bu, <span className="text-ink-primary font-medium">#{channel.name}</span> kanalının
-              başlangıcı.
+              {t('channel.startOf', { name: channel.name })}
             </p>
           </div>
         )}
@@ -316,7 +317,7 @@ export function MessageList() {
                     <span>
                       {m.content}
                       <span className="ml-2 text-[10px]">
-                        {new Date(m.created_at).toLocaleTimeString('tr-TR', {
+                        {new Date(m.created_at).toLocaleTimeString(localeTag(), {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
@@ -414,7 +415,7 @@ function DateDivider({ date }: { date: Date }) {
   if (date.toDateString() === today.toDateString()) label = t('date.today');
   else if (date.toDateString() === yesterday.toDateString()) label = t('date.yesterday');
   else
-    label = date.toLocaleDateString('tr-TR', {
+    label = date.toLocaleDateString(localeTag(), {
       day: 'numeric',
       month: 'long',
       year: date.getFullYear() === today.getFullYear() ? undefined : 'numeric',
@@ -752,7 +753,7 @@ function MessageItem({
         ) : (
           <div
             className="w-10 shrink-0 text-[10px] text-transparent group-hover:text-ink-tertiary text-right pr-2 leading-7 select-none"
-            title={new Date(ts).toLocaleString('tr-TR')}
+            title={new Date(ts).toLocaleString(localeTag())}
           >
             {formatTime(ts)}
           </div>
@@ -837,7 +838,7 @@ function MessageItem({
             editedAt ? (
               <span
                 className="text-[10px] text-ink-tertiary"
-                title={new Date(editedAt).toLocaleString('tr-TR')}
+                title={new Date(editedAt).toLocaleString(localeTag())}
               >
                 (düzenlendi)
               </span>
@@ -849,7 +850,7 @@ function MessageItem({
               {publishedAt && (
                 <span
                   className="ml-1.5 text-[9px] font-semibold uppercase tracking-wide bg-surface-3 text-ink-tertiary rounded px-1 py-px align-middle"
-                  title={t('msg.publishedAt') + new Date(publishedAt).toLocaleString('tr-TR')}
+                  title={t('msg.publishedAt') + new Date(publishedAt).toLocaleString(localeTag())}
                 >
                   📣 Yayınlandı
                 </span>
@@ -1064,7 +1065,7 @@ function MessageItem({
                               dispatch(
                                 addToast({
                                   kind: 'error',
-                                  message: e?.message || t('msg.publishFailed'),
+                                  message: errText(e, t('msg.publishFailed')),
                                 }),
                               ),
                             );
@@ -1403,7 +1404,7 @@ function formatBytes(b: number): string {
 }
 
 function formatTime(ts: number) {
-  return new Date(ts).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  return new Date(ts).toLocaleTimeString(localeTag(), { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatFull(ts: number) {
@@ -1411,14 +1412,14 @@ function formatFull(ts: number) {
   const now = new Date();
   // Çok yeni mesajlar için göreli zaman
   const diffSec = Math.round((now.getTime() - ts) / 1000);
-  if (diffSec >= 0 && diffSec < 60) return 'az önce';
+  if (diffSec >= 0 && diffSec < 60) return t('time.justNow');
   if (diffSec < 3600) return t('time.minAgoShort', { n: Math.floor(diffSec / 60) });
   if (d.toDateString() === now.toDateString()) return t('date.todayAt', { time: formatTime(ts) });
   const yest = new Date(now);
   yest.setDate(yest.getDate() - 1);
   if (d.toDateString() === yest.toDateString())
     return t('date.yesterdayAt', { time: formatTime(ts) });
-  return d.toLocaleString('tr-TR', {
+  return d.toLocaleString(localeTag(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -1455,7 +1456,7 @@ function EditedLabel({ messageId, editedAt }: { messageId: string; editedAt: str
       <button
         onClick={() => setOpen((o) => !o)}
         className="text-[10px] text-ink-tertiary ml-1 hover:text-brand-400 hover:underline"
-        title={new Date(editedAt).toLocaleString('tr-TR')}
+        title={new Date(editedAt).toLocaleString(localeTag())}
       >
         (düzenlendi)
       </button>
@@ -1473,7 +1474,7 @@ function EditedLabel({ messageId, editedAt }: { messageId: string; editedAt: str
               {edits.map((e) => (
                 <li key={e.id} className="bg-surface-2 rounded-lg p-2">
                   <div className="text-[10px] text-ink-tertiary mb-0.5">
-                    {new Date(e.edited_at).toLocaleString('tr-TR')}
+                    {new Date(e.edited_at).toLocaleString(localeTag())}
                   </div>
                   <div className="text-xs text-ink-secondary whitespace-pre-wrap break-words line-through decoration-ink-muted/40">
                     {e.old_content}
@@ -1563,7 +1564,7 @@ function RichEmbeds({ embeds }: { embeds: RichEmbed[] }) {
                 )}
                 {e.footer_text && <span>{e.footer_text}</span>}
                 {e.footer_text && e.timestamp && <span>•</span>}
-                {e.timestamp && <span>{new Date(e.timestamp).toLocaleString('tr-TR')}</span>}
+                {e.timestamp && <span>{new Date(e.timestamp).toLocaleString(localeTag())}</span>}
               </div>
             )}
           </div>
@@ -1835,7 +1836,7 @@ function InviteCard({ content }: { content: string }) {
       dispatch(selectGuild(guild.id));
       dispatch(addToast({ kind: 'success', message: t('guild.joined', { name: guild.name }) }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || t('invite.joinFailed') }));
+      dispatch(addToast({ kind: 'error', message: errText(e, t('invite.joinFailed')) }));
     } finally {
       setJoining(false);
     }
@@ -1905,7 +1906,7 @@ function InviteCard({ content }: { content: string }) {
         {preview && (
           <div className="mt-2 pt-2 border-t border-line text-[11px] text-ink-tertiary">
             Kuruluş:{' '}
-            {new Date(preview.guild.created_at).toLocaleDateString('tr-TR', {
+            {new Date(preview.guild.created_at).toLocaleDateString(localeTag(), {
               day: 'numeric',
               month: 'long',
               year: 'numeric',

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, Clock, Trash2 } from 'lucide-react';
 import { api, type APIScheduledMessage } from '../api';
-import { t } from '../i18n';
+import { t, errText, localeTag } from '../i18n';
 
 interface Props {
   channelId: string;
@@ -58,7 +58,7 @@ export function ScheduleMessageModal({ channelId, initialContent, onClose, onSch
       loadExisting();
       onScheduled?.();
     } catch (e: any) {
-      setErr(e?.message ?? t('sched.failed'));
+      setErr(errText(e, t('sched.failed')));
     } finally {
       setBusy(false);
     }
@@ -135,7 +135,7 @@ export function ScheduleMessageModal({ channelId, initialContent, onClose, onSch
                   >
                     <span className="flex-1 min-w-0 truncate text-ink-secondary">{m.content}</span>
                     <span className="text-[11px] text-ink-tertiary shrink-0">
-                      {new Date(m.scheduled_for).toLocaleString('tr-TR', {
+                      {new Date(m.scheduled_for).toLocaleString(localeTag(), {
                         day: 'numeric',
                         month: 'short',
                         hour: '2-digit',

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { MessagesSquare, Plus, X, Archive, Search } from 'lucide-react';
 import { api, type APIChannel } from '../api';
 import { useAppDispatch, useAppSelector, selectChannel } from '../store';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 type ForumPost = APIChannel & {
   message_count?: number;
@@ -131,7 +131,7 @@ export function ForumView({ channelId }: { channelId: string }) {
           <div className="text-center py-16 text-ink-tertiary">
             <MessagesSquare size={40} className="mx-auto mb-3 opacity-40" />
             <p className="text-sm">{t('forum.noPosts')}</p>
-            <p className="text-xs mt-1">"Yeni Gönderi" ile ilk tartışmayı başlat.</p>
+            <p className="text-xs mt-1">{t('ui.yeniGonderiIleIlkTartismayiBaslat')}</p>
           </div>
         ) : (
           <div className="max-w-3xl mx-auto space-y-2">
@@ -197,7 +197,9 @@ export function ForumView({ channelId }: { channelId: string }) {
                           <span className="flex items-center gap-1">
                             <MessagesSquare size={11} /> {p.message_count ?? 0} mesaj
                           </span>
-                          {p.archived && <span className="text-ink-tertiary">· arşivlendi</span>}
+                          {p.archived && (
+                            <span className="text-ink-tertiary">{t('ui.arsivlendi')}</span>
+                          )}
                         </div>
                         {(p.tag_ids ?? []).length > 0 && (
                           <div className="flex items-center gap-1 flex-wrap mt-1.5">
@@ -292,7 +294,7 @@ function CreatePostModal({
       await api.channels.sendMessage(thread.id, body.trim()).catch(() => {});
       onCreated(thread.id);
     } catch (e: any) {
-      setErr(e?.message ?? t('forum.createFailed'));
+      setErr(errText(e, t('forum.createFailed')));
     } finally {
       setBusy(false);
     }

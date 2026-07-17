@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../api';
 import { playMentionSound, playMessageSound } from '../../notifSound';
 import { AudioToggle } from './shared';
-import { t } from '../../i18n';
+import { t, errText } from '../../i18n';
 
 export function NotificationsTab() {
   const [enabled, setEnabled] = useState<NotificationPermission>(
@@ -44,7 +44,7 @@ export function NotificationsTab() {
       });
       setSubscribed(true);
     } catch (e: any) {
-      setErr(e?.message ?? t('notif.pushFailed'));
+      setErr(errText(e, t('notif.pushFailed')));
     }
   }
 
@@ -86,7 +86,7 @@ export function NotificationsTab() {
             onClick={enable}
             className="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-white font-semibold"
           >
-            Bildirimleri Aç
+            {t('ui.bildirimleriAc')}
           </button>
         )}
       </div>

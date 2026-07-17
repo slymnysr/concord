@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import { api, type APIBan } from '../../api';
-import { t } from '../../i18n';
+import { t, localeTag } from '../../i18n';
 
 export function BansTab({ guildId }: { guildId: string }) {
   const [bans, setBans] = useState<APIBan[]>([]);
@@ -94,7 +94,7 @@ export function BansTab({ guildId }: { guildId: string }) {
               <div className="text-ink-primary font-mono text-sm">{b.user_id}</div>
               {b.reason && <div className="text-xs text-ink-tertiary mt-1">Sebep: {b.reason}</div>}
               <div className="text-xs text-ink-muted mt-1">
-                {new Date(b.banned_at).toLocaleString('tr-TR')}
+                {new Date(b.banned_at).toLocaleString(localeTag())}
               </div>
             </div>
             <button

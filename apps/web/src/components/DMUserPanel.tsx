@@ -11,7 +11,7 @@ import {
   ChevronRight,
   Users,
 } from 'lucide-react';
-import { t } from '../i18n';
+import { t, errText, localeTag } from '../i18n';
 import { api, type APIPublicUser } from '../api';
 import { ConnectionChips } from './connectionMeta';
 import { useAppDispatch, useAppSelector, addToast, toggleIgnore, switchToDM } from '../store';
@@ -142,7 +142,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
         dispatch(addToast({ kind: 'success', message: t('friend.requestSent') }));
       }
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || t('common.actionFailed') }));
+      dispatch(addToast({ kind: 'error', message: errText(e, t('common.actionFailed')) }));
     } finally {
       setBusy(false);
     }
@@ -156,7 +156,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
       setUser({ ...user, friendship_state: 'blocked' });
       dispatch(addToast({ kind: 'info', message: t('user.blocked') }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || t('user.blockFailed') }));
+      dispatch(addToast({ kind: 'error', message: errText(e, t('user.blockFailed')) }));
     }
     setMenuOpen(false);
   }
@@ -179,7 +179,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
       dispatch(
         addToast({
           kind: 'error',
-          message: e?.message?.includes('forbidden')
+          message: errText(e)?.includes('forbidden')
             ? t('invite.noPermission')
             : t('invite.createFailed'),
         }),
@@ -332,7 +332,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
                       dispatch(addToast({ kind: 'success', message: t('report.received') }));
                     } catch (e: any) {
                       dispatch(
-                        addToast({ kind: 'error', message: e?.message || t('report.failed') }),
+                        addToast({ kind: 'error', message: errText(e, t('report.failed')) }),
                       );
                     }
                   }}
@@ -418,7 +418,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
             aria-label={t('profile.concordMembership')}
           >
             <p className="text-xs text-ink-secondary">
-              {new Date(user.created_at).toLocaleDateString('tr-TR', {
+              {new Date(user.created_at).toLocaleDateString(localeTag(), {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',
@@ -527,7 +527,7 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
       setGroupName(name);
       dispatch(addToast({ kind: 'success', message: 'Grup adı güncellendi' }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Ad değiştirilemedi' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Ad değiştirilemedi') }));
     }
   }
 
@@ -538,7 +538,7 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
       setReloadKey((k) => k + 1);
       dispatch(addToast({ kind: 'success', message: t('dm.removedFromGroup', { name }) }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Çıkarılamadı' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Çıkarılamadı') }));
     }
   }
 
@@ -556,7 +556,7 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
       setAddOpen(false);
       dispatch(addToast({ kind: 'success', message: 'Kişi eklendi' }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Eklenemedi' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Eklenemedi') }));
     }
   }
   async function leaveGroup() {
@@ -565,7 +565,7 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
       await api.dms.removeRecipient(channelId, me.id);
       dispatch(switchToDM());
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Ayrılınamadı' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Ayrılınamadı') }));
     }
   }
 
@@ -678,7 +678,7 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
         {addOpen && (
           <div className="max-h-40 overflow-y-auto bg-surface-2 rounded-lg p-1">
             {friends.filter((f) => !members.some((m) => m.id === f.user_id)).length === 0 ? (
-              <p className="text-xs text-ink-tertiary px-2 py-1.5">Eklenecek arkadaş yok.</p>
+              <p className="text-xs text-ink-tertiary px-2 py-1.5">{t('ui.eklenecekArkadasYok')}</p>
             ) : (
               friends
                 .filter((f) => !members.some((m) => m.id === f.user_id))

@@ -112,3 +112,121 @@ PUT /api/v1/users/me/push-subscriptions
 - `platform: "web"` → `p256dh` + `auth` **zorunlu** (Web Push payload'ı bunlarla şifrelenir).
 - `platform: "expo"` → `endpoint` `ExponentPushToken[...]` olmalı; p256dh/auth **gönderilmez**.
 - `platform` yoksa geriye dönük çıkarım yapılır (p256dh/auth varsa web, yoksa expo).
+
+## Hata sözleşmesi — İSTEMCİ `error` KODUNU ÇEVİRİR, `detail`'i GÖSTERMEZ
+
+```
+{ "error": "<kod>", "detail": "<geliştirici ipucu>" }
+```
+
+**KURAL:** `detail` **TÜRKÇEDİR ve kullanıcıya GÖSTERİLMEMELİDİR.** Uygulama global;
+Fransız kullanıcıya "sunucu oluşturulamadı" göstermek kabul edilemez. `detail` yalnızca
+geliştirici/log içindir (konsola bas, ekrana değil).
+
+**İstemci yapmalı:**
+
+1. `t('error.' + error)` — çevirisi varsa onu göster.
+2. Yoksa HTTP durumuna göre GENEL yerelleştirilmiş mesaj (400 → "geçersiz istek",
+   403 → "yetkin yok", 404 → "bulunamadı", 429 → "çok fazla istek", 5xx → "bir şeyler ters gitti").
+3. `detail`'i ASLA ekrana koyma; konsola yaz.
+
+**Kodlar KARARLIDIR** — bir kod yayınlandıktan sonra anlamı değişmez, silinmez.
+Yeni durum için yeni kod eklenir. Şu an 92 kod:
+
+`2fa_required`
+`already_enabled`
+`already_exists`
+`already_following`
+`already_member`
+`already_published`
+`automod_blocked`
+`bad_platform`
+`bad_request`
+`bad_time`
+`bad_token`
+`banned`
+`blocked`
+`cannot_ban_owner`
+`cannot_delete_everyone`
+`cannot_kick_owner`
+`communication_disabled`
+`conflict`
+`dm_restricted`
+`email_taken`
+`exhausted`
+`expired`
+`forbidden`
+`github_error`
+`internal`
+`invalid`
+`invalid_2fa`
+`invalid_actions`
+`invalid_answers`
+`invalid_attachment`
+`invalid_auto_archive`
+`invalid_bio`
+`invalid_code`
+`invalid_content`
+`invalid_credentials`
+`invalid_description`
+`invalid_email`
+`invalid_entity_type`
+`invalid_format`
+`invalid_level`
+`invalid_name`
+`invalid_question`
+`invalid_rate`
+`invalid_refresh`
+`invalid_response`
+`invalid_role`
+`invalid_state`
+`invalid_status`
+`invalid_target`
+`invalid_token`
+`invalid_topic`
+`invalid_trigger`
+`invalid_type`
+`invalid_username`
+`invalid_users`
+`invalid_volume`
+`limit_reached`
+`mail_failed`
+`missing`
+`missing_arg`
+`missing_emoji`
+`missing_location`
+`missing_permission`
+`no_secret`
+`no_storage`
+`no_token`
+`not_announcement`
+`not_bot`
+`not_configured`
+`not_enabled`
+`not_found`
+`not_member`
+`not_stage`
+`not_voice`
+`nothing_to_update`
+`owner_cant_leave`
+`owns_guilds`
+`perm_escalation`
+`poll_expired`
+`private_bot`
+`rate_limited`
+`role_hierarchy`
+`self`
+`self_follow`
+`slowmode`
+`too_far`
+`too_large`
+`too_many_tags`
+`too_soon`
+`unauthorized`
+`weak_password`
+`wrong_password`
+
+> `bad_request` / `internal` / `not_found` / `forbidden` genel kodlardır: çağrı yerine göre
+> farklı `detail` taşırlar. İstemci bunlar için genel mesaj gösterir. Kullanıcının **eylem
+> alabileceği** durumlar (ör. `invalid_attachment`, `rate_limited`, `weak_password`,
+> `channel_full`) özel kodlarla ayrılmıştır ve çevrilmelidir.

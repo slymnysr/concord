@@ -294,14 +294,14 @@ function GuildContextMenu({
           }}
           className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink-primary hover:bg-surface-2"
         >
-          Sunucu Ayarları
+          {t('ui.sunucuAyarlari')}
         </button>
         <div className="my-1 h-px bg-line" />
         <button
           onClick={leave}
           className="w-full text-left px-3 py-2 rounded-lg text-sm text-accent-500 hover:bg-accent-500/10"
         >
-          Sunucudan Ayrıl
+          {t('ui.sunucudanAyril')}
         </button>
       </div>
     </div>

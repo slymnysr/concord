@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Image as ImageIcon, X } from 'lucide-react';
 import { useAppDispatch, useAppSelector, fetchMessages } from '../store';
 import type { APIAttachment } from '../api';
-import { t } from '../i18n';
+import { t, localeTag } from '../i18n';
 
 type MediaItem = { att: APIAttachment; author?: string; created_at: string };
 
@@ -68,7 +68,7 @@ export function MediaView({ channelId }: { channelId: string }) {
                   className="group relative aspect-square rounded-lg overflow-hidden bg-surface-2 border border-line hover:ring-2 hover:ring-brand-500 transition"
                   title={
                     it.author
-                      ? `${it.author} · ${new Date(it.created_at).toLocaleString('tr-TR')}`
+                      ? `${it.author} · ${new Date(it.created_at).toLocaleString(localeTag())}`
                       : undefined
                   }
                 >

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Hash, Megaphone, Check } from 'lucide-react';
 import { api, type APIChannel } from '../api';
 import { useAppDispatch, useAppSelector, closeModal, addToast } from '../store';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 // Duyuru kanalını takip et: kendi sunucularından birinin metin kanalını seç,
 // kaynakta "Yayınla"nan mesajlar oraya otomatik iletilir.
@@ -58,7 +58,7 @@ export function FollowChannelModal() {
         dispatch(closeModal());
       })
       .catch((e: any) => {
-        dispatch(addToast({ kind: 'error', message: e?.message || t('follow.failed') }));
+        dispatch(addToast({ kind: 'error', message: errText(e, t('follow.failed')) }));
         setBusy(false);
       });
   };

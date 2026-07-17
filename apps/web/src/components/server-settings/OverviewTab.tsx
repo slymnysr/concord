@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch, fetchGuilds } from '../../store';
 import { api, type APIRole } from '../../api';
-import { t } from '../../i18n';
+import { t, errText, localeTag } from '../../i18n';
 
 export function OverviewTab({ guildId }: { guildId: string }) {
   const guild = useAppSelector((s) => s.guilds.list.find((g) => g.id === guildId));
@@ -39,7 +39,7 @@ export function OverviewTab({ guildId }: { guildId: string }) {
       await api.guilds.deleteGuild(guild.id);
       await dispatch(fetchGuilds());
     } catch (e: any) {
-      alert(e?.message || t('common.deleteFailed'));
+      alert(errText(e, t('common.deleteFailed')));
     }
   }
 
@@ -136,7 +136,7 @@ export function OverviewTab({ guildId }: { guildId: string }) {
         <Row label={t('guild.serverId')} value={guild.id} mono />
         <Row
           label={t('guild.createdAt')}
-          value={new Date(guild.created_at).toLocaleString('tr-TR')}
+          value={new Date(guild.created_at).toLocaleString(localeTag())}
         />
         <div className="pt-3 border-t border-line">
           <div className="text-sm font-semibold text-ink-primary mb-1.5">{t('guild.banner')}</div>
@@ -321,7 +321,9 @@ export function OverviewTab({ guildId }: { guildId: string }) {
           >
             Sunucuyu Sil
           </button>
-          <p className="text-xs text-ink-tertiary mt-1.5">Bu işlem kalıcıdır ve geri alınamaz.</p>
+          <p className="text-xs text-ink-tertiary mt-1.5">
+            {t('ui.buIslemKalicidirVeGeriAlinamaz')}
+          </p>
         </div>
       )}
     </div>

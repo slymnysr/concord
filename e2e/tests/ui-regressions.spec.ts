@@ -117,4 +117,46 @@ test.describe("UI regresyonları (elle bulunan bug'lar)", () => {
     expect(body).toContain('concord_http_requests_total');
     expect(body).toContain('concord_http_request_duration_seconds');
   });
+
+  /**
+   * FAZ J — GLOBAL: locale=en iken arayüzde TÜRKÇE METİN KALMAMALI.
+   *
+   * Uygulama global. Önceki i18n turu "898/898 parite" raporlamıştı ama 44 string hâlâ
+   * gömülüydü, API hataları Türkçe ekrana basıyordu ve 35 yerde tarih 'tr-TR'ye çakılıydı.
+   * Bu test o üç kusuru birden kilitler: İngilizce arayüzde Türkçe'ye özgü karakter
+   * (ç/ğ/ı/ö/ş/ü) GÖRÜNMEMELİ.
+   */
+  test('locale=en: arayüzde Türkçe metin kalmıyor', async ({ page, request }) => {
+    const u = makeUser('trleak');
+    const token = await registerViaApi(request, u);
+    const guild = await createGuild(request, token, 'Global Server');
+    const channels = await guildChannels(request, token, guild.id);
+    const text = channels.find((c: any) => c.type === 'text');
+    await sendMessage(request, token, text.id, 'hello world');
+
+    await seedSession(page, request, u);
+    await page.evaluate(() => localStorage.setItem('concord_locale', 'en'));
+    await page.goto('/');
+    await page.getByRole('button', { name: text.name, exact: true }).first().click();
+    await page.waitForTimeout(1500);
+
+    // Türkçe'ye ÖZGÜ karakterler (İngilizce metinde bulunmazlar)
+    const turkce = /[çğışöüÇĞİÖŞÜ]/;
+    const sizinti = await page.evaluate((re) => {
+      const rx = new RegExp(re);
+      const out: string[] = [];
+      const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      let n: Node | null;
+      while ((n = walk.nextNode())) {
+        const t = (n.textContent ?? '').trim();
+        // Kullanıcı ÜRETİMİ içerik hariç (sunucu/kanal/mesaj adları kullanıcıdan gelir)
+        if (t && rx.test(t)) out.push(t.slice(0, 60));
+      }
+      return out;
+    }, turkce.source);
+
+    expect(sizinti, `İngilizce arayüzde Türkçe metin sızdı: ${JSON.stringify(sizinti)}`).toEqual(
+      [],
+    );
+  });
 });

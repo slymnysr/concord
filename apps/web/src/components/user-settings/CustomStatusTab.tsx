@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../api';
 import { useAppDispatch, fetchMe, addToast } from '../../store';
 import { setActivity, getMyActivity } from '../../gateway';
-import { t } from '../../i18n';
+import { t, localeTag } from '../../i18n';
 
 const STATUS_DURATIONS: { label: string; seconds: number }[] = [
   { label: t('status.today'), seconds: -2 }, // sentinel: gün sonuna kadar (save'de hesaplanır)
@@ -108,7 +108,7 @@ export function CustomStatusTab() {
           {expiresAt && (
             <p className="text-xs text-ink-tertiary mt-1.5">
               Otomatik temizlenme:{' '}
-              {new Date(expiresAt).toLocaleString('tr-TR', {
+              {new Date(expiresAt).toLocaleString(localeTag(), {
                 hour: '2-digit',
                 minute: '2-digit',
                 day: 'numeric',
@@ -178,9 +178,9 @@ function ActivitySection() {
           aria-label={t('activity.type')}
         >
           <option value="playing">🎮 Oynuyor</option>
-          <option value="streaming">🔴 Yayında</option>
+          <option value="streaming">{t('ui.yayinda')}</option>
           <option value="listening">🎵 Dinliyor</option>
-          <option value="watching">📺 İzliyor</option>
+          <option value="watching">{t('ui.izliyor')}</option>
         </select>
         <input
           value={actName}

@@ -24,7 +24,7 @@ import { sendTyping, sendDMTyping } from '../gateway';
 import { EmojiPicker } from './EmojiPicker';
 import { MentionPicker } from './MentionPicker';
 import { MarkdownToolbar } from './MarkdownToolbar';
-import { t } from '../i18n';
+import { t, errText } from '../i18n';
 
 interface PendingFile {
   id: string;
@@ -195,7 +195,12 @@ export function MessageInput() {
       setFiles((fs) => fs.map((f) => (f.id === id ? done : f)));
       return done;
     } catch (e: any) {
-      const failed: PendingFile = { id, file, uploading: false, error: e?.message || 'upload err' };
+      const failed: PendingFile = {
+        id,
+        file,
+        uploading: false,
+        error: errText(e, t('error.generic')),
+      };
       setFiles((fs) => fs.map((f) => (f.id === id ? failed : f)));
       return failed;
     }
@@ -831,7 +836,7 @@ export function MessageInput() {
         <kbd className="px-1.5 py-0.5 bg-surface-2 rounded text-[10px] text-ink-secondary mr-1">
           Enter
         </kbd>
-        gönder ·
+        {t('input.hintSend')}
         <kbd className="px-1.5 py-0.5 bg-surface-2 rounded text-[10px] text-ink-secondary mx-1">
           Shift
         </kbd>
@@ -839,7 +844,7 @@ export function MessageInput() {
         <kbd className="px-1.5 py-0.5 bg-surface-2 rounded text-[10px] text-ink-secondary mx-1">
           Enter
         </kbd>
-        yeni satır · sürükle bırak ile dosya ekle
+        {t('input.hintNewline')}
       </div>
     </div>
   );

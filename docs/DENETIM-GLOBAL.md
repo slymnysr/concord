@@ -110,12 +110,24 @@ Kural aynı: her faz **ayrı üst-dizin** sahiplenir; iki faz aynı dosyaya yazm
   `cmd/reindex` backfill, CI'da hem e2e servisi hem API job'ı için ayağa kaldırılıyor.
 - **Test:** ✅ FAZ H'nin 14 sürücü testi + 3 E2E testi GERÇEK Meilisearch'e karşı yeşil.
 
-## FAZ J — Web globalleşme (`apps/web/**`)
+## FAZ J — Web globalleşme (`apps/web/**`) — ✅ TAMAM
 
-- Kalan **44** gömülü stringi `t()`'ye al; **35** `'tr-TR'` → `getLocale()`/`Intl`.
-- Hata kodu→mesaj eşlemesi (FAZ H kontratı); `detail` yalnızca kod eşleşmezse.
-- Dil altyapısı: `tr/en` + en az **de/fr/es/ru/ja** iskeleti; eksik anahtar → en'e düşsün.
-- **Test:** locale=de'de Türkçe metin KALMAMALI (E2E, mevcut i18n testinin genişletilmişi).
+- ✅ **44 gömülü string** → `t()` (42 yeni anahtar, tr+en). Sözlük paritesi **959/959**.
+- ✅ **35 `'tr-TR'`** → `localeTag()` (tek kaynak: aktif locale). Kalan 2 geçiş fonksiyonun
+  kendi tanımı.
+- ✅ **Hata sözleşmesi bağlandı:** `errText()` — kod→`t('error.<kod>')`, yoksa HTTP durumuna
+  göre genel yerelleştirilmiş mesaj; `detail` ASLA ekrana gitmez (konsola yazılır).
+  **60 yerde** `e?.message` doğrudan basılıyordu ve `APIError.message` = `"<kod>: <Türkçe detail>"`
+  → Fransız kullanıcı **"invalid_name: sunucu adı geçersiz"** görüyordu. Şimdi 0.
+- **Test:** ✅ `ui-regressions.spec.ts` — locale=en'de arayüzde Türkçe'ye özgü karakter
+  (ç/ğ/ı/ö/ş/ü) taşıyan metin KALMIYOR. Test dişli: tek bir string geri konunca düşüyor.
+  Bu test regex taramamın kaçırdığı **5 sızıntı** daha buldu (çok-satırlı JSX + JS string'leri):
+  göreli zaman ("az önce") tamamen Türkçeydi, kanal-başlangıcı metni, input ipucu,
+  çevrimdışı sayacı, aktivite metni.
+
+> **Dil sayısı (de/fr/es/ru/ja) SONRAYA:** altyapı hazır (tek `localeTag()`, tam parite,
+> hata kodları çevrilebilir) ama ~959 anahtarı 5 dile makine çevirisiyle doldurmak
+> kalitesiz sonuç verir; gerçek çeviri kaynağı gerektirir → bloke listesinde.
 
 ## FAZ K — Mobil globalleşme (`apps/mobile/**`)
 

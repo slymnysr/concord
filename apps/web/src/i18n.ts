@@ -21,6 +21,76 @@ type Dict = Record<string, string>;
 
 // Türkçe = referans (anahtar = TR metin değil, semantik anahtar).
 const tr: Dict = {
+  'time.justNow': 'az önce',
+  'activity.justStarted': 'az önce başladı',
+  'channel.startOf': '#{name} kanalının başlangıcı.',
+  'input.hintSend': 'gönder ·',
+  'input.hintNewline': 'yeni satır · sürükle bırak ile dosya ekle',
+  'member.offlineCount': 'Çevrimdışı — {n}',
+  // FAZ J: i18n dışında kalmış gömülü metinler (global: tüm arayüz çevrilebilir olmalı)
+  'ui.18NsfwIcerik': '+18 (NSFW) içerik',
+  'ui.sabitlenmisMesajlar': 'Sabitlenmiş Mesajlar',
+  'ui.arkadaslariDavetEt': 'Arkadaşları Davet Et',
+  'ui.sunucuAyarlari': 'Sunucu Ayarları',
+  'ui.bildirimleriAc': 'Bildirimleri Aç',
+  'ui.sunucuProfiliniDuzenle': 'Sunucu Profilini Düzenle',
+  'ui.tumunuOkunduIsaretle': 'Tümünü Okundu İşaretle',
+  'ui.sunucudanAyril': 'Sunucudan Ayrıl',
+  'ui.davetEdilecekArkadasYok': 'Davet edilecek arkadaş yok.',
+  'ui.veyaBirDavetBaglantisiYolla': 'veya bir davet bağlantısı yolla',
+  'ui.sonucBulunamadi': 'Sonuç bulunamadı.',
+  'ui.rollerUyeler': 'Roller / Üyeler →',
+  'ui.yukleniyor': 'Yükleniyor...',
+  'ui.henuzWebhookYok': 'Henüz webhook yok.',
+  'ui.birSunucuyaKatil': 'Bir Sunucuya Katıl',
+  'ui.henuzDmYokArkadasEkleIle': 'Henüz DM yok. "Arkadaş Ekle" ile başla.',
+  'ui.eklenecekArkadasYok': 'Eklenecek arkadaş yok.',
+  'ui.herkeseAcikSunuculariBulVeSana': 'Herkese açık sunucuları bul ve sana uygun olana katıl.',
+  'ui.yeniGonderiIleIlkTartismayiBaslat': '"Yeni Gönderi" ile ilk tartışmayı başlat.',
+  'ui.arsivlendi': '· arşivlendi',
+  'ui.uyeListesiYukleniyor': 'Üye listesi yükleniyor...',
+  'ui.birKanalSec': 'Bir kanal seç',
+  'ui.1Gun': '1 gün',
+  'ui.henuzOtomatikModerasyonKuraliYok': 'Henüz otomatik moderasyon kuralı yok.',
+  'ui.kanalSec': '— Kanal seç —',
+  'ui.buIslemKalicidirVeGeriAlinamaz': 'Bu işlem kalıcıdır ve geri alınamaz.',
+  'ui.parolaBasariylaDegistirildi': 'Parola başarıyla değiştirildi.',
+  'ui.ikiAdimliDogrulama2fa': 'İki Adımlı Doğrulama (2FA)',
+  'ui.sadeceArkadaslar': 'Sadece Arkadaşlar',
+  'ui.tehlikeliBolge': 'Tehlikeli Bölge',
+  'ui.geriAlinamaz': 'geri alınamaz',
+  'ui.genisAralikBuyukAvatarlar': 'Geniş aralık, büyük avatarlar',
+  'ui.yogunCompact': 'Yoğun (Compact)',
+  'ui.darSatirlarIrcTarzi': 'Dar satırlar, IRC tarzı',
+  'ui.yakinlastirmaDuzeyi': 'Yakınlaştırma Düzeyi',
+  'ui.tumArayuzuBuyuturVeyaKucultur': 'Tüm arayüzü büyütür veya küçültür.',
+  'ui.yayinda': '🔴 Yayında',
+  'ui.izliyor': '📺 İzliyor',
+  'ui.klavyeKisayollari': 'Klavye Kısayolları',
+  'ui.herZamanAcik': '(her zaman açık)',
+  'ui.sadeceTusaBasiliyken': '(sadece tuşa basılıyken)',
+  'ui.720pOnerilen': '720p (önerilen)',
+  // Genel hata mesajları — API `detail`'i TÜRKÇE ve gösterilmez (bkz. API-KONTRAT, errText)
+  'error.generic': 'Bir şeyler ters gitti.',
+  'account.deleteFailed': 'Hesap silinemedi.',
+  'error.badRequest': 'Geçersiz istek.',
+  'error.unauthorized': 'Oturumun sona ermiş olabilir, tekrar giriş yap.',
+  'error.forbidden': 'Bunu yapmaya yetkin yok.',
+  'error.notFound': 'Bulunamadı.',
+  'error.conflict': 'Bu zaten var.',
+  'error.tooLarge': 'Dosya çok büyük.',
+  'error.rateLimited': 'Çok fazla istek — biraz bekle.',
+  'error.server': 'Sunucu hatası. Lütfen tekrar dene.',
+  // Kullanıcının EYLEM alabileceği özel kodlar
+  'error.invalid_attachment': 'Dosya iliştirilemedi.',
+  'error.weak_password': 'Parola çok zayıf.',
+  'error.wrong_password': 'Parola hatalı.',
+  'error.invalid_credentials': 'E-posta veya parola hatalı.',
+  'error.channel_full': 'Kanal dolu.',
+  'error.missing_permission': 'Bu işlem için yetkin yok.',
+  'error.role_hierarchy': 'Kendinden yüksek bir rolü değiştiremezsin.',
+  'error.invalid_name': 'Geçersiz ad.',
+  'error.automod_blocked': 'Mesajın otomatik moderasyon tarafından engellendi.',
   // Genel
   'common.save': 'Kaydet',
   'common.cancel': 'İptal',
@@ -952,6 +1022,75 @@ const tr: Dict = {
 };
 
 const en: Dict = {
+  'time.justNow': 'just now',
+  'activity.justStarted': 'started just now',
+  'channel.startOf': 'This is the start of #{name}.',
+  'input.hintSend': 'to send ·',
+  'input.hintNewline': 'for new line · drag & drop to attach',
+  'member.offlineCount': 'Offline — {n}',
+  'ui.18NsfwIcerik': '+18 (NSFW) content',
+  'ui.sabitlenmisMesajlar': 'Pinned Messages',
+  'ui.arkadaslariDavetEt': 'Invite Friends',
+  'ui.sunucuAyarlari': 'Server Settings',
+  'ui.bildirimleriAc': 'Enable Notifications',
+  'ui.sunucuProfiliniDuzenle': 'Edit Server Profile',
+  'ui.tumunuOkunduIsaretle': 'Mark All As Read',
+  'ui.sunucudanAyril': 'Leave Server',
+  'ui.davetEdilecekArkadasYok': 'No friends to invite.',
+  'ui.veyaBirDavetBaglantisiYolla': 'or send an invite link',
+  'ui.sonucBulunamadi': 'No results found.',
+  'ui.rollerUyeler': 'Roles / Members →',
+  'ui.yukleniyor': 'Loading…',
+  'ui.henuzWebhookYok': 'No webhooks yet.',
+  'ui.birSunucuyaKatil': 'Join a Server',
+  'ui.henuzDmYokArkadasEkleIle': 'No DMs yet. Start with "Add Friend".',
+  'ui.eklenecekArkadasYok': 'No friends to add.',
+  'ui.herkeseAcikSunuculariBulVeSana': 'Find public servers and join the one that fits you.',
+  'ui.yeniGonderiIleIlkTartismayiBaslat': 'Start the first discussion with "New Post".',
+  'ui.arsivlendi': '· archived',
+  'ui.uyeListesiYukleniyor': 'Loading member list…',
+  'ui.birKanalSec': 'Select a channel',
+  'ui.1Gun': '1 day',
+  'ui.henuzOtomatikModerasyonKuraliYok': 'No auto-moderation rules yet.',
+  'ui.kanalSec': '— Select channel —',
+  'ui.buIslemKalicidirVeGeriAlinamaz': 'This action is permanent and cannot be undone.',
+  'ui.parolaBasariylaDegistirildi': 'Password changed successfully.',
+  'ui.ikiAdimliDogrulama2fa': 'Two-Factor Authentication (2FA)',
+  'ui.sadeceArkadaslar': 'Friends Only',
+  'ui.tehlikeliBolge': 'Danger Zone',
+  'ui.geriAlinamaz': 'cannot be undone',
+  'ui.genisAralikBuyukAvatarlar': 'Roomy spacing, large avatars',
+  'ui.yogunCompact': 'Compact',
+  'ui.darSatirlarIrcTarzi': 'Tight rows, IRC style',
+  'ui.yakinlastirmaDuzeyi': 'Zoom Level',
+  'ui.tumArayuzuBuyuturVeyaKucultur': 'Scales the entire interface up or down.',
+  'ui.yayinda': '🔴 Live',
+  'ui.izliyor': '📺 Watching',
+  'ui.klavyeKisayollari': 'Keyboard Shortcuts',
+  'ui.herZamanAcik': '(always on)',
+  'ui.sadeceTusaBasiliyken': '(push to talk)',
+  'ui.720pOnerilen': '720p (recommended)',
+  // Generic error messages — API `detail` is Turkish and must not be shown (see API-KONTRAT, errText)
+  'error.generic': 'Something went wrong.',
+  'account.deleteFailed': 'Account could not be deleted.',
+  'error.badRequest': 'Invalid request.',
+  'error.unauthorized': 'Your session may have expired, please sign in again.',
+  'error.forbidden': "You don't have permission to do that.",
+  'error.notFound': 'Not found.',
+  'error.conflict': 'This already exists.',
+  'error.tooLarge': 'File is too large.',
+  'error.rateLimited': 'Too many requests — please wait a moment.',
+  'error.server': 'Server error. Please try again.',
+  // Specific codes the user can act on
+  'error.invalid_attachment': 'Attachment could not be added.',
+  'error.weak_password': 'Password is too weak.',
+  'error.wrong_password': 'Wrong password.',
+  'error.invalid_credentials': 'Incorrect email or password.',
+  'error.channel_full': 'Channel is full.',
+  'error.missing_permission': "You don't have permission for this.",
+  'error.role_hierarchy': "You can't modify a role higher than your own.",
+  'error.invalid_name': 'Invalid name.',
+  'error.automod_blocked': 'Your message was blocked by auto-moderation.',
   'common.save': 'Save',
   'common.cancel': 'Cancel',
   'common.delete': 'Delete',
@@ -1866,6 +2005,11 @@ const dicts: Record<Locale, Dict> = { tr, en };
  * t — anahtarı geçerli dile çevirir. Anahtar yoksa fallback (varsa) ya da anahtarın kendisi döner.
  * Parametre ikamesi: t('x.y', { name: 'Ali' }) → '{name}' yerini doldurur.
  */
+/** Aktif sözlük (errText gibi yardımcılar anahtarın VARLIĞINI sorabilsin diye). */
+function dict(): Record<string, string> {
+  return getLocale() === 'en' ? en : tr;
+}
+
 export function t(key: string, params?: Record<string, string | number>): string {
   const loc = getLocale();
   let out = dicts[loc]?.[key] ?? dicts.tr[key] ?? key;
@@ -1881,3 +2025,56 @@ export const LOCALES: { value: Locale; label: string; flag: string }[] = [
   { value: 'tr', label: 'Türkçe', flag: '🇹🇷' },
   { value: 'en', label: 'English', flag: '🇬🇧' },
 ];
+
+/**
+ * errText — API hatasını KULLANICININ DİLİNE çevirir.
+ *
+ * NEDEN GEREKLİ: `APIError.message` = `"<kod>: <detail>"` ve `detail` TÜRKÇE (API-KONTRAT:
+ * "detail geliştirici ipucudur, gösterilmez"). Doğrudan `e.message` basmak Fransız
+ * kullanıcıya "invalid_name: sunucu adı geçersiz" göstermek demekti — uygulama global.
+ *
+ * Sıra: 1) kodun çevirisi  2) HTTP durumuna göre genel mesaj  3) fallback.
+ * `detail` ekrana ASLA gitmez; konsola yazılır (geliştirici görsün).
+ */
+export function errText(e: unknown, fallback?: string): string {
+  const anyE = e as { status?: number; code?: string; detail?: string; message?: string };
+
+  if (anyE?.code) {
+    if (anyE.detail) console.warn(`[api] ${anyE.code}: ${anyE.detail}`);
+    const özel = dict()[`error.${anyE.code}`];
+    if (özel) return özel;
+
+    switch (anyE.status) {
+      case 400:
+        return t('error.badRequest');
+      case 401:
+        return t('error.unauthorized');
+      case 403:
+        return t('error.forbidden');
+      case 404:
+        return t('error.notFound');
+      case 409:
+        return t('error.conflict');
+      case 413:
+        return t('error.tooLarge');
+      case 429:
+        return t('error.rateLimited');
+      default:
+        if ((anyE.status ?? 0) >= 500) return t('error.server');
+    }
+  }
+  // Ağ hatası / APIError olmayan: mesaj İstemci kaynaklı olabilir ama Türkçe olma riski var
+  if (fallback) return fallback;
+  return t('error.generic');
+}
+
+/**
+ * localeTag — Intl API'lerine verilecek BCP-47 etiketi.
+ *
+ * NEDEN: 35 yerde `toLocaleDateString('tr-TR')` ÇAKILIYDI → Fransız/Japon kullanıcı
+ * arayüz İngilizce olsa bile Türkçe tarih biçimi görüyordu (uygulama global).
+ * Tek kaynak: aktif locale. Yeni dil eklenince tarihler kendiliğinden doğru olur.
+ */
+export function localeTag(): string {
+  return getLocale() === 'en' ? 'en-US' : 'tr-TR';
+}
