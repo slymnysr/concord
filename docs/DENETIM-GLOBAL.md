@@ -76,13 +76,14 @@ node'una düşebilir → 250ms+ gecikme. Global ses için bölge farkındalığ�
 Kural aynı: her faz **ayrı üst-dizin** sahiplenir; iki faz aynı dosyaya yazmaz.
 Çapraz ihtiyaçlar **kontrat** üzerinden (`apps/api/docs/API-KONTRAT.md`).
 
-## FAZ H — API globalleşme (`apps/api/**`) — ✅ ARAMA TAMAM
+## FAZ H — API globalleşme (`apps/api/**`) — ✅ TAMAM
 
 - **Arama motoru soyutlaması:** `internal/search` arayüzü; Meilisearch sürücüsü + mevcut
   Postgres FTS sürücüsü (fallback). Mesaj yazma/düzenleme/silmede index senkronu.
   _Yapma: senkronu "sonra" bırakma — index bayatlarsa arama sessizce yanlış sonuç verir._
-- **Hata sözleşmesi:** her `writeError` kodu **kararlı ve belgeli**; kod→anlam tablosu
-  KONTRAT'a. Türkçe `detail` geliştirici ipucu olarak kalır, istemci koda göre çevirir.
+- ✅ **Hata sözleşmesi:** 92 kod KONTRAT'a yazıldı; kurallar netleştirildi — `detail`
+  TÜRKÇEDİR ve **gösterilmez** (geliştirici ipucu), istemci `error` kodunu çevirir, yoksa
+  HTTP durumuna göre genel yerelleştirilmiş mesaj. FAZ J/K bunu `errText()` ile uyguladı.
 - **Kontrat:** arama endpoint'i (dil/`sort`), hata kodu tablosu.
 - **Test:** ✅ ÖLÇÜLDÜ — aynı 8 vaka artık **8/8 geçiyor** (gerçek API üzerinden):
   `メッセージ`→JA, `消息`→ZH, `메시지`→KO, `сообщение`→RU, `Nachricht`→DE, `toplantı`/`toplanti`→TR,
@@ -174,3 +175,21 @@ Kural aynı: her faz **ayrı üst-dizin** sahiplenir; iki faz aynı dosyaya yazm
   vs. sert silme kararı belgelenmeli), yaş kapısı (kayıtta doğum tarihi + yaşa göre NSFW).
 - **Test:** dışa aktarma arşivi kullanıcının tüm verisini içeriyor mu; silinen hesabın
   mesajları ne oluyor (Discord: "Deleted User" olarak kalır).
+
+---
+
+# BLOKE — kullanıcı eylemi gerekiyor
+
+Kod tarafı hazır; bu maddeler hesap/cihaz/dış kaynak istiyor:
+
+1. **Dil sözlükleri (de/fr/es/ru/ja…)** — altyapı hazır (tek `localeTag()`, tam tr/en paritesi,
+   hata kodları çevrilebilir, eksik anahtar en'e düşer). Ama ~959 web + 270 mobil anahtarı
+   makine çevirisiyle doldurmak kalitesiz sonuç verir; gerçek çeviri kaynağı gerekiyor.
+   **Arama, tarih ve hata mesajları bu dillerde ZATEN çalışıyor** — eksik olan yalnızca
+   arayüz metinleri (şu an İngilizceye düşüyorlar, anlaşılmaz bir dil değil).
+2. **EAS build + cihaz testi** (FAZ E) — Expo hesabı ister (`eas init` → `extra.eas.projectId`),
+   Android FCM kimlik bilgileri Expo panelinden. Ses/kamera/push native modüller; emülatör yetmez.
+3. **`docker rm -f concord-scylla && docker volume rm docker_scylla_data`** — silme onayı
+   bekliyor. Kod ve dokümanda Scylla tamamen temiz; kalan yalnızca atıl container.
+4. **Vault/sealed-secrets** (FAZ F) — hangi vault, hangi küme: altyapı kararı kullanıcıya ait.
+   Şu an env tabanlı + `MustSecure` üretimde zayıf/eksik secret'la açılışı reddediyor.
