@@ -1,6 +1,8 @@
 // Concord Snowflake — Discord-stili 64-bit dağıtık ID üretici.
 // Layout:
-//   1 bit (her zaman 0) | 42 bit timestamp (ms) | 10 bit worker_id | 11 bit sequence
+//
+//	1 bit (her zaman 0) | 42 bit timestamp (ms) | 10 bit worker_id | 11 bit sequence
+//
 // Bizim epoch: 2026-01-01 00:00 UTC
 package snowflake
 
@@ -11,13 +13,13 @@ import (
 )
 
 const (
-	Epoch         int64 = 1767225600000 // 2026-01-01 00:00:00 UTC ms
-	workerBits          = 10
-	sequenceBits        = 11
-	maxWorker           = (1 << workerBits) - 1
-	maxSequence         = (1 << sequenceBits) - 1
-	timeShift           = workerBits + sequenceBits
-	workerShift         = sequenceBits
+	Epoch        int64 = 1767225600000 // 2026-01-01 00:00:00 UTC ms
+	workerBits         = 10
+	sequenceBits       = 11
+	maxWorker          = (1 << workerBits) - 1
+	maxSequence        = (1 << sequenceBits) - 1
+	timeShift          = workerBits + sequenceBits
+	workerShift        = sequenceBits
 )
 
 type Generator struct {

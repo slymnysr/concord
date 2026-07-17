@@ -41,8 +41,8 @@ type Rule struct {
 	TriggerType      TriggerType     `json:"trigger_type"`
 	TriggerData      json.RawMessage `json:"trigger_data"`
 	Actions          json.RawMessage `json:"actions"`
-	ExemptRoleIDs   []int64         `json:"exempt_role_ids"`
-	ExemptChannelIDs []int64        `json:"exempt_channel_ids"`
+	ExemptRoleIDs    []int64         `json:"exempt_role_ids"`
+	ExemptChannelIDs []int64         `json:"exempt_channel_ids"`
 }
 
 // Action — uygulanacak aksiyon
@@ -55,11 +55,11 @@ type Action struct {
 
 // Decision — engine'in mesaj için verdiği karar
 type Decision struct {
-	Triggered    bool
-	RuleID       int64
-	RuleName     string
-	MatchedText  string
-	Actions      []Action
+	Triggered   bool
+	RuleID      int64
+	RuleName    string
+	MatchedText string
+	Actions     []Action
 }
 
 type Engine struct {

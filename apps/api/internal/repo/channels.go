@@ -10,20 +10,20 @@ import (
 )
 
 type Channel struct {
-	ID            int64     `json:"id,string"`
-	GuildID       *int64    `json:"guild_id,string,omitempty"`
-	ParentID      *int64    `json:"parent_id,string,omitempty"`
-	Type          string    `json:"type"`
-	Name          string    `json:"name"`
-	Topic         *string   `json:"topic,omitempty"`
-	Position      int32     `json:"position"`
-	NSFW          bool      `json:"nsfw"`
-	RateLimitSec  int32     `json:"rate_limit_sec"`
-	AutoArchiveMinutes int32 `json:"auto_archive_minutes"`
-	UserLimit     int32     `json:"user_limit"`
-	Bitrate       int32     `json:"bitrate"`
-	LastMessageID *int64    `json:"last_message_id,string,omitempty"`
-	CreatedAt     time.Time `json:"created_at"`
+	ID                 int64     `json:"id,string"`
+	GuildID            *int64    `json:"guild_id,string,omitempty"`
+	ParentID           *int64    `json:"parent_id,string,omitempty"`
+	Type               string    `json:"type"`
+	Name               string    `json:"name"`
+	Topic              *string   `json:"topic,omitempty"`
+	Position           int32     `json:"position"`
+	NSFW               bool      `json:"nsfw"`
+	RateLimitSec       int32     `json:"rate_limit_sec"`
+	AutoArchiveMinutes int32     `json:"auto_archive_minutes"`
+	UserLimit          int32     `json:"user_limit"`
+	Bitrate            int32     `json:"bitrate"`
+	LastMessageID      *int64    `json:"last_message_id,string,omitempty"`
+	CreatedAt          time.Time `json:"created_at"`
 }
 
 type Channels struct{ pool *pgxpool.Pool }

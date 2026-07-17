@@ -22,9 +22,9 @@ type FriendView struct {
 	Username    string    `json:"username"`
 	DisplayName string    `json:"display_name"`
 	AvatarColor string    `json:"avatar_color"`
-	Status      string    `json:"status"`        // user online/idle/dnd/offline
+	Status      string    `json:"status"` // user online/idle/dnd/offline
 	Bot         bool      `json:"bot"`
-	Friendship  string    `json:"friendship"`    // pending_sent, pending_received, accepted
+	Friendship  string    `json:"friendship"` // pending_sent, pending_received, accepted
 	CreatedAt   time.Time `json:"created_at"`
 }
 

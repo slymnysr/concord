@@ -4,36 +4,36 @@ package perms
 // Permission bitleri — 64-bit bitmask
 const (
 	// Genel
-	CreateInvite           uint64 = 1 << 0
-	KickMembers            uint64 = 1 << 1
-	BanMembers             uint64 = 1 << 2
-	Administrator          uint64 = 1 << 3 // her şeyi yapabilir
-	ManageChannels         uint64 = 1 << 4
-	ManageGuild            uint64 = 1 << 5
-	AddReactions           uint64 = 1 << 6
-	ViewAuditLog           uint64 = 1 << 7
-	PrioritySpeaker        uint64 = 1 << 8
-	Stream                 uint64 = 1 << 9
+	CreateInvite    uint64 = 1 << 0
+	KickMembers     uint64 = 1 << 1
+	BanMembers      uint64 = 1 << 2
+	Administrator   uint64 = 1 << 3 // her şeyi yapabilir
+	ManageChannels  uint64 = 1 << 4
+	ManageGuild     uint64 = 1 << 5
+	AddReactions    uint64 = 1 << 6
+	ViewAuditLog    uint64 = 1 << 7
+	PrioritySpeaker uint64 = 1 << 8
+	Stream          uint64 = 1 << 9
 
 	// Metin
-	ViewChannel            uint64 = 1 << 10
-	SendMessages           uint64 = 1 << 11
-	SendTTSMessages        uint64 = 1 << 12
-	ManageMessages         uint64 = 1 << 13
-	EmbedLinks             uint64 = 1 << 14
-	AttachFiles            uint64 = 1 << 15
-	ReadMessageHistory     uint64 = 1 << 16
-	MentionEveryone        uint64 = 1 << 17
-	UseExternalEmojis      uint64 = 1 << 18
-	ViewGuildInsights      uint64 = 1 << 19
+	ViewChannel        uint64 = 1 << 10
+	SendMessages       uint64 = 1 << 11
+	SendTTSMessages    uint64 = 1 << 12
+	ManageMessages     uint64 = 1 << 13
+	EmbedLinks         uint64 = 1 << 14
+	AttachFiles        uint64 = 1 << 15
+	ReadMessageHistory uint64 = 1 << 16
+	MentionEveryone    uint64 = 1 << 17
+	UseExternalEmojis  uint64 = 1 << 18
+	ViewGuildInsights  uint64 = 1 << 19
 
 	// Sesli
-	Connect                uint64 = 1 << 20
-	Speak                  uint64 = 1 << 21
-	MuteMembers            uint64 = 1 << 22
-	DeafenMembers          uint64 = 1 << 23
-	MoveMembers            uint64 = 1 << 24
-	UseVAD                 uint64 = 1 << 25 // voice activity detection
+	Connect       uint64 = 1 << 20
+	Speak         uint64 = 1 << 21
+	MuteMembers   uint64 = 1 << 22
+	DeafenMembers uint64 = 1 << 23
+	MoveMembers   uint64 = 1 << 24
+	UseVAD        uint64 = 1 << 25 // voice activity detection
 
 	// Diğer
 	ChangeNickname         uint64 = 1 << 26
