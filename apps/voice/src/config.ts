@@ -28,6 +28,10 @@ export const config = {
     wsUrl: process.env.VOICE_WS_URL ?? `ws://127.0.0.1:${process.env.VOICE_PORT ?? '4443'}`,
     // Node'lar arası iç çağrıları koruyan secret (pipe pazarlığı dışarı açık olmamalı)
     secret: process.env.VOICE_CLUSTER_SECRET ?? 'dev_voice_cluster_secret',
+    // Coğrafi bölge (ör. 'eu-central', 'ap-northeast', 'us-east'). Uygulama GLOBAL:
+    // Tokyo'daki kullanıcıyı Frankfurt node'una bağlamak 250ms+ gecikme demek. Cascade
+    // (FAZ C) node'lar arasını zaten köprülüyor → istemci KENDİ bölgesindeki node'a bağlanmalı.
+    region: process.env.VOICE_REGION ?? 'default',
   },
   // JWT_SECRET — API ve gateway ile AYNI değişken adı. Eskiden CONCORD_JWT_SECRET
   // okunuyordu ama hiçbir yer onu set etmiyordu → voice üretimde dev secret'ına düşüyor,

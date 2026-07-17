@@ -22,14 +22,21 @@ const kill = [];
 function startNode(id, wsPort, httpPort, rtcMin, rtcMax) {
   const p = spawn('node', ['dist/index.js'], {
     cwd: '/home/slmnys/concord/apps/voice',
-    env: { ...process.env,
-      VOICE_CLUSTER_ENABLED: 'true', VOICE_NODE_ID: id,
-      VOICE_PORT: String(wsPort), VOICE_HTTP_PORT: String(httpPort),
-      VOICE_HTTP_URL: `http://127.0.0.1:${httpPort}`, VOICE_WS_URL: `ws://127.0.0.1:${wsPort}`,
+    env: {
+      ...process.env,
+      VOICE_CLUSTER_ENABLED: 'true',
+      VOICE_NODE_ID: id,
+      VOICE_PORT: String(wsPort),
+      VOICE_HTTP_PORT: String(httpPort),
+      VOICE_HTTP_URL: `http://127.0.0.1:${httpPort}`,
+      VOICE_WS_URL: `ws://127.0.0.1:${wsPort}`,
       VOICE_PIPE_IP: '127.0.0.1',
-      MS_RTC_MIN_PORT: String(rtcMin), MS_RTC_MAX_PORT: String(rtcMax),
-      REDIS_HOST: 'localhost', REDIS_PORT: '6379',
-    }, stdio: ['ignore', 'pipe', 'pipe'],
+      MS_RTC_MIN_PORT: String(rtcMin),
+      MS_RTC_MAX_PORT: String(rtcMax),
+      REDIS_HOST: 'localhost',
+      REDIS_PORT: '6379',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
   const logs = [];
   p.stdout.on('data', (d) => logs.push(d.toString()));
@@ -38,7 +45,8 @@ function startNode(id, wsPort, httpPort, rtcMin, rtcMax) {
   return { logs };
 }
 
-const token = (uid, name) => jwt.sign({ sub: String(uid), name, iss: 'concord-api' }, SECRET_JWT, { expiresIn: '15m' });
+const token = (uid, name) =>
+  jwt.sign({ sub: String(uid), name, iss: 'concord-api' }, SECRET_JWT, { expiresIn: '15m' });
 
 function connect(port, uid, name, channel) {
   const ws = new WebSocket(`ws://127.0.0.1:${port}/?token=${token(uid, name)}&channel=${channel}`);
@@ -47,15 +55,22 @@ function connect(port, uid, name, channel) {
   ws.on('message', (raw) => {
     const m = JSON.parse(raw.toString());
     events.push(m);
-    if (m.replyTo && replies.has(m.replyTo)) { replies.get(m.replyTo)(m); replies.delete(m.replyTo); }
+    if (m.replyTo && replies.has(m.replyTo)) {
+      replies.get(m.replyTo)(m);
+      replies.delete(m.replyTo);
+    }
   });
-  const rpc = (type, payload) => new Promise((res, rej) => {
-    const id = Math.random().toString(36).slice(2);
-    replies.set(id, res);
-    ws.send(JSON.stringify({ id, type, payload }));
-    setTimeout(() => rej(new Error(`${type} zaman asimi`)), 8000);
+  const rpc = (type, payload) =>
+    new Promise((res, rej) => {
+      const id = Math.random().toString(36).slice(2);
+      replies.set(id, res);
+      ws.send(JSON.stringify({ id, type, payload }));
+      setTimeout(() => rej(new Error(`${type} zaman asimi`)), 8000);
+    });
+  const open = new Promise((res, rej) => {
+    ws.once('open', res);
+    ws.once('error', rej);
   });
-  const open = new Promise((res, rej) => { ws.once('open', res); ws.once('error', rej); });
   return { ws, events, rpc, open };
 }
 
@@ -81,7 +96,16 @@ async function main() {
     kind: 'audio',
     rtpParameters: {
       mid: '0',
-      codecs: [{ mimeType: 'audio/opus', payloadType: opus.preferredPayloadType, clockRate: 48000, channels: 2, parameters: {}, rtcpFeedback: [] }],
+      codecs: [
+        {
+          mimeType: 'audio/opus',
+          payloadType: opus.preferredPayloadType,
+          clockRate: 48000,
+          channels: 2,
+          parameters: {},
+          rtcpFeedback: [],
+        },
+      ],
       headerExtensions: [],
       encodings: [{ ssrc: 11111111 }],
       rtcp: { cname: 'test' },
@@ -98,7 +122,8 @@ async function main() {
   console.log('B nin aldigi newProducer bildirimleri:', JSON.stringify(bGot));
 
   const pipedOnB = A.logs.join('') + B.logs.join('');
-  const pipeKuruldu = pipedOnB.includes('pipe link kuruldu') || pipedOnB.includes('pipe link kabul edildi');
+  const pipeKuruldu =
+    pipedOnB.includes('pipe link kuruldu') || pipedOnB.includes('pipe link kabul edildi');
   const pipeAlindi = pipedOnB.includes('uzak producer pipe ile alındı');
 
   // B'deki peer, pipe ile gelen UZAK producer'i GERCEKTEN consume edebiliyor mu?
@@ -115,7 +140,8 @@ async function main() {
     consumeSonuc = { error: e.message };
   }
   const consumeOk =
-    consumeSonuc && consumeSonuc.type === 'consumed' &&
+    consumeSonuc &&
+    consumeSonuc.type === 'consumed' &&
     consumeSonuc.payload?.producerId === pid &&
     consumeSonuc.payload?.kind === 'audio' &&
     Array.isArray(consumeSonuc.payload?.rtpParameters?.codecs) &&
@@ -125,8 +151,13 @@ async function main() {
   console.log('pipe link kuruldu :', pipeKuruldu);
   console.log('uzak producer pipe ile alindi :', pipeAlindi);
   console.log('B producer i gordu :', bGot.includes(pid));
-  console.log('B UZAK producer i CONSUME edebildi :', consumeOk,
-    consumeOk ? '(codec: ' + consumeSonuc.payload.rtpParameters.codecs[0].mimeType + ')' : JSON.stringify(consumeSonuc)?.slice(0, 120));
+  console.log(
+    'B UZAK producer i CONSUME edebildi :',
+    consumeOk,
+    consumeOk
+      ? '(codec: ' + consumeSonuc.payload.rtpParameters.codecs[0].mimeType + ')'
+      : JSON.stringify(consumeSonuc)?.slice(0, 120),
+  );
 
   // SOZLESME: /presence {id,name}[] — cok-node'da HER IKI node'un peer'lari gorunmeli
   const presA = await fetch(`http://127.0.0.1:5444/presence?channels=${CH}`).then((r) => r.json());
@@ -136,22 +167,42 @@ async function main() {
   console.log('A nodundan /presence :', JSON.stringify(presA[CH]));
   console.log('B nodundan /presence :', JSON.stringify(presB[CH]));
   const bekleniyor = ['111', '222'];
-  console.log('presence her iki node u da gosteriyor :',
-    JSON.stringify(idsA) === JSON.stringify(bekleniyor) && JSON.stringify(idsB) === JSON.stringify(bekleniyor));
+  console.log(
+    'presence her iki node u da gosteriyor :',
+    JSON.stringify(idsA) === JSON.stringify(bekleniyor) &&
+      JSON.stringify(idsB) === JSON.stringify(bekleniyor),
+  );
   if (!pipeAlindi) {
     console.log('\n--- pipe/cascade loglari ---');
-    console.log(pipedOnB.split('\n').filter((l) => /pipe|cascade|cluster/.test(l)).slice(-8).join('\n'));
+    console.log(
+      pipedOnB
+        .split('\n')
+        .filter((l) => /pipe|cascade|cluster/.test(l))
+        .slice(-8)
+        .join('\n'),
+    );
   }
 
   const basarili =
-    pipeKuruldu && pipeAlindi && bGot.includes(pid) && consumeOk &&
+    pipeKuruldu &&
+    pipeAlindi &&
+    bGot.includes(pid) &&
+    consumeOk &&
     JSON.stringify(idsA) === JSON.stringify(bekleniyor) &&
     JSON.stringify(idsB) === JSON.stringify(bekleniyor);
 
-  a.ws.close(); b.ws.close();
+  a.ws.close();
+  b.ws.close();
   for (const p of kill) p.kill('SIGTERM');
   await sleep(800);
-  if (!basarili) { console.error('\nFAZ C SINAVI BASARISIZ'); process.exit(1); }
+  if (!basarili) {
+    console.error('\nFAZ C SINAVI BASARISIZ');
+    process.exit(1);
+  }
   console.log('\nFAZ C SINAVI GECTI');
 }
-main().catch(async (e) => { console.error('HATA:', e.message); for (const p of kill) p.kill('SIGKILL'); process.exit(1); });
+main().catch(async (e) => {
+  console.error('HATA:', e.message);
+  for (const p of kill) p.kill('SIGKILL');
+  process.exit(1);
+});

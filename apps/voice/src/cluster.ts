@@ -23,6 +23,8 @@ export interface NodeInfo {
    *  node'un adresini yerel porttan türetmek yanlış porta yönlendirir (portlar aynı
    *  olmak zorunda değil — testte/karma kurulumda farklıdır). */
   wsUrl: string;
+  /** Coğrafi bölge — SFU seçici önce buna, sonra yüke bakar (global gecikme) */
+  region: string;
   /** Yük göstergesi: bu node'daki toplam peer sayısı (SFU seçici bunu kullanır) */
   load: number;
   ts: number;
@@ -113,6 +115,7 @@ export class VoiceCluster {
       pipeIp: config.cluster.pipeIp,
       httpUrl: config.cluster.httpUrl,
       wsUrl: config.cluster.wsUrl,
+      region: config.cluster.region,
       load,
       ts: Date.now(),
     };

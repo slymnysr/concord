@@ -344,6 +344,14 @@ jobs:
         run: pnpm --filter @concord/voice exec tsc --noEmit
       - name: Build
         run: pnpm --filter @concord/voice build
+      # FAZ C + FAZ L: gerçek 2-node küme testleri (cascade + bölge yönlendirme).
+      # Redis şart — küme koordinasyonu onun üzerinden.
+      - name: Redis başlat (küme testleri)
+        run: docker run -d --name voice-redis -p 6379:6379 redis:7-alpine
+      - name: Cascade testi (2 node, çok-makine)
+        run: pnpm --filter @concord/voice test:cascade
+      - name: Bölge yönlendirme testi (2 bölge)
+        run: pnpm --filter @concord/voice test:region
 
   lint-format:
     name: Format check

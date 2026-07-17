@@ -105,13 +105,30 @@ export function startHTTP() {
       return res.end('{}');
     }
 
+    /**
+     * Bölge listesi — istemci GERÇEK gecikmeyi ölçüp bölgesini seçsin.
+     *
+     * NEDEN IP'den tahmin etmiyoruz: geo-IP veritabanları VPN/mobil operatör/CGNAT
+     * altında sıkça yanılır ve kullanıcıyı yanlış kıtaya yollar. İstemcinin kendi ping'i
+     * gerçeği ölçer. `/sfu/select?region=` ile seçimini bildirir.
+     */
+    if (url.pathname === '/sfu/regions') {
+      return listRegions()
+        .then((r) => res.end(JSON.stringify(r)))
+        .catch((e) => {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: String(e) }));
+        });
+    }
+
     // --- SFU seçici: istemci hangi node'a bağlanmalı? ---
     // Politika: ÖNCE o kanalı zaten barındıran node (gereksiz cascade açma), yoksa EN AZ
     // yüklü node. Sadece yüke bakmak aynı kanalı node'lara dağıtır → her yayın için pipe
     // kurulur, bant genişliği boşuna N katına çıkar.
     if (url.pathname === '/sfu/select') {
       const channelId = url.searchParams.get('channel') ?? '';
-      return selectNode(channelId)
+      const region = url.searchParams.get('region') ?? undefined;
+      return selectNode(channelId, region)
         .then((n) => res.end(JSON.stringify(n)))
         .catch((e) => {
           res.statusCode = 500;
@@ -226,28 +243,84 @@ async function aggregatePresence(
 }
 
 /** SFU seçici — kanalı zaten barındıran node önceliklidir, yoksa en az yüklü. */
+/** Ayakta olan node'ların bölgeleri + her bölge için bir ping hedefi. */
+async function listRegions(): Promise<{ region: string; nodes: number; probeUrl: string }[]> {
+  if (!cluster.enabled) {
+    return [
+      { region: config.cluster.region, nodes: 1, probeUrl: config.cluster.httpUrl + '/health' },
+    ];
+  }
+  const nodes = await cluster.liveNodes();
+  const byRegion = new Map<string, { nodes: number; probeUrl: string }>();
+  for (const n of nodes) {
+    const cur = byRegion.get(n.region);
+    if (cur) cur.nodes++;
+    else byRegion.set(n.region, { nodes: 1, probeUrl: n.httpUrl + '/health' });
+  }
+  return [...byRegion.entries()].map(([region, v]) => ({ region, ...v }));
+}
+
+/**
+ * SFU seçici — istemci hangi node'a bağlanmalı?
+ *
+ * POLİTİKA (sıra önemli):
+ *  1. **BÖLGE** — istemcinin bölgesindeki node'lar. Uygulama global: Tokyo'daki kullanıcıyı
+ *     Frankfurt'a bağlamak 250ms+ gecikme demek. Kanal başka bölgede olsa bile istemci KENDİ
+ *     bölgesine bağlanır; cascade (FAZ C) node'lar arasını köprüler — zaten bunun için var.
+ *  2. **Kanal yerelliği (bölge içinde)** — o bölgede kanalı zaten barındıran node varsa o.
+ *     Aynı bölgede aynı kanal için ikinci node açmak gereksiz pipe + bant genişliği demek.
+ *  3. **Yük** — kalanlar arasında en az yüklü.
+ *
+ * İstemci bölgesini bilmiyorsa `/sfu/regions`'tan listeyi alıp ping'leyebilir (gerçek
+ * gecikme, tahmin değil). Bölge verilmezse yalnızca (2)+(3) uygulanır.
+ */
 async function selectNode(
   channelId: string,
-): Promise<{ nodeId: string; wsUrl: string; reason: string }> {
-  const self = { nodeId: cluster.nodeId, wsUrl: config.cluster.wsUrl, reason: 'tek-node' };
+  region?: string,
+): Promise<{ nodeId: string; wsUrl: string; region: string; reason: string }> {
+  const self = {
+    nodeId: cluster.nodeId,
+    wsUrl: config.cluster.wsUrl,
+    region: config.cluster.region,
+    reason: 'tek-node',
+  };
   if (!cluster.enabled) return self;
 
-  const nodes = await cluster.liveNodes();
-  if (nodes.length === 0) return self;
+  const hepsi = await cluster.liveNodes();
+  if (hepsi.length === 0) return self;
+
+  // 1) BÖLGE süzgeci — istemcinin bölgesinde node varsa YALNIZCA onlar değerlendirilir
+  const bolgede = region ? hepsi.filter((n) => n.region === region) : [];
+  const aday = bolgede.length > 0 ? bolgede : hepsi;
+  const bolgeBulundu = bolgede.length > 0;
 
   if (channelId) {
-    const hosting = await cluster.remoteNodesFor(channelId);
-    const local = rooms.get(channelId);
-    if (local && local.peers.size > 0) {
-      return { nodeId: cluster.nodeId, wsUrl: config.cluster.wsUrl, reason: 'kanal-burada' };
+    // 2) Kanal yerelliği — ama SADECE aday bölge içinde
+    const barindiran = await cluster.remoteNodesFor(channelId);
+    const yerel = rooms.get(channelId);
+    if (yerel && yerel.peers.size > 0 && aday.some((n) => n.id === cluster.nodeId)) {
+      return { ...self, reason: bolgeBulundu ? 'bolge+kanal-burada' : 'kanal-burada' };
     }
-    if (hosting.length > 0) {
-      const best = hosting.reduce((a, b) => (a.load <= b.load ? a : b));
-      return { nodeId: best.id, wsUrl: best.wsUrl, reason: 'kanal-orada' };
+    const bolgedeBarindiran = barindiran.filter((n) => aday.some((a) => a.id === n.id));
+    if (bolgedeBarindiran.length > 0) {
+      const best = bolgedeBarindiran.reduce((a, b) => (a.load <= b.load ? a : b));
+      return {
+        nodeId: best.id,
+        wsUrl: best.wsUrl,
+        region: best.region,
+        reason: bolgeBulundu ? 'bolge+kanal-orada' : 'kanal-orada',
+      };
     }
   }
-  const least = nodes.reduce((a, b) => (a.load <= b.load ? a : b));
+
+  // 3) En az yüklü (aday küme içinde)
+  const least = aday.reduce((a, b) => (a.load <= b.load ? a : b));
   // Node'un KENDİ duyurduğu wsUrl kullanılır. Uzak adresi yerel porttan türetmek
   // (ws://<uzak-host>:<YEREL port>) portlar farklıysa istemciyi yanlış adrese yollar.
-  return { nodeId: least.id, wsUrl: least.wsUrl, reason: 'en-az-yuklu' };
+  return {
+    nodeId: least.id,
+    wsUrl: least.wsUrl,
+    region: least.region,
+    reason: bolgeBulundu ? 'bolge+en-az-yuklu' : region ? 'bolge-yok→en-az-yuklu' : 'en-az-yuklu',
+  };
 }

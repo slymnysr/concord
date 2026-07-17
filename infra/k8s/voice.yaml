@@ -61,6 +61,11 @@ spec:
             # --- Çok-makine cascade (FAZ C) ---
             - name: VOICE_CLUSTER_ENABLED
               value: 'true'
+            # Coğrafi bölge (FAZ L). Uygulama GLOBAL: bu ayarlanmazsa tüm node'lar
+            # 'default' bölgesinde görünür ve Tokyo'daki kullanıcı Frankfurt'a düşebilir
+            # (250ms+). Her bölgedeki deployment'a kendi değeri verilmeli.
+            - name: VOICE_REGION
+              value: 'eu-central'
             - name: POD_NAME
               valueFrom: { fieldRef: { fieldPath: metadata.name } }
             - name: HOST_IP

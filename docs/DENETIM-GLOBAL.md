@@ -148,12 +148,23 @@ Kural aynı: her faz **ayrı üst-dizin** sahiplenir; iki faz aynı dosyaya yazm
 > (FAZ E ile aynı blokede). Statik denetim regresyonu üreten şeyi — kaynağa Türkçe string
 > eklemeyi — kesin yakalar.
 
-## FAZ L — Ses bölge yönlendirme (`apps/voice/**`)
+## FAZ L — Ses bölge yönlendirme (`apps/voice/**`) — ✅ TAMAM
 
-- Node kaydına `region` (env) + `/sfu/select`'e bölge farkındalığı: aynı bölge → kanal-yerelliği
-  → yük. İstemci gecikme ölçümü (ping) ile bölge seçimi.
-- **Sözleşme (sabit):** `/presence` `{id,name}[]` değişmez.
-- **Test:** 2 bölgeli sahte küme; Tokyo istemcisi Tokyo node'una düşüyor mu.
+- ✅ Node kaydına `region` (`VOICE_REGION`); `/sfu/select?region=` bölge farkındalıklı.
+- ✅ **Politika sırası: BÖLGE → kanal yerelliği (bölge içinde) → yük.** Kanal başka bölgede
+  olsa bile istemci KENDİ bölgesine bağlanır — cascade (FAZ C) node'lar arasını zaten
+  köprüler; bunun için var. Öncesinde yalnızca kanal-yerelliği + yük vardı → Tokyo'daki
+  kullanıcı Frankfurt node'una düşebiliyordu (250ms+).
+- ✅ `/sfu/regions` — istemci bölgeleri alıp **gerçek gecikmeyi ölçer**. Geo-IP ile tahmin
+  ETMİYORUZ: VPN/mobil operatör/CGNAT altında sıkça yanılır ve kullanıcıyı yanlış kıtaya yollar.
+- ✅ Bilinmeyen bölgede en-az-yüklüye düşer (patlamaz); bölge verilmezse eski davranış.
+- **Sözleşme korundu:** `/presence` `{id,name}[]` değişmedi.
+- **Test:** ✅ `pnpm --filter @concord/voice test:region` — 2 AYRI bölgede (eu/ap) gerçek node
+  process'i; 5/5: bölgeler listeleniyor, ap istemcisi→ap node, eu istemcisi→eu node,
+  bilinmeyen bölge düşüyor, bölgesiz eski davranış. **Dişli:** bölge süzgeci kapatılınca
+  eu istemcisi ap node'una düşüyor ve test onu yakalıyor. CI'da koşuyor.
+- **k8s:** `VOICE_REGION` (ayarlanmazsa tüm node'lar 'default' bölgesinde görünür → bölge
+  yönlendirmesi etkisiz kalır; her bölge deployment'ına kendi değeri verilmeli).
 
 ## FAZ M — Uyum (`apps/api/**` + `apps/web/**` — SIRALI, H/J bitince)
 
