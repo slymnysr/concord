@@ -23,7 +23,7 @@ func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.Compress(5))
 	r.Use(mw.Metrics)      // Prometheus RED metrikleri
-	r.Use(securityHeaders) // güvenlik başlıkları
+	r.Use(securityHeaders(cfg.Environment == "production")) // güvenlik başlıkları (+ prod'da HSTS)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   cfg.AllowedOrigins, // env: ALLOWED_ORIGINS
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -316,13 +316,27 @@ func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 	return r
 }
 
-// securityHeaders — temel güvenlik başlıkları (MIME-sniff, clickjacking, referrer sızıntısı).
-func securityHeaders(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h := w.Header()
-		h.Set("X-Content-Type-Options", "nosniff")
-		h.Set("X-Frame-Options", "DENY")
-		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
-		next.ServeHTTP(w, r)
-	})
+// securityHeaders — güvenlik başlıkları (MIME-sniff, clickjacking, referrer sızıntısı,
+// CSP, HSTS). prod parametresi HSTS'i yalnızca üretimde açar.
+func securityHeaders(prod bool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			h := w.Header()
+			h.Set("X-Content-Type-Options", "nosniff")
+			h.Set("X-Frame-Options", "DENY")
+			h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+			// CSP: bu API YALNIZCA JSON döndürür, hiç HTML/script sunmaz. O yüzden en katı
+			// politika güvenli — bir yanıt tarayıcıda bir şekilde render edilse bile hiçbir
+			// kaynak yükleyemez, iframe'lenemez. (Web SPA'nın kendi CSP'si ayrıdır: script
+			// çalıştırdığı için index.html'de tanımlanır.)
+			h.Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
+			// HSTS: tarayıcıyı bu alan adına yalnızca HTTPS ile bağlanmaya zorlar (SSL-stripping
+			// savunması). Sadece ÜRETİMDE: dev'de localhost HTTP'dir, HSTS onu ileride HTTPS'e
+			// zorlar ve geliştiriciyi kilitler. 1 yıl + alt alan adları + preload listesi.
+			if prod {
+				h.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }
