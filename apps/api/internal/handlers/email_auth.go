@@ -20,6 +20,17 @@ import (
 // mailCooldownWindow — aynı adrese arka arkaya mail arasındaki en kısa süre.
 const mailCooldownWindow = 60 * time.Second
 
+// sendMailAsync — maili ARKA PLANDA gönderir (goroutine). Request context'inden bağımsızdır
+// (istek bitince Send iptal olmasın); mailer'ın kendi 20 sn deadline'ı sarkmayı önler.
+// Hata kullanıcıya sızmaz (enumeration önleme) — log'a düşer.
+func (h *Handler) sendMailAsync(to, subject, html string) {
+	go func() {
+		if err := h.Mailer.Send(to, subject, html); err != nil {
+			h.logger.Warn("mail gönderilemedi", zap.Error(err), zap.String("to", to))
+		}
+	}()
+}
+
 // mailCooldownGeçti — aynı e-posta adresine mail gönderimini pencere başına 1'e sınırlar
 // (MAIL BOMBING önleme). Saldırgan, kurbanın adresini forgot-password/change-email'e girip
 // tekrar tekrar mail tetikleyerek inbox'ını dolduramasın. Redis SetNX: ilk çağrı key'i kurar
@@ -120,10 +131,13 @@ func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		Footer:      tx.Footer,
 		FallbackURL: tx.FallbackURL,
 	})
-	if err := h.Mailer.Send(email, tx.Subject, html); err != nil {
-		h.logger.Warn("reset maili gönderilemedi", zap.Error(err), zap.String("to", email))
-	}
+	// Yanıtı ÖNCE dön, maili ARKA PLANDA gönder. Senkron gönderim iki sorun yaratıyordu:
+	// (1) ENUMERATION timing side-channel — hesap VARSA yanıt SMTP gönderimi kadar gecikir,
+	// YOKSA anında döner (üstteki err!=nil dalı); saldırgan yanıt süresini ölçüp "hep 200"
+	// korumasını bypass edebilir. (2) Yavaş SMTP, HTTP isteğini 20 sn'ye kadar bloke eder
+	// (UX + DoS). Token zaten senkron yazıldı → linkli mail arka planda güvenle gidebilir.
 	respond()
+	h.sendMailAsync(email, tx.Subject, html)
 }
 
 type resetPasswordReq struct {

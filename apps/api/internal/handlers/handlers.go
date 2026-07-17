@@ -22,6 +22,13 @@ import (
 	"go.uber.org/zap"
 )
 
+// mailSender — Handler mail göndermek için yalnızca Send'e ihtiyaç duyar. Interface olması
+// testte sahte (yavaş/bloklayan) gönderici enjekte edip asenkron gönderimi deterministik
+// doğrulamayı sağlar. *mailer.Mailer bunu karşılar.
+type mailSender interface {
+	Send(to, subject, htmlBody string) error
+}
+
 type Handler struct {
 	logger *zap.Logger
 	cfg    *config.Config
@@ -33,7 +40,7 @@ type Handler struct {
 	Storage *storage.Storage
 	Events  *events.Publisher
 	AutoMod *automod.Engine
-	Mailer  *mailer.Mailer
+	Mailer  mailSender
 	Push    *push.Sender
 	Search  search.Driver
 
