@@ -57,6 +57,9 @@ func (h *Handler) EditMessage(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	m.EditedAt = &now
 
+	// Arama indeksi: bağlanmazsa düzenlenen mesaj ESKİ metniyle bulunmaya devam eder
+	h.indexMessage(m)
+
 	ch, _ := h.Channels.ByID(r.Context(), m.ChannelID)
 	if ch != nil {
 		h.publishMessageEvent(r.Context(), ch, m, "MESSAGE_UPDATE")
@@ -152,6 +155,8 @@ func (h *Handler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal", "silinemedi")
 		return
 	}
+	// Arama indeksi: bağlanmazsa SİLİNEN mesaj arama sonuçlarında görünmeye devam eder
+	h.unindexMessage(messageID)
 	h.publishMessageEvent(r.Context(), ch, m, "MESSAGE_DELETE")
 	w.WriteHeader(http.StatusNoContent)
 }

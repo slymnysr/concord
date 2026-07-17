@@ -76,7 +76,7 @@ node'una düşebilir → 250ms+ gecikme. Global ses için bölge farkındalığ�
 Kural aynı: her faz **ayrı üst-dizin** sahiplenir; iki faz aynı dosyaya yazmaz.
 Çapraz ihtiyaçlar **kontrat** üzerinden (`apps/api/docs/API-KONTRAT.md`).
 
-## FAZ H — API globalleşme (`apps/api/**`)
+## FAZ H — API globalleşme (`apps/api/**`) — ✅ ARAMA TAMAM
 
 - **Arama motoru soyutlaması:** `internal/search` arayüzü; Meilisearch sürücüsü + mevcut
   Postgres FTS sürücüsü (fallback). Mesaj yazma/düzenleme/silmede index senkronu.
@@ -84,12 +84,31 @@ Kural aynı: her faz **ayrı üst-dizin** sahiplenir; iki faz aynı dosyaya yazm
 - **Hata sözleşmesi:** her `writeError` kodu **kararlı ve belgeli**; kod→anlam tablosu
   KONTRAT'a. Türkçe `detail` geliştirici ipucu olarak kalır, istemci koda göre çevirir.
 - **Kontrat:** arama endpoint'i (dil/`sort`), hata kodu tablosu.
-- **Test:** DE/RU/JA/ZH/TR/EN için yaz→ara (yukarıdaki tablo test olarak sabitlenir).
+- **Test:** ✅ ÖLÇÜLDÜ — aynı 8 vaka artık **8/8 geçiyor** (gerçek API üzerinden):
+  `メッセージ`→JA, `消息`→ZH, `메시지`→KO, `сообщение`→RU, `Nachricht`→DE, `toplantı`/`toplanti`→TR,
+  `test`→EN. Postgres yedeğinde aynı test DÜŞÜYOR (dişlilik kanıtlandı).
+  Testler: `internal/search/meili_test.go` (14, gerçek Meilisearch'e karşı),
+  `e2e/tests/search.spec.ts` (3: global diller, kök bulma/ASCII/alaka, index senkronu).
+- **İndeks senkronu bağlandı** (create/edit/delete) ve uçtan uca doğrulandı: yeni mesaj
+  indeksleniyor, düzenleme eski metni düşürüyor, silme indeksten kaldırıyor.
+- **Backfill:** `cmd/reindex` (sayfalı; 943 mesaj 55ms).
 
-## FAZ I — Arama altyapısı (`infra/**`)
+**FAZ H'nin bulduğu 2 gerçek bug:**
 
-- Meilisearch container (compose + k8s) + adres/anahtar env'leri; ilk-index (backfill) işi.
-- **Test:** temiz ortamda ayağa kalkma + FAZ H'nin sürücüsüyle uçtan uca.
+1. `sort=recent` KRONOLOJİK DEĞİLDİ: Meilisearch ranking rule sırasında `attribute`
+   (terimin metindeki konumu) `sort`'tan önce geliyordu → kullanıcı açıkça "yeniye göre"
+   dese bile terim konumu kazanıyordu. `sort` en başa alındı.
+2. `created_at` SANİYE hassasiyetindeydi → sohbette mesajlar salkım halinde geldiği için
+   aynı saniyedeki mesajlar ayırt edilemiyor, `sort=recent` rastgele sıralıyordu.
+   Milisaniyeye çevrildi. (Snowflake ID kullanılamaz: Meilisearch sayıları f64 tutar,
+   64-bit ID hassasiyet kaybeder.)
+
+## FAZ I — Arama altyapısı (`infra/**`) — ✅ TAMAM
+
+- ✅ Meilisearch container (compose + k8s StatefulSet — indeks diskte yaşar), `MEILI_ADDR`
+  configMap'te, `MEILI_MASTER_KEY` secret'ta (MEILI_ENV=production anahtarsız başlamayı reddeder),
+  `cmd/reindex` backfill, CI'da hem e2e servisi hem API job'ı için ayağa kaldırılıyor.
+- **Test:** ✅ FAZ H'nin 14 sürücü testi + 3 E2E testi GERÇEK Meilisearch'e karşı yeşil.
 
 ## FAZ J — Web globalleşme (`apps/web/**`)
 

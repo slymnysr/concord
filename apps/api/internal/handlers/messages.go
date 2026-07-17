@@ -273,6 +273,8 @@ func (h *Handler) CreateMessage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Arama indeksi: ekler m.Attachments'a konduktan SONRA (has_image doğru olsun)
+	h.indexMessage(m)
 	h.publishMessage(r.Context(), ch, m)
 
 	writeJSON(w, http.StatusCreated, m)

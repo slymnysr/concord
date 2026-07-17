@@ -75,11 +75,18 @@ GET /api/v1/search/messages?q=...&sort=...&limit=...
 
 **Arama davranışı (FAZ B'nin UI'da varsayabileceği):**
 
-- **Türkçe kök bulma:** `mesaj` → "mesajları" bulur.
-- **Aksan-duyarsız:** `toplanti` → "toplantı" bulur (kullanıcıların çoğu Türkçe karakter yazmaz).
-- **İngilizce de köklenir:** `test` → "tests" bulur (karışık içerik).
-- Motor: PostgreSQL FTS (`unaccent` + `turkish`‖`english` tsvector). Ayrı bir arama servisi
-  (Meilisearch) YOK — gerekçesi ve ölçümü: ROADMAP FAZ A.
+- **Çok-dilli:** JA/ZH/KO/RU/DE/TR/EN/FR ölçüldü (docs/DENETIM-GLOBAL.md tablosu).
+  `メッセージ`, `消息`, `메시지`, `сообщение`, `Nachricht` hepsi bulunur.
+- **Kök bulma:** `mesaj` → "mesajları"; `Nachricht` → "Nachrichten"; `test` → "tests".
+- **Aksan-duyarsız:** `toplanti` → "toplantı".
+- **Yazım toleransı:** `toplanit` → "toplantı".
+- ⚠️ **Önek eşleşmesi yalnızca SON kelimeye uygulanır** (Meilisearch davranışı):
+  `toplantı` → "toplantılar" bulur, ama `toplantı yarın` sorgusunda "toplantı" son kelime
+  olmadığı için çekimli biçim eşleşmez. UI'da bu beklenmedik değil (arama-yazarken davranışı).
+- Motor: **Meilisearch** (`MEILI_ADDR`). Yapılandırılmamışsa Postgres FTS'e düşer — ama bu
+  düşüş CJK'da aramayı ÖLDÜRÜR, o yüzden üretimde `MEILI_ADDR` zorunludur (config.MustSecure).
+- **İndeksleme ASENKRON:** mesaj gönderildikten hemen sonra arama onu bulamayabilir
+  (tipik <1sn). İstemci "gönderdim ama aramada yok" durumunu hata saymamalı.
 
 > **FAZ B yapacak:** arama UI'ında alaka/yeni sıralama anahtarı (`sort=recent`) sun.
 

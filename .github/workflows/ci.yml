@@ -51,7 +51,20 @@ jobs:
           cache-dependency-path: apps/api/go.sum
       - run: go mod download
       - run: go vet ./...
-      - run: go test -race -coverprofile=coverage.out ./...
+      # Arama sürücüsü testleri GERÇEK Meilisearch'e karşı koşar (mock YOK: CJK
+      # segmentasyonu ve filtre dili motorun kendi davranışı; mock'lasak kendi
+      # varsayımımızı test etmiş olurduk). Yoksa o testler atlanır.
+      - name: Meilisearch başlat (arama sürücüsü testleri)
+        run: |
+          docker run -d --name meili -p 7700:7700 \
+            -e MEILI_MASTER_KEY=ci_meili_key -e MEILI_NO_ANALYTICS=true \
+            getmeili/meilisearch:v1.11
+          for i in $(seq 1 30); do curl -sf http://localhost:7700/health && break || sleep 1; done
+          curl -sf http://localhost:7700/health || { echo "Meili kalkmadı"; docker logs meili; exit 1; }
+      - env:
+          MEILI_ADDR: http://localhost:7700
+          MEILI_KEY: ci_meili_key
+        run: go test -race -coverprofile=coverage.out ./...
       # Kapsam görünür olsun — yoksa "-cover" çıktısı log'da kaybolur ve kimse bakmaz
       - name: Coverage özeti
         run: |
@@ -118,6 +131,15 @@ jobs:
         options: >-
           --health-cmd "redis-cli ping" --health-interval 5s
           --health-timeout 5s --health-retries 10
+      meilisearch:
+        image: getmeili/meilisearch:v1.11
+        ports: ['7700:7700']
+        env:
+          MEILI_MASTER_KEY: ci_meili_key
+          MEILI_NO_ANALYTICS: 'true'
+        options: >-
+          --health-cmd "curl -fsS http://localhost:7700/health || exit 1"
+          --health-interval 5s --health-timeout 3s --health-retries 12
     env:
       POSTGRES_DSN: postgres://concord:concord_dev@localhost:5433/concord?sslmode=disable
       JWT_SECRET: ci_jwt_secret_at_least_32_characters_long_x
@@ -130,6 +152,10 @@ jobs:
       # Medya boru hattı CI'da GERÇEKTEN koşsun: secret boşsa webhook kapanır ve
       # attachments testi (thumbnail/tarama sözleşmesi) sessizce anlamsızlaşır.
       MEDIA_EVENT_SECRET: ci_media_event_secret
+      # Meilisearch olmadan arama Postgres FTS'e düşer ve CJK testleri (FAZ H'nin varlık
+      # sebebi) sessizce anlamsızlaşır.
+      MEILI_ADDR: http://localhost:7700
+      MEILI_KEY: ci_meili_key
       MINIO_ENDPOINT: localhost:9000
       MINIO_ACCESS_KEY: concord
       MINIO_SECRET_KEY: concord_dev_minio

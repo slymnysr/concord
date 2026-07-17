@@ -8,15 +8,8 @@ import (
 
 	"github.com/concord/api/internal/middleware"
 	"github.com/concord/api/internal/repo"
+	"github.com/concord/api/internal/search"
 )
-
-// tsQuery — arama sorgusunu indeksle AYNI dönüşümle tsquery'ye çevirir (tek yerde tutulur:
-// indeks ile sorgu ayrışırsa arama sessizce hiçbir şey bulmaz).
-func tsQuery(argNo int) string {
-	n := strconv.Itoa(argNo)
-	return "(plainto_tsquery('turkish', concord_unaccent($" + n + ")) || " +
-		"plainto_tsquery('english', concord_unaccent($" + n + ")))"
-}
 
 type searchResult struct {
 	Message *repo.Message `json:"message"`
@@ -24,21 +17,23 @@ type searchResult struct {
 	Author  *repo.User    `json:"author,omitempty"`
 }
 
+// SearchMessages — arama. Motor (Meilisearch veya Postgres FTS) yalnızca SIRALI ID döndürür;
+// içerik/yetki tazeliği DB'den doğrulanır.
+//
+// NEDEN İKİ AŞAMA: indeks bayat olabilir (silinmiş mesaj, kaldırılan üyelik). Motorun
+// döndürdüğü ID'leri DB'den okuyup ORADA da yetki kontrolü yapmak, indeks gecikmesinin
+// veri sızdırmasını engeller. Yetki ayrıca indekste de uygulanır (allowedChannels) —
+// yalnızca sonradan elemek, motorun ilk N sonucu yetkisizse boş sayfa döndürürdü.
 func (h *Handler) SearchMessages(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	if limit <= 0 || limit > 100 {
 		limit = 25
 	}
-	guildID := r.URL.Query().Get("guild_id")
-	channelID := r.URL.Query().Get("channel_id")
-	authorID := r.URL.Query().Get("author_id")
-	// sort=relevance (metin araması varsa varsayılan) | recent. Metin yoksa alaka
-	// anlamsızdır (sıralayacak skor yok) → her zaman kronolojik.
-	sortBy := r.URL.Query().Get("sort")
+	uid := middleware.UserIDFrom(r.Context())
 
 	// Operatör var mı? (metin yoksa bile operatörle arama yapılabilsin)
-	hasOps := authorID != "" || channelID != "" ||
+	hasOps := r.URL.Query().Get("author_id") != "" || r.URL.Query().Get("channel_id") != "" ||
 		r.URL.Query().Get("mentions") != "" || r.URL.Query().Get("pinned") != "" ||
 		r.URL.Query().Get("before") != "" || r.URL.Query().Get("after") != "" ||
 		r.URL.Query().Get("during") != "" || len(r.URL.Query()["has"]) > 0
@@ -47,123 +42,120 @@ func (h *Handler) SearchMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uid := middleware.UserIDFrom(r.Context())
-
-	// Sadece kullanıcının üye olduğu sunucuların kanalları + DM'leri
-	args := []any{uid}
-	where := `
-        (
-            (c.guild_id IS NOT NULL AND EXISTS (SELECT 1 FROM guild_members gm WHERE gm.guild_id = c.guild_id AND gm.user_id = $1))
-            OR (c.guild_id IS NULL AND EXISTS (SELECT 1 FROM dm_participants dp WHERE dp.channel_id = c.id AND dp.user_id = $1))
-        )
-    `
-	// Sorgu, indeksin ürettiği vektörle AYNI dönüşümden geçmeli (bkz. migrations/0056):
-	// concord_unaccent + turkish||english. Biri bile farklı olursa HİÇBİR ŞEY eşleşmez.
-	qArg := 0
-	if q != "" {
-		args = append(args, q)
-		qArg = len(args)
-		where += " AND m.search_vector @@ " + tsQuery(qArg)
+	// Kullanıcının OKUYABİLDİĞİ kanallar — motora filtre olarak verilir
+	allowed, err := h.readableChannelIDs(r, uid)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal", "kanal listesi alınamadı")
+		return
 	}
-	if guildID != "" {
-		if gid, err := strconv.ParseInt(guildID, 10, 64); err == nil {
-			args = append(args, gid)
-			where += " AND c.guild_id = $" + strconv.Itoa(len(args))
-		}
-	}
-	if channelID != "" {
-		if cid, err := strconv.ParseInt(channelID, 10, 64); err == nil {
-			args = append(args, cid)
-			where += " AND m.channel_id = $" + strconv.Itoa(len(args))
-		}
-	}
-	if authorID != "" {
-		if aid, err := strconv.ParseInt(authorID, 10, 64); err == nil {
-			args = append(args, aid)
-			where += " AND m.author_id = $" + strconv.Itoa(len(args))
-		}
+	if len(allowed) == 0 {
+		writeJSON(w, http.StatusOK, []searchResult{})
+		return
 	}
 
-	// has: link | image | video | sound | file | embed
-	for _, hv := range r.URL.Query()["has"] {
-		for _, h := range strings.Split(hv, ",") {
-			switch strings.ToLower(strings.TrimSpace(h)) {
-			case "link", "embed":
-				where += ` AND m.content ~* 'https?://'`
-			case "image":
-				where += ` AND EXISTS (SELECT 1 FROM attachments a WHERE a.message_id = m.id AND a.content_type LIKE 'image/%')`
-			case "video":
-				where += ` AND EXISTS (SELECT 1 FROM attachments a WHERE a.message_id = m.id AND a.content_type LIKE 'video/%')`
-			case "sound", "audio":
-				where += ` AND EXISTS (SELECT 1 FROM attachments a WHERE a.message_id = m.id AND a.content_type LIKE 'audio/%')`
-			case "file":
-				where += ` AND EXISTS (SELECT 1 FROM attachments a WHERE a.message_id = m.id)`
-			}
+	sq := search.Query{
+		Text:              q,
+		AllowedChannelIDs: allowed,
+		Limit:             limit,
+		SortRecent:        r.URL.Query().Get("sort") == "recent" || q == "",
+	}
+	if v := r.URL.Query().Get("channel_id"); v != "" {
+		if id, e := strconv.ParseInt(v, 10, 64); e == nil {
+			sq.ChannelID = &id
 		}
 	}
-
-	// mentions: <user_id>
-	if mentions := r.URL.Query().Get("mentions"); mentions != "" {
-		if mid, err := strconv.ParseInt(mentions, 10, 64); err == nil {
-			args = append(args, mid)
-			where += " AND EXISTS (SELECT 1 FROM message_mentions mm WHERE mm.message_id = m.id AND mm.user_id = $" + strconv.Itoa(len(args)) + ")"
+	if v := r.URL.Query().Get("guild_id"); v != "" {
+		if id, e := strconv.ParseInt(v, 10, 64); e == nil {
+			sq.GuildID = &id
 		}
 	}
-
-	// pinned: true
-	if strings.EqualFold(r.URL.Query().Get("pinned"), "true") {
-		where += " AND EXISTS (SELECT 1 FROM channel_pins cp WHERE cp.message_id = m.id)"
+	if v := r.URL.Query().Get("author_id"); v != "" {
+		if id, e := strconv.ParseInt(v, 10, 64); e == nil {
+			sq.AuthorID = &id
+		}
 	}
-
-	// before / after / during (YYYY-MM-DD, yerel olmayan UTC kabul)
 	if v := r.URL.Query().Get("before"); v != "" {
-		if t, err := time.Parse("2006-01-02", v); err == nil {
-			args = append(args, t)
-			where += " AND m.created_at < $" + strconv.Itoa(len(args))
+		if t, e := time.Parse(time.RFC3339, v); e == nil {
+			sq.Before = &t
 		}
 	}
 	if v := r.URL.Query().Get("after"); v != "" {
-		if t, err := time.Parse("2006-01-02", v); err == nil {
-			args = append(args, t.Add(24*time.Hour))
-			where += " AND m.created_at >= $" + strconv.Itoa(len(args))
+		if t, e := time.Parse(time.RFC3339, v); e == nil {
+			sq.After = &t
 		}
 	}
-	if v := r.URL.Query().Get("during"); v != "" {
-		if t, err := time.Parse("2006-01-02", v); err == nil {
-			args = append(args, t)
-			args = append(args, t.Add(24*time.Hour))
-			where += " AND m.created_at >= $" + strconv.Itoa(len(args)-1) + " AND m.created_at < $" + strconv.Itoa(len(args))
+	if v := r.URL.Query().Get("pinned"); v != "" {
+		b := v == "true"
+		sq.Pinned = &b
+	}
+	for _, hv := range r.URL.Query()["has"] {
+		switch hv {
+		case "image", "file":
+			sq.HasImage = true
+		case "link":
+			sq.HasLink = true
 		}
 	}
 
-	// ALAKA SIRALAMASI (roadmap FAZ A). Öncesinde her zaman m.id DESC idi → en alakalı
-	// sonuç sayfalarca aşağıda kalabiliyordu. ts_rank eşleşme sıklığı+konumuna göre skorlar;
-	// eşit skorlarda yeni mesaj öne alınır (kararlı sıra + sohbette yeni olan daha yararlı).
-	orderBy := "m.id DESC"
-	if qArg > 0 && sortBy != "recent" {
-		orderBy = "ts_rank(m.search_vector, " + tsQuery(qArg) + ") DESC, m.id DESC"
-	}
-
-	args = append(args, limit)
-	query := `
-        SELECT m.id, m.channel_id, m.author_id, m.content, m.edited_at, m.created_at,
-               c.id, c.guild_id, c.type::text, c.name, c.position
-        FROM messages m
-        JOIN channels c ON c.id = m.channel_id
-        WHERE ` + where + `
-        ORDER BY ` + orderBy + `
-        LIMIT $` + strconv.Itoa(len(args)) + `
-    `
-
-	rows, err := h.Pool.Query(r.Context(), query, args...)
+	ids, err := h.Search.Search(r.Context(), sq)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "arama hatası: "+err.Error())
 		return
 	}
+	if len(ids) == 0 {
+		writeJSON(w, http.StatusOK, []searchResult{})
+		return
+	}
+
+	results, err := h.hydrateSearch(r, ids, allowed)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal", "sonuçlar okunamadı")
+		return
+	}
+	writeJSON(w, http.StatusOK, results)
+}
+
+// readableChannelIDs — kullanıcının üye olduğu sunucuların kanalları + DM'leri.
+func (h *Handler) readableChannelIDs(r *http.Request, uid int64) ([]int64, error) {
+	rows, err := h.Pool.Query(r.Context(), `
+        SELECT c.id FROM channels c
+        WHERE (c.guild_id IS NOT NULL AND EXISTS (
+                  SELECT 1 FROM guild_members gm WHERE gm.guild_id = c.guild_id AND gm.user_id = $1))
+           OR (c.guild_id IS NULL AND EXISTS (
+                  SELECT 1 FROM dm_participants dp WHERE dp.channel_id = c.id AND dp.user_id = $1))
+    `, uid)
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+// hydrateSearch — motorun SIRASINI koruyarak mesajları DB'den okur.
+func (h *Handler) hydrateSearch(r *http.Request, ids []int64, allowed []int64) ([]searchResult, error) {
+	rows, err := h.Pool.Query(r.Context(), `
+        SELECT m.id, m.channel_id, m.author_id, m.content, m.edited_at, m.created_at,
+               c.id, c.guild_id, c.type::text, c.name, c.position
+        FROM messages m
+        JOIN channels c ON c.id = m.channel_id
+        WHERE m.id = ANY($1) AND m.channel_id = ANY($2)
+    `, ids, allowed)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	byID := map[int64]searchResult{}
 	authorIDs := map[int64]bool{}
-	var results []searchResult
 	for rows.Next() {
 		var m repo.Message
 		var c repo.Channel
@@ -174,37 +166,42 @@ func (h *Handler) SearchMessages(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		authorIDs[m.AuthorID] = true
-		results = append(results, searchResult{Message: &m, Channel: &c})
+		byID[m.ID] = searchResult{Message: &m, Channel: &c}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
-	// Author bilgilerini çek
+	authors := map[int64]*repo.User{}
 	if len(authorIDs) > 0 {
-		ids := make([]int64, 0, len(authorIDs))
+		aids := make([]int64, 0, len(authorIDs))
 		for id := range authorIDs {
-			ids = append(ids, id)
+			aids = append(aids, id)
 		}
-		authors := map[int64]*repo.User{}
-		urows, _ := h.Pool.Query(r.Context(), `
+		urows, err := h.Pool.Query(r.Context(), `
             SELECT id, username, email, display_name, password_hash, avatar_color, avatar_url, bio, status, bot, created_at
             FROM users WHERE id = ANY($1)
-        `, ids)
-		if urows != nil {
+        `, aids)
+		if err == nil {
 			defer urows.Close()
 			for urows.Next() {
-				u := &repo.User{}
+				var u repo.User
 				if err := urows.Scan(&u.ID, &u.Username, &u.Email, &u.DisplayName, &u.PasswordHash,
 					&u.AvatarColor, &u.AvatarURL, &u.Bio, &u.Status, &u.Bot, &u.CreatedAt); err == nil {
-					authors[u.ID] = u
+					authors[u.ID] = &u
 				}
 			}
 		}
-		for i := range results {
-			results[i].Author = authors[results[i].Message.AuthorID]
-		}
 	}
 
-	if results == nil {
-		results = []searchResult{}
+	// MOTORUN SIRASI korunur: map iterasyonu Go'da rastgeledir, ID sırasına göre
+	// dizmek alaka sıralamasını yok ederdi.
+	out := make([]searchResult, 0, len(ids))
+	for _, id := range ids {
+		if res, ok := byID[id]; ok {
+			res.Author = authors[res.Message.AuthorID]
+			out = append(out, res)
+		}
 	}
-	writeJSON(w, http.StatusOK, results)
+	return out, nil
 }

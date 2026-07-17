@@ -30,6 +30,11 @@ type Config struct {
 	// MinIO bucket-notification webhook'unu koruyan secret. BOŞSA webhook KAPALIDIR
 	// (kimliksiz açık bırakmak, herkesin işleme tetiklemesi demek olurdu).
 	MediaEventSecret string
+	// Arama motoru. MEILI_ADDR boşsa Postgres FTS'e düşülür — ama bu SESSİZ değil:
+	// /health hangi motorun aktif olduğunu raporlar. Postgres FTS CJK'da çalışmaz
+	// (bkz. docs/DENETIM-GLOBAL.md) → global üretimde MEILI_ADDR ZORUNLU (MustSecure).
+	MeiliAddr string
+	MeiliKey  string
 	// Push bildirimi. VAPID anahtarları boşsa WEB push kapalıdır (payload şifrelemesi
 	// anahtarsız yapılamaz); Expo push anahtar istemez (EAS tarafında yapılandırılır).
 	ExpoAccessToken string
@@ -69,6 +74,8 @@ func Load() *Config {
 		AllowedOrigins:      splitCSV(getEnv("ALLOWED_ORIGINS", "http://localhost:3000")),
 		VoiceControlSecret:  getEnv("VOICE_CONTROL_SECRET", devVoiceSecret),
 		MediaEventSecret:    getEnv("MEDIA_EVENT_SECRET", ""),
+		MeiliAddr:           getEnv("MEILI_ADDR", ""),
+		MeiliKey:            getEnv("MEILI_KEY", ""),
 		ExpoAccessToken:     getEnv("EXPO_ACCESS_TOKEN", ""),
 		VAPIDPublicKey:      getEnv("VAPID_PUBLIC_KEY", ""),
 		VAPIDPrivateKey:     getEnv("VAPID_PRIVATE_KEY", ""),
@@ -107,6 +114,11 @@ func (c *Config) MustSecure() error {
 	// (handlers.resolveAttachments doğrulamayı atlar). Üretimde bu kabul edilemez.
 	if c.MediaEventSecret == "" {
 		return fmt.Errorf("üretimde MEDIA_EVENT_SECRET ZORUNLU: boşsa dosyalar virüs taramasından geçmeden iliştirilebilir")
+	}
+	// Postgres FTS CJK'yı kelimelere ayıramaz → Japonca/Çince/Korece kullanıcılar için arama
+	// HİÇ çalışmaz (ölçüldü: docs/DENETIM-GLOBAL.md). Global üretimde bu kabul edilemez.
+	if c.MeiliAddr == "" {
+		return fmt.Errorf("üretimde MEILI_ADDR ZORUNLU: Postgres FTS yedeği CJK'da arama yapamaz (JP/ZH/KO kullanıcıları için arama ölür)")
 	}
 	return nil
 }

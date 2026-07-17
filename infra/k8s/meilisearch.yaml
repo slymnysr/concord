@@ -1,0 +1,66 @@
+# Meilisearch — mesaj arama motoru (FAZ I)
+#
+# NEDEN AYRI SERVİS: PostgreSQL FTS global üründe yetmiyor (ölçüldü, docs/DENETIM-GLOBAL.md):
+# CJK'yı kelimelere AYIRAMIYOR (Japonca/Çince cümle TEK TOKEN olarak indekslenir → arama hiç
+# çalışmaz), dil başına tek config seçmek zorunda (turkish config Almanca'yı bozuyor), Rusça
+# kök bulma yok. Meilisearch aynı 11 vakanın hepsini geçiyor + yazım toleransı.
+#
+# StatefulSet: arama indeksi DİSKTE yaşar. Deployment + emptyDir olsaydı her yeniden başlatma
+# indeksi siler ve tam backfill gerektirirdi (milyonlarca mesajda saatler).
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: meilisearch
+  namespace: concord
+  labels: { app: meilisearch }
+spec:
+  serviceName: meilisearch
+  replicas: 1 # Meilisearch tek-yazar; ölçekleme okuma replikasıyla yapılır (v1.11'de HA yok)
+  selector:
+    matchLabels: { app: meilisearch }
+  template:
+    metadata:
+      labels: { app: meilisearch }
+    spec:
+      containers:
+        - name: meilisearch
+          image: getmeili/meilisearch:v1.11
+          ports:
+            - { name: http, containerPort: 7700 }
+          env:
+            - name: MEILI_ENV
+              value: 'production'
+            - name: MEILI_NO_ANALYTICS
+              value: 'true'
+            # Anahtarsız çalıştırmak indeksi herkese açık YAZILABİLİR bırakır.
+            # MEILI_ENV=production zaten anahtar olmadan başlamayı reddeder.
+            - name: MEILI_MASTER_KEY
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: MEILI_MASTER_KEY } }
+          volumeMounts:
+            - { name: data, mountPath: /meili_data }
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 200m, memory: 512Mi }
+            limits: { cpu: '2', memory: 4Gi }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ['ReadWriteOnce']
+        resources: { requests: { storage: 20Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meilisearch
+  namespace: concord
+spec:
+  selector: { app: meilisearch }
+  ports:
+    - { name: http, port: 7700, targetPort: http }

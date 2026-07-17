@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/concord/api/internal/auth"
 	"github.com/concord/api/internal/automod"
@@ -12,6 +14,7 @@ import (
 	"github.com/concord/api/internal/mailer"
 	"github.com/concord/api/internal/push"
 	"github.com/concord/api/internal/repo"
+	"github.com/concord/api/internal/search"
 	"github.com/concord/api/internal/snowflake"
 	"github.com/concord/api/internal/storage"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -32,6 +35,7 @@ type Handler struct {
 	AutoMod *automod.Engine
 	Mailer  *mailer.Mailer
 	Push    *push.Sender
+	Search  search.Driver
 
 	Users         *repo.Users
 	Guilds        *repo.Guilds
@@ -61,6 +65,7 @@ func New(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool, rdb *redis.
 	return &Handler{
 		logger: logger,
 		cfg:    cfg,
+		Search: newSearchDriver(logger, cfg, pool),
 		Push: push.NewSender(push.Config{
 			ExpoAccessToken: cfg.ExpoAccessToken,
 			VAPIDPublicKey:  cfg.VAPIDPublicKey,
@@ -146,4 +151,31 @@ func readJSONLenient(r *http.Request, v any) error {
 		return errors.New("invalid JSON: " + err.Error())
 	}
 	return nil
+}
+
+// newSearchDriver — Meilisearch yapılandırılmışsa onu, değilse Postgres FTS'i seçer.
+//
+// Düşüş SESSİZ DEĞİL: seçilen motor loglanır ve /health'te raporlanır. Postgres yedeği
+// CJK'da arama YAPAMAZ (docs/DENETIM-GLOBAL.md) → üretimde config.MustSecure zaten
+// MEILI_ADDR'i zorunlu kılar; bu yol yalnızca yerel geliştirme içindir.
+func newSearchDriver(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool) search.Driver {
+	if cfg.MeiliAddr == "" {
+		logger.Warn("MEILI_ADDR yok → arama Postgres FTS'e düşüyor; CJK (JP/ZH/KO) aramaları ÇALIŞMAZ")
+		return search.NewPostgres(pool)
+	}
+	m := search.NewMeili(cfg.MeiliAddr, cfg.MeiliKey)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := m.Ready(ctx); err != nil {
+		// Açılışta erişilemiyorsa yedeğe düş — ama GÖRÜNÜR şekilde. Burada panic atmak
+		// Meilisearch'ün geçici bir hıçkırığında tüm API'yi indirirdi.
+		logger.Error("Meilisearch'e ulaşılamadı → Postgres FTS yedeği; CJK aramaları ÇALIŞMAZ", zap.Error(err))
+		return search.NewPostgres(pool)
+	}
+	if err := m.Setup(ctx); err != nil {
+		logger.Error("Meilisearch indeks kurulumu başarısız → Postgres FTS yedeği", zap.Error(err))
+		return search.NewPostgres(pool)
+	}
+	logger.Info("arama motoru: meilisearch", zap.String("addr", cfg.MeiliAddr))
+	return m
 }

@@ -120,6 +120,33 @@ services:
       retries: 5
 
   # Geliştirme SMTP sunucusu — gönderilen tüm mailler http://localhost:8025 arayüzünde görünür
+  # Meilisearch — mesaj arama motoru (FAZ I).
+  #
+  # NEDEN AYRI SERVİS: PostgreSQL FTS global bir üründe yetmiyor (ölçüldü, bkz.
+  # docs/DENETIM-GLOBAL.md): CJK'yı kelimelere AYIRAMIYOR (Japonca/Çince cümle tek token
+  # olarak indeksleniyor → arama hiç çalışmıyor), dil başına tek config seçmek zorunda
+  # (turkish config Almanca'yı bozuyor), Rusça kök bulma yok. Meilisearch bunların hepsini
+  # kutudan çıktığı gibi yapar (CJK segmentasyonu + çok-dil + yazım toleransı).
+  meilisearch:
+    image: getmeili/meilisearch:v1.11
+    container_name: concord-meilisearch
+    restart: unless-stopped
+    ports:
+      - '7700:7700'
+    environment:
+      # Dev anahtarı; prod'da secret'tan gelir (MEILI_MASTER_KEY). Anahtarsız çalıştırmak
+      # arama indeksini herkese açık yazılabilir bırakır.
+      MEILI_MASTER_KEY: concord_dev_meili_key
+      MEILI_ENV: development
+      MEILI_NO_ANALYTICS: 'true'
+    volumes:
+      - meili_data:/meili_data
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:7700/health']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
   mailhog:
     image: mailhog/mailhog:latest
     container_name: concord-mailhog
@@ -130,6 +157,7 @@ services:
 
 volumes:
   postgres_data:
+  meili_data:
   redis_data:
   minio_data:
   prometheus_data:
