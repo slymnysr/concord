@@ -51,6 +51,15 @@ jobs:
           cache-dependency-path: apps/api/go.sum
       - run: go mod download
       - run: go vet ./...
+      # Bilinen güvenlik açığı taraması. govulncheck yalnızca kodun GERÇEKTEN ULAŞTIĞI
+      # açıkları raporlar (çağrı grafiği analizi) → gürültü düşük, çıkanlar gerçek. Bir
+      # bağımlılıkta ya da Go stdlib'inde yamalı bir CVE'ye ulaşan kod yolu varsa PR kırılır.
+      # Bu adım eklenirken 21 ulaşılabilir açık vardı (eski Go 1.25.0 yaması + 2019'dan kalma
+      # x/image); toolchain 1.25.12 + bağımlılık güncellemesiyle sıfırlandı.
+      - name: Güvenlik açığı taraması (govulncheck)
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
       # Arama sürücüsü testleri GERÇEK Meilisearch'e karşı koşar (mock YOK: CJK
       # segmentasyonu ve filtre dili motorun kendi davranışı; mock'lasak kendi
       # varsayımımızı test etmiş olurduk). Yoksa o testler atlanır.
