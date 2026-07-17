@@ -9,12 +9,18 @@
 //
 // GEREKSİNİM: Redis (localhost:6379). Çalıştır: node test/region.test.mjs
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+// Paket kökü test dosyasından TÜRETİLİR. Sabit yol (/home/...) gömmek testi yalnızca
+// tek bir makinede çalışır kılar — CI'da bu dizin yok.
+const VOICE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const kill = [];
 function startNode(id, region, wsPort, httpPort, rtcMin, rtcMax) {
   const p = spawn('node', ['dist/index.js'], {
-    cwd: '/home/slmnys/concord/apps/voice',
+    cwd: VOICE_DIR,
     env: {
       ...process.env,
       VOICE_CLUSTER_ENABLED: 'true',

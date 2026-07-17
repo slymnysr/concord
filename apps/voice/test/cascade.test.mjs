@@ -11,17 +11,26 @@
 // Iki node'a birer WS peer baglanir. A'daki peer produce eder; B'deki peer'in
 // "newProducer" bildirimi alip alamadigina ve B'nin router'inda pipe producer olusup
 // olusmadigina bakariz.
+// NOT: 'ws' ve 'jsonwebtoken' PAKET ADIYLA import edilir — mutlak yerel yol (/home/...)
+// gömmek testi yalnızca benim makinemde çalışır kılıyordu; CI'da ERR_MODULE_NOT_FOUND.
+// İkisi de apps/voice'un kendi bağımlılığı, çözümleme buradan yapılır.
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+// Paket kökü test dosyasından TÜRETİLİR. Sabit yol (/home/...) gömmek testi yalnızca
+// tek bir makinede çalışır kılar — CI'da bu dizin yok.
+const VOICE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 import { setTimeout as sleep } from 'node:timers/promises';
-import WebSocket from '/home/slmnys/concord/node_modules/.pnpm/ws@8.21.0/node_modules/ws/index.js';
-import jwt from '/home/slmnys/concord/node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/index.js';
+import WebSocket from 'ws';
+import jwt from 'jsonwebtoken';
 
 const SECRET_JWT = 'dev_jwt_secret_change_in_prod_at_least_32_chars';
 const kill = [];
 
 function startNode(id, wsPort, httpPort, rtcMin, rtcMax) {
   const p = spawn('node', ['dist/index.js'], {
-    cwd: '/home/slmnys/concord/apps/voice',
+    cwd: VOICE_DIR,
     env: {
       ...process.env,
       VOICE_CLUSTER_ENABLED: 'true',
