@@ -213,11 +213,19 @@ func (h *Handler) CreateMessage(w http.ResponseWriter, r *http.Request) {
 	// Kanalın last_message_id'sini güncelle (unread badge için)
 	_, _ = h.Pool.Exec(r.Context(), `UPDATE channels SET last_message_id = $1 WHERE id = $2`, m.ID, channelID)
 
-	// Attachment'ları ekle — metadata resolveAttachments'tan (sunucu tespiti), istemciden DEĞİL
+	// Attachment'ları ekle — metadata resolveAttachments'tan (sunucu tespiti), istemciden DEĞİL.
+	//
+	// m.Attachments'ı DA doldurmak ŞART: hem HTTP yanıtı hem MESSAGE_CREATE olayı `m`'i
+	// serileştirir. Doldurulmazsa (eski hali) ek DB'ye yazılır ama ne gönderen yanıtında ne de
+	// diğer istemcilerin realtime olayında görünür → görsel, sayfa yenilenip ListMessages
+	// çağrılana kadar HİÇ ÇIKMAZ. ListMessages doğru dolduruyordu; sessiz tutarsızlık buydu.
 	for _, ra := range resolvedAtt {
-		_ = h.Attachments.Create(r.Context(), &repo.Attachment{
-			ID:          h.IDs.Next(),
-			MessageID:   m.ID,
+		att := &repo.Attachment{
+			ID:        h.IDs.Next(),
+			MessageID: m.ID,
+			// DB'de DEFAULT NOW() var ama yanıt struct'tan serileşiyor → doldurulmazsa
+			// istemci created_at olarak "0001-01-01" görür
+			CreatedAt:   m.CreatedAt,
 			Filename:    ra.in.Filename,
 			URL:         ra.in.URL,
 			ContentType: ra.contentT,
@@ -225,7 +233,12 @@ func (h *Handler) CreateMessage(w http.ResponseWriter, r *http.Request) {
 			Width:       ra.width,
 			Height:      ra.height,
 			ThumbURL:    ra.thumbURL,
-		})
+		}
+		if err := h.Attachments.Create(r.Context(), att); err != nil {
+			h.logger.Error("ek kaydedilemedi", zap.Error(err), zap.Int64("message", m.ID))
+			continue
+		}
+		m.Attachments = append(m.Attachments, *att)
 	}
 
 	// Mention parse + bildirim (yanıt yazarı da pinglenir). @silent ise hiç bildirim yok.

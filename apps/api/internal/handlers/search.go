@@ -10,6 +10,14 @@ import (
 	"github.com/concord/api/internal/repo"
 )
 
+// tsQuery — arama sorgusunu indeksle AYNI dönüşümle tsquery'ye çevirir (tek yerde tutulur:
+// indeks ile sorgu ayrışırsa arama sessizce hiçbir şey bulmaz).
+func tsQuery(argNo int) string {
+	n := strconv.Itoa(argNo)
+	return "(plainto_tsquery('turkish', concord_unaccent($" + n + ")) || " +
+		"plainto_tsquery('english', concord_unaccent($" + n + ")))"
+}
+
 type searchResult struct {
 	Message *repo.Message `json:"message"`
 	Channel *repo.Channel `json:"channel"`
@@ -25,6 +33,9 @@ func (h *Handler) SearchMessages(w http.ResponseWriter, r *http.Request) {
 	guildID := r.URL.Query().Get("guild_id")
 	channelID := r.URL.Query().Get("channel_id")
 	authorID := r.URL.Query().Get("author_id")
+	// sort=relevance (metin araması varsa varsayılan) | recent. Metin yoksa alaka
+	// anlamsızdır (sıralayacak skor yok) → her zaman kronolojik.
+	sortBy := r.URL.Query().Get("sort")
 
 	// Operatör var mı? (metin yoksa bile operatörle arama yapılabilsin)
 	hasOps := authorID != "" || channelID != "" ||
@@ -46,9 +57,13 @@ func (h *Handler) SearchMessages(w http.ResponseWriter, r *http.Request) {
             OR (c.guild_id IS NULL AND EXISTS (SELECT 1 FROM dm_participants dp WHERE dp.channel_id = c.id AND dp.user_id = $1))
         )
     `
+	// Sorgu, indeksin ürettiği vektörle AYNI dönüşümden geçmeli (bkz. migrations/0056):
+	// concord_unaccent + turkish||english. Biri bile farklı olursa HİÇBİR ŞEY eşleşmez.
+	qArg := 0
 	if q != "" {
 		args = append(args, q)
-		where += " AND m.search_vector @@ plainto_tsquery('simple', $" + strconv.Itoa(len(args)) + ")"
+		qArg = len(args)
+		where += " AND m.search_vector @@ " + tsQuery(qArg)
 	}
 	if guildID != "" {
 		if gid, err := strconv.ParseInt(guildID, 10, 64); err == nil {
@@ -121,6 +136,14 @@ func (h *Handler) SearchMessages(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// ALAKA SIRALAMASI (roadmap FAZ A). Öncesinde her zaman m.id DESC idi → en alakalı
+	// sonuç sayfalarca aşağıda kalabiliyordu. ts_rank eşleşme sıklığı+konumuna göre skorlar;
+	// eşit skorlarda yeni mesaj öne alınır (kararlı sıra + sohbette yeni olan daha yararlı).
+	orderBy := "m.id DESC"
+	if qArg > 0 && sortBy != "recent" {
+		orderBy = "ts_rank(m.search_vector, " + tsQuery(qArg) + ") DESC, m.id DESC"
+	}
+
 	args = append(args, limit)
 	query := `
         SELECT m.id, m.channel_id, m.author_id, m.content, m.edited_at, m.created_at,
@@ -128,7 +151,7 @@ func (h *Handler) SearchMessages(w http.ResponseWriter, r *http.Request) {
         FROM messages m
         JOIN channels c ON c.id = m.channel_id
         WHERE ` + where + `
-        ORDER BY m.id DESC
+        ORDER BY ` + orderBy + `
         LIMIT $` + strconv.Itoa(len(args)) + `
     `
 

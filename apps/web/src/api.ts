@@ -86,8 +86,12 @@ export interface APIAttachment {
   message_id: Snowflake;
   filename: string;
   url: string;
+  // Sunucunun nesneden TESPİT ETTİĞİ metadata (istemci beyanı değil) — bkz. API-KONTRAT
   content_type?: string;
   size_bytes: number;
+  width?: number; // yalnızca görüntülerde
+  height?: number; // yalnızca görüntülerde
+  thumb_url?: string; // EXIF'siz JPEG thumbnail (uzun kenar 400px), yalnızca görüntülerde
   created_at: string;
 }
 

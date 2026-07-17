@@ -1277,8 +1277,10 @@ function AttachmentView({ a }: { a: APIAttachment }) {
         className="relative inline-flex items-center justify-center max-w-xs w-48 h-32 rounded-lg border border-line overflow-hidden group/sp"
       >
         {ct.startsWith('image/') && (
+          // Spoiler önizlemesi zaten bulanık → thumbnail fazlasıyla yeterli.
+          // Tam boyu indirmek, kullanıcı hiç açmasa bile MB'ları boşa harcardı.
           <img
-            src={a.url}
+            src={a.thumb_url ?? a.url}
             alt=""
             className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-60"
           />
@@ -1293,11 +1295,19 @@ function AttachmentView({ a }: { a: APIAttachment }) {
     return (
       <>
         <div className="relative group/att inline-block max-w-xs">
+          {/* Sohbet akışında THUMBNAIL gösterilir (tam boy yalnızca lightbox'ta):
+              tam boyu satır içi yüklemek her görselde MB'larca gereksiz indirme demek.
+              width/height verilince tarayıcı yeri ÖNCEDEN ayırır → görsel inince liste
+              ZIPLAMAZ (layout shift) ve kullanıcı okuduğu yeri kaybetmez. */}
           <img
-            src={a.url}
+            src={a.thumb_url ?? a.url}
             alt={a.filename}
+            width={a.width}
+            height={a.height}
+            loading="lazy"
+            decoding="async"
             onClick={() => setLightbox(true)}
-            className="rounded-lg max-h-80 border border-line cursor-zoom-in"
+            className="rounded-lg max-h-80 w-auto h-auto border border-line cursor-zoom-in"
           />
           <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover/att:opacity-100 transition-opacity">
             <a

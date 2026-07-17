@@ -45,7 +45,17 @@ Bu 7 dizin ayrıktır → **7 AI aynı anda, sıfır çakışma.**
 - **Prod secret zorlaması** — `config.go`: prod'da dev-default secret ise başlatmayı FAIL et.
 - **CORS/güvenlik başlıkları** — env'den allowlist.
 - **Medya işleme** — presign sıkılaştırma (tip/boyut) + MinIO-event ile async resize/EXIF-temizleme/thumbnail/virüs-tarama (ClamAV; adres env'den, container FAZ F'te). _Yapma: ham dosya serve etme._
-- **Arama** — Meilisearch/Typesense; mesaj yazımında index'le; alaka sıralaması. _Yapma: ILIKE'ta bırakma._
+- **Arama** — ✅ TAMAM (PostgreSQL FTS; Meilisearch **bilinçli olarak seçilmedi**).
+  Önceki hali üç kusurluydu: kök bulma yok ('simple' config), ASCII yazım hiç eşleşmiyor,
+  alaka sıralaması yok (`ORDER BY m.id DESC`). Şimdi: `unaccent` + `turkish`‖`english`
+  tsvector + `ts_rank` (+ `sort=recent` seçeneği).
+  **ÖLÇÜM (8 vaka: kök bulma + ASCII yazım + İngilizce): eski 0/6 → yeni 8/8.**
+  **Meilisearch neden yok:** ölçülen kalite ihtiyacı karşılıyor; ayrı servis + indeks
+  senkronu + tutarlılık yükü bu boyutta karşılığını vermiyor. Bu bir "kestirme" değil,
+  ölçülmüş bir karar — kalite yetmezse TIER 4'te ele alınır. `search_vector` GENERATED
+  kolon olduğu için indeks senkronu derdi de yok (Meilisearch'ün asıl maliyeti buydu).
+  ⚠️ Bilinen sınır: Postgres'in Türkçe snowball stemmer'ı aksanlı metinde tutarsız
+  ('toplantı'→'topla' ama 'toplantılar'→'toplan'); `unaccent` bunu da düzeltiyor.
 - **Reactions N+1** — mesaj listesi tek istekte reaction getirir (embed veya batch endpoint).
 - **ID-serialization** — zaten temiz (string); teyit et.
   **Sözleşme (dışarıya):** FAZ B'nin çağıracağı endpoint şekilleri (medya/arama/reactions-batch) —
@@ -59,7 +69,10 @@ Bu 7 dizin ayrıktır → **7 AI aynı anda, sıfır çakışma.**
 
 - **Tanrı-bileşen refaktörü** — `ServerSettingsModal`(2515) + `UserSettingsModal`(1905) sekme-başına böl (>600 satır kalmasın).
 - **Reactions N+1 (web tarafı)** — FAZ A'nın batch/embed endpoint'ini kullan (`MessageList`).
-- **Yeni endpoint tüketimi** — medya thumbnail'leri, arama UI'ı (FAZ A kontratına göre).
+- **Yeni endpoint tüketimi** — ✅ thumbnail tüketimi TAMAM: satır içi görseller artık
+  `thumb_url` gösteriyor (tam boy yalnızca lightbox/indirme) ve `width`/`height` ile yer
+  ayrılıyor → liste ziplamıyor. Arama UI'ı mevcut (`SearchModal`); `sort=recent` anahtarı
+  kontratta duruyor, UI'a eklenmesi isteğe bağlı.
 - **i18n tamamlama** — kalan ~40 bileşeni `t()` ile sar.
   **Sözleşme (dışarıdan):** FAZ A'nın `## API-KONTRAT`'ını tüketir. **Test:** bileşen davranışı korunur (E2E ayar akışları).
 
@@ -182,7 +195,12 @@ aynı ölü token'la sonsuza dek dener → **realtime sayfa yenilenene kadar ses
 - **ClamAV** container (`CLAMAV_ADDR` env → FAZ A `internal/media.Scan` bunu kullanır).
 - **MinIO bucket-notification** (`s3:ObjectCreated:*`) → FAZ A medya webhook'una POST.
 - **ScyllaDB'yi KALDIR** (atıl + tasarım-kod uyuşmazlığı) + `docs/architecture.md` düzelt. _Yapma: atıl bırakma._
-- Prod secret yönetimi (vault/env).
+- Prod secret yönetimi — ✅ **env tabanlı** (maddenin "vault/**env**" seçeneği):
+  k8s Secret'ları (`secrets.example.yaml` + README'de `kubectl create secret`), ve asıl
+  koruma: `config.MustSecure()` üretimde dev-default JWT/VOICE/MEDIA secret'larıyla
+  **açılışı reddeder**; gateway `runtime.exs` aynısını yapar + `RELEASE_COOKIE` zorunlu.
+  Vault/sealed-secrets **bilinçli eklenmedi**: hangi vault, hangi küme — bu altyapı kararı
+  kullanıcıya ait, tek taraflı seçilmemeli.
 
 > ### ✅ MEDYA WIRING'İ TAMAM (F → A koordinasyonu kapandı)
 >
