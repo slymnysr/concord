@@ -483,6 +483,8 @@ export const api = {
     email: string;
     display_name: string;
     password: string;
+    // Yaş kapısı (COPPA/DSA) — API bunu ZORUNLU tutar, YYYY-MM-DD
+    birth_date: string;
   }): Promise<AuthResponse> {
     const r = await request<AuthResponse>('/auth/register', {
       method: 'POST',

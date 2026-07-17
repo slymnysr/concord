@@ -185,6 +185,12 @@ func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 			r.Post("/users/me/verify-email", h.VerifyMyEmail)
 			r.Post("/users/me/email", h.ChangeEmail)
 			r.Delete("/users/me", h.DeleteMyAccount)
+
+			// Uyum (FAZ M) — GDPR Md.15 (erişim hakkı). Md.17 (silme/unutulma) yukarıdaki
+			// DELETE /users/me ile karşılanıyor: anonimleştirir, login'i engeller.
+			r.Post("/users/me/data-export", h.RequestDataExport)
+			r.Get("/users/me/data-exports", h.ListDataExports)
+			r.Get("/users/me/data-exports/{exportID}", h.DownloadDataExport)
 			// DM gizliliği
 			r.Get("/users/me/privacy", h.GetMyPrivacy)
 			r.Put("/users/me/privacy", h.UpdateMyPrivacy)

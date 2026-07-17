@@ -1,3 +1,4 @@
+import { errText, t } from './i18n';
 import {
   configureStore,
   createSlice,
@@ -69,14 +70,20 @@ export const loginThunk = createAsyncThunk(
 export const registerThunk = createAsyncThunk(
   'auth/register',
   async (
-    input: { username: string; email: string; display_name: string; password: string },
+    input: {
+      username: string;
+      email: string;
+      display_name: string;
+      password: string;
+      birth_date: string;
+    },
     { rejectWithValue },
   ) => {
     try {
       const r = await api.register(input);
       return r.user;
     } catch (e: any) {
-      return rejectWithValue(e.message || 'Kayıt başarısız');
+      return rejectWithValue(errText(e, t('auth.registerFailed')));
     }
   },
 );

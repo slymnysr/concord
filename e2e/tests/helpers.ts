@@ -31,6 +31,8 @@ export async function registerViaApi(req: APIRequestContext, u: TestUser): Promi
       email: u.email,
       password: u.password,
       display_name: u.displayName,
+      // Yaş kapısı (FAZ M) doğum tarihini ZORUNLU kılar — testler yetişkin kullanıcı kurar
+      birth_date: '1995-01-01',
     },
   });
   expect(r.ok(), `kayıt başarısız: ${r.status()} ${await r.text()}`).toBeTruthy();

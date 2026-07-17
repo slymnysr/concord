@@ -44,6 +44,8 @@ type registerReq struct {
 	Email       string `json:"email"`
 	DisplayName string `json:"display_name"`
 	Password    string `json:"password"`
+	// YYYY-MM-DD. Yaş kapısı için ZORUNLU (COPPA/DSA — bkz. handlers/compliance.go).
+	BirthDate string `json:"birth_date"`
 }
 
 type authResp struct {
@@ -76,6 +78,23 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "weak_password", "parola en az 8 karakter olmalı")
 		return
 	}
+	// YAŞ KAPISI (COPPA/DSA — uygulama global). Doğum tarihi olmadan kayıt YOK: sonradan
+	// sormak, veri toplandıktan sonra sormak demek — yasal olarak anlamsız.
+	birth, err := time.Parse("2006-01-02", req.BirthDate)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_birth_date", "doğum tarihi gerekli (YYYY-MM-DD)")
+		return
+	}
+	if birth.After(time.Now()) {
+		writeError(w, http.StatusBadRequest, "invalid_birth_date", "doğum tarihi gelecekte olamaz")
+		return
+	}
+	if !ageOK(birth, time.Now()) {
+		// Reddedilen kaydın e-postası/kullanıcı adı DB'ye YAZILMAZ: 13 yaş altından veri
+		// toplamamak COPPA'nın asıl gereği.
+		writeError(w, http.StatusForbidden, "underage", "kayıt için en az 13 yaşında olmalısın")
+		return
+	}
 	if req.DisplayName == "" {
 		req.DisplayName = req.Username
 	}
@@ -95,6 +114,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		PasswordHash: hash,
 		AvatarColor:  randomBrandColor(),
 		Status:       "online",
+		BirthDate:    &birth,
 	}
 	if err := h.Users.Create(r.Context(), user); err != nil {
 		if errors.Is(err, repo.ErrConflict) {

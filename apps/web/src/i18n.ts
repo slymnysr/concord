@@ -21,6 +21,11 @@ type Dict = Record<string, string>;
 
 // Türkçe = referans (anahtar = TR metin değil, semantik anahtar).
 const tr: Dict = {
+  'auth.birthDate': 'Doğum tarihin',
+  'auth.birthDate.hint': 'Yaş sınırı için gerekli. Kimseye gösterilmez.',
+  'auth.registerFailed': 'Kayıt başarısız.',
+  'error.underage': 'Kayıt için en az 13 yaşında olmalısın.',
+  'error.invalid_birth_date': 'Geçerli bir doğum tarihi gir.',
   'time.justNow': 'az önce',
   'activity.justStarted': 'az önce başladı',
   'channel.startOf': '#{name} kanalının başlangıcı.',
@@ -1022,6 +1027,11 @@ const tr: Dict = {
 };
 
 const en: Dict = {
+  'auth.birthDate': 'Your date of birth',
+  'auth.birthDate.hint': "Required for age verification. It's never shown to anyone.",
+  'auth.registerFailed': 'Registration failed.',
+  'error.underage': 'You must be at least 13 years old to sign up.',
+  'error.invalid_birth_date': 'Enter a valid date of birth.',
   'time.justNow': 'just now',
   'activity.justStarted': 'started just now',
   'channel.startOf': 'This is the start of #{name}.',

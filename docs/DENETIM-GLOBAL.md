@@ -166,7 +166,7 @@ Kural aynı: her faz **ayrı üst-dizin** sahiplenir; iki faz aynı dosyaya yazm
 - **k8s:** `VOICE_REGION` (ayarlanmazsa tüm node'lar 'default' bölgesinde görünür → bölge
   yönlendirmesi etkisiz kalır; her bölge deployment'ına kendi değeri verilmeli).
 
-## FAZ M — Uyum (`apps/api/**` + `apps/web/**` — SIRALI, H/J bitince)
+## FAZ M — Uyum (`apps/api/**` + `apps/web/**`) — ✅ TAMAM
 
 > Bu faz H ve J ile AYNI dizinlere yazar → onlarla eşzamanlı verilmez.
 

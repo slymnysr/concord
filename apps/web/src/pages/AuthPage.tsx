@@ -25,6 +25,7 @@ export function AuthPage() {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [totpCode, setTotpCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPassword2, setNewPassword2] = useState('');
@@ -46,6 +47,7 @@ export function AuthPage() {
           password,
           username,
           display_name: displayName || username,
+          birth_date: birthDate,
         }),
       );
     } else if (mode === 'forgot') {
@@ -122,6 +124,19 @@ export function AuthPage() {
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder={t('auth.displayName.placeholder')}
                   autoComplete="name"
+                  className={inputCls}
+                />
+              </Field>
+              {/* Yaş kapısı (COPPA/DSA) — API doğum tarihini ZORUNLU tutar; alan olmadan
+                  kayıt 400 alır. Sonradan sormak yasal olarak anlamsız: veri zaten toplanmış olur. */}
+              <Field label={t('auth.birthDate')} hint={t('auth.birthDate.hint')}>
+                <input
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  required
+                  max={new Date().toISOString().slice(0, 10)}
+                  autoComplete="bday"
                   className={inputCls}
                 />
               </Field>

@@ -230,3 +230,32 @@ Yeni durum için yeni kod eklenir. Şu an 92 kod:
 > farklı `detail` taşırlar. İstemci bunlar için genel mesaj gösterir. Kullanıcının **eylem
 > alabileceği** durumlar (ör. `invalid_attachment`, `rate_limited`, `weak_password`,
 > `channel_full`) özel kodlarla ayrılmıştır ve çevrilmelidir.
+
+## Uyum (FAZ M) — yaş kapısı + veri dışa aktarma
+
+**Kayıt artık `birth_date` ZORUNLU** (COPPA 13+/DSA):
+
+```
+POST /api/v1/auth/register  { username, email, display_name, password, birth_date: "YYYY-MM-DD" }
+→ 400 { error: "invalid_birth_date" }   // eksik/geçersiz/gelecek tarih
+→ 403 { error: "underage" }             // 13 yaş altı — verisi DB'ye YAZILMAZ
+```
+
+> **FAZ B/K yapacak:** kayıt formunda doğum tarihi alanı ZORUNLU. Alan olmadan kayıt 400 alır.
+> `error.underage` ve `error.invalid_birth_date` çevrilmelidir (kullanıcı eylem alabilir).
+
+**Veri dışa aktarma (GDPR Md.15)** — ASENKRON:
+
+```
+POST /api/v1/users/me/data-export        → 202 { id: string, status: "pending" }
+GET  /api/v1/users/me/data-exports       → 200 [{ id, status, requested_at, ready_at?, expires_at? }]
+GET  /api/v1/users/me/data-exports/{id}  → 200 (JSON arşiv) | 409 not_ready | 410 expired | 404
+```
+
+- `id` **STRING** (Snowflake 64-bit; JSON sayı JS'te yuvarlanır).
+- Bekleyen istek varken yeni POST aynı isteği döner (her istek 41 tablo tarar).
+- Arşiv **7 gün** sonra sona erer.
+
+**Hesap silme (GDPR Md.17)** — `DELETE /api/v1/users/me { password }` → 204.
+Anonimleştirir, girişi engeller; **mesajlar kalır** (sert silme başkalarının sohbet geçmişini
+bozardı — Discord da böyle yapar). Sahip olunan sunucu varsa `409 owns_guilds`.
