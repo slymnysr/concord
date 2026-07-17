@@ -46,6 +46,9 @@ type registerReq struct {
 	Password    string `json:"password"`
 	// YYYY-MM-DD. Yaş kapısı için ZORUNLU (COPPA/DSA — bkz. handlers/compliance.go).
 	BirthDate string `json:"birth_date"`
+	// Dil (isteğe bağlı) — verilmezse Accept-Language'dan çıkarılır. İşlem maillerinin
+	// dilini belirler (mailler API'den gider, çeviri sunucuda olmak zorunda).
+	Locale string `json:"locale"`
 }
 
 type authResp struct {
@@ -74,8 +77,11 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid_email", "geçerli bir e-posta gir")
 		return
 	}
-	if len(req.Password) < 8 {
-		writeError(w, http.StatusBadRequest, "weak_password", "parola en az 8 karakter olmalı")
+	// Parola politikası (auth.CheckPassword): tek "8 karakter" kuralı "password",
+	// "12345678", "qwertyui" gibi dünyanın en yaygın parolalarını kabul ediyordu — hesap
+	// kilidi bile korumaz, saldırgan İLK denemede tutturur.
+	if pe := auth.CheckPassword(req.Password, req.Username, req.Email); pe != nil {
+		writeError(w, http.StatusBadRequest, pe.Code, pe.Msg)
 		return
 	}
 	// YAŞ KAPISI (COPPA/DSA — uygulama global). Doğum tarihi olmadan kayıt YOK: sonradan
@@ -106,6 +112,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	loc := localeFrom(r, req.Locale)
 	user := &repo.User{
 		ID:           h.IDs.Next(),
 		Username:     req.Username,
@@ -115,6 +122,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		AvatarColor:  randomBrandColor(),
 		Status:       "online",
 		BirthDate:    &birth,
+		Locale:       &loc,
 	}
 	if err := h.Users.Create(r.Context(), user); err != nil {
 		if errors.Is(err, repo.ErrConflict) {
@@ -307,19 +315,21 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "bad_request", err.Error())
 		return
 	}
-	if len(req.NewPassword) < 8 {
-		writeError(w, http.StatusBadRequest, "weak_password", "yeni parola en az 8 karakter")
-		return
-	}
 	uid := middleware.UserIDFrom(r.Context())
 	user, err := h.Users.ByID(r.Context(), uid)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "kullanıcı")
 		return
 	}
+	// Politika kontrolü parola DOĞRULANDIKTAN sonra: aksi halde yanlış parolayla gelen
+	// saldırgan, hata mesajından politikayı öğrenir (bilgi sızıntısı).
 	ok, err := auth.VerifyPassword(req.CurrentPassword, user.PasswordHash)
 	if err != nil || !ok {
 		writeError(w, http.StatusForbidden, "wrong_password", "mevcut parola yanlış")
+		return
+	}
+	if pe := auth.CheckPassword(req.NewPassword, user.Username, user.Email); pe != nil {
+		writeError(w, http.StatusBadRequest, pe.Code, pe.Msg)
 		return
 	}
 	newHash, err := auth.HashPassword(req.NewPassword)
@@ -330,6 +340,15 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	if _, err := h.Pool.Exec(r.Context(), `UPDATE users SET password_hash = $1 WHERE id = $2`, newHash, uid); err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "kaydedilemedi")
 		return
+	}
+
+	// DİĞER OTURUMLARI KAPAT — bu satır yoktu ve gerçek bir açıktı: parolası çalınan
+	// kullanıcı parolasını değiştirse bile SALDIRGANIN OTURUMU CANLI KALIYORDU.
+	// (ResetPassword bunu zaten doğru yapıyordu; ChangePassword'de unutulmuş.)
+	// Kullanıcının KENDİ oturumu da kapanır — parola değişimi sonrası yeniden giriş
+	// istemek standart davranıştır (Discord/Google aynısını yapar).
+	if _, err := h.Pool.Exec(r.Context(), `DELETE FROM refresh_tokens WHERE user_id = $1`, uid); err != nil {
+		h.logger.Error("parola değişiminde oturumlar kapatılamadı", zap.Error(err), zap.Int64("user", uid))
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

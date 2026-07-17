@@ -79,7 +79,7 @@ func New(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool, rdb *redis.
 		Storage:       store,
 		Events:        events.New(rdb),
 		AutoMod:       automod.New(pool),
-		Mailer:        mailer.New(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass, cfg.MailFrom),
+		Mailer:        mailer.New(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass, cfg.MailFrom, cfg.SMTPRequireTLS),
 		Users:         repo.NewUsers(pool),
 		Guilds:        repo.NewGuilds(pool),
 		Channels:      repo.NewChannels(pool),

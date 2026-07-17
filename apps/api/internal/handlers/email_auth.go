@@ -58,9 +58,10 @@ func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	var userID int64
 	var displayName string
+	var locale *string
 	err := h.Pool.QueryRow(r.Context(),
-		`SELECT id, display_name FROM users WHERE email = $1 AND deleted_at IS NULL AND bot = FALSE`,
-		email).Scan(&userID, &displayName)
+		`SELECT id, display_name, locale FROM users WHERE email = $1 AND deleted_at IS NULL AND bot = FALSE`,
+		email).Scan(&userID, &displayName, &locale)
 	if err != nil {
 		respond()
 		return
@@ -75,8 +76,20 @@ func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	link := h.cfg.WebBaseURL + "/?reset_token=" + raw
-	body := fmt.Sprintf("Merhaba %s,<br><br>Concord hesabın için şifre sıfırlama isteği aldık. Aşağıdaki butonla yeni şifreni belirleyebilirsin. Bağlantı <b>1 saat</b> geçerlidir.", displayName)
-	if err := h.Mailer.Send(email, "Şifre sıfırlama", mailer.Layout("Şifreni sıfırla", body, link, "Yeni Şifre Belirle")); err != nil {
+	// Mail KULLANICININ dilinde: mailler API'den gider, istemci yok → çeviri burada olmalı.
+	// Öncesinde şablon Türkçe sabitti; Japon kullanıcı sıfırlama mailini Türkçe alıyordu.
+	loc := userLocale(locale)
+	tx := mailer.T(loc, mailer.PasswordReset)
+	html := mailer.Layout(mailer.Text{
+		Lang:        loc,
+		Title:       tx.Title,
+		Body:        fmt.Sprintf(tx.Body, displayName),
+		ActionURL:   link,
+		ActionLabel: tx.ActionLabel,
+		Footer:      tx.Footer,
+		FallbackURL: tx.FallbackURL,
+	})
+	if err := h.Mailer.Send(email, tx.Subject, html); err != nil {
 		h.logger.Warn("reset maili gönderilemedi", zap.Error(err), zap.String("to", email))
 	}
 	respond()
@@ -94,8 +107,10 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "bad_request", err.Error())
 		return
 	}
-	if len(req.NewPassword) < 8 || len(req.NewPassword) > 128 {
-		writeError(w, http.StatusBadRequest, "weak_password", "şifre en az 8 karakter olmalı")
+	// Parola politikası — sıfırlamada da kayıttakiyle AYNI kural. Farklı olsaydı zayıf
+	// parolaya sıfırlama üzerinden geri dönmek mümkün olur, politika anlamsızlaşırdı.
+	if pe := auth.CheckPassword(req.NewPassword); pe != nil {
+		writeError(w, http.StatusBadRequest, pe.Code, pe.Msg)
 		return
 	}
 	var userID int64
@@ -138,12 +153,29 @@ func (h *Handler) sendVerifyEmail(r *http.Request, userID int64, targetEmail, ne
 		return err
 	}
 	link := h.cfg.PublicBaseURL + "/api/v1/auth/verify-email?token=" + raw
-	title, body := "E-postanı doğrula", "Concord hesabının e-posta adresini doğrulamak için aşağıdaki butona tıkla. Bağlantı <b>24 saat</b> geçerlidir."
+
+	// Kullanıcının dilinde (mailler API'den gider → çeviri sunucuda)
+	var loc *string
+	var displayName string
+	_ = h.Pool.QueryRow(r.Context(), `SELECT locale, display_name FROM users WHERE id = $1`, userID).
+		Scan(&loc, &displayName)
+	l := userLocale(loc)
+
+	kind, arg := mailer.EmailVerify, displayName
 	if newEmail != "" {
-		title = "E-posta değişikliğini onayla"
-		body = "Concord hesabının e-posta adresini <b>" + newEmail + "</b> olarak değiştirmek istedin. Onaylamak için aşağıdaki butona tıkla."
+		kind, arg = mailer.EmailChange, newEmail
 	}
-	return h.Mailer.Send(targetEmail, title, mailer.Layout(title, body, link, "Doğrula"))
+	tx := mailer.T(l, kind)
+	html := mailer.Layout(mailer.Text{
+		Lang:        l,
+		Title:       tx.Title,
+		Body:        fmt.Sprintf(tx.Body, arg),
+		ActionURL:   link,
+		ActionLabel: tx.ActionLabel,
+		Footer:      tx.Footer,
+		FallbackURL: tx.FallbackURL,
+	})
+	return h.Mailer.Send(targetEmail, tx.Subject, html)
 }
 
 // VerifyMyEmail — artık gerçek doğrulama maili gönderir (eski self-verify davranışının doğrusu).
