@@ -1,4 +1,5 @@
 // Keşfet — herkese açık sunucular, katıl.
+import { t } from '../i18n';
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { colors } from '../theme';
@@ -31,21 +32,21 @@ export function DiscoverScreen({ nav, onBack }: { nav: Nav; onBack: () => void }
   async function join(id: string) {
     try {
       await api.discover.join(id);
-      Alert.alert('Concord', 'Katıldın!');
+      Alert.alert('Concord', t('guild.joined'));
       nav.reset({ kind: 'home' });
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Katılınamadı');
+      Alert.alert('Concord', e?.message ?? t('guild.joinFailed'));
     }
   }
 
   return (
     <View style={ui.screen}>
-      <ScreenHeader title="Keşfet" onBack={onBack} />
+      <ScreenHeader title={t('discover.title')} onBack={onBack} />
       <FlatList
         data={items}
         keyExtractor={(g) => g.id}
         contentContainerStyle={{ padding: 12 }}
-        ListEmptyComponent={<Empty text="Herkese açık sunucu yok." />}
+        ListEmptyComponent={<Empty text={t('discover.none')} />}
         renderItem={({ item }) => (
           <View style={s.card}>
             <Avatar name={item.icon_text || item.name} color={item.icon_color} size={48} />
@@ -64,7 +65,7 @@ export function DiscoverScreen({ nav, onBack }: { nav: Nav; onBack: () => void }
               onPress={() => join(item.id)}
             >
               <Text style={[s.joinText, item.joined && { color: colors.inkTertiary }]}>
-                {item.joined ? 'Üye' : 'Katıl'}
+                {item.joined ? t('members.one') : t('guild.join')}
               </Text>
             </TouchableOpacity>
           </View>

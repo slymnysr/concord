@@ -1,4 +1,5 @@
 // Sesli sohbet çubuğu — bağlıyken ekranın altında görünür; mic/sağırlaştır/ayrıl.
+import { t } from './i18n';
 import { useEffect, useReducer, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from './theme';
@@ -65,7 +66,7 @@ export function VoiceBar() {
           <Text style={s.ctrl}>{voice.isDeafened() ? '🔕' : '🎧'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={s.leaveBtn} onPress={() => voice.disconnect()}>
-          <Text style={s.leaveText}>Ayrıl</Text>
+          <Text style={s.leaveText}>{t('common.leave')}</Text>
         </TouchableOpacity>
       </View>
       <VoiceRoom visible={roomOpen} onClose={() => setRoomOpen(false)} />

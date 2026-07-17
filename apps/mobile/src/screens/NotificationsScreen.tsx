@@ -1,4 +1,5 @@
 // Bildirimler — liste + tümünü okundu işaretle.
+import { t } from '../i18n';
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../theme';
@@ -31,7 +32,7 @@ export function NotificationsScreen({ onBack }: { onBack: () => void }) {
               } catch {}
             }}
           >
-            <Text style={ui.headerBtn}>Tümü okundu</Text>
+            <Text style={ui.headerBtn}>{t('common.allRead')}</Text>
           </TouchableOpacity>
         }
       />

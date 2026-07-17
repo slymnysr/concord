@@ -1,4 +1,5 @@
 // Kanal ayarları — genel (konu/yavaş mod/NSFW), izinler, webhook, zamanlanmış mesaj.
+import { t } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import {
   View,
@@ -60,46 +61,48 @@ export function ChannelSettingsScreen({
       if (ok) Alert.alert('Concord', ok);
       reload();
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'İşlem başarısız');
+      Alert.alert('Concord', e?.message ?? t('common.actionFailed'));
     }
   }
 
   function slowMenu() {
-    Alert.alert('Yavaş mod', undefined, [
+    Alert.alert(t('channel.slowmode'), undefined, [
       {
-        text: 'Kapalı',
+        text: t('common.off'),
         onPress: () =>
-          run(() => api.channels.update(channelId, { rate_limit_sec: 0 }), 'Güncellendi'),
+          run(() => api.channels.update(channelId, { rate_limit_sec: 0 }), t('common.updated')),
       },
       {
         text: '5 saniye',
         onPress: () =>
-          run(() => api.channels.update(channelId, { rate_limit_sec: 5 }), 'Güncellendi'),
+          run(() => api.channels.update(channelId, { rate_limit_sec: 5 }), t('common.updated')),
       },
       {
         text: '30 saniye',
         onPress: () =>
-          run(() => api.channels.update(channelId, { rate_limit_sec: 30 }), 'Güncellendi'),
+          run(() => api.channels.update(channelId, { rate_limit_sec: 30 }), t('common.updated')),
       },
       {
         text: '1 dakika',
         onPress: () =>
-          run(() => api.channels.update(channelId, { rate_limit_sec: 60 }), 'Güncellendi'),
+          run(() => api.channels.update(channelId, { rate_limit_sec: 60 }), t('common.updated')),
       },
-      { text: 'Vazgeç', style: 'cancel' },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   }
   function nsfwMenu() {
     Alert.alert('NSFW (+18)', undefined, [
       {
-        text: 'Aç',
-        onPress: () => run(() => api.channels.update(channelId, { nsfw: true }), 'Güncellendi'),
+        text: t('common.open'),
+        onPress: () =>
+          run(() => api.channels.update(channelId, { nsfw: true }), t('common.updated')),
       },
       {
         text: 'Kapat',
-        onPress: () => run(() => api.channels.update(channelId, { nsfw: false }), 'Güncellendi'),
+        onPress: () =>
+          run(() => api.channels.update(channelId, { nsfw: false }), t('common.updated')),
       },
-      { text: 'Vazgeç', style: 'cancel' },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   }
 
@@ -108,25 +111,28 @@ export function ChannelSettingsScreen({
     setEdit(null);
     if (!e || !value.trim()) return;
     if (e.k === 'topic')
-      return run(() => api.channels.update(channelId, { topic: value.trim() }), 'Konu güncellendi');
+      return run(
+        () => api.channels.update(channelId, { topic: value.trim() }),
+        t('channel.topicUpdated'),
+      );
     if (e.k === 'webhook')
       return run(async () => {
         const w = await api.channels.createWebhook(channelId, value.trim());
-        Alert.alert('Webhook oluşturuldu', w.token ? `Token:\n${w.token}` : 'Oluşturuldu');
+        Alert.alert(t('webhook.created'), w.token ? `Token:\n${w.token}` : t('common.created'));
       }, undefined);
     if (e.k === 'sched') {
       const at = new Date(Date.now() + 3600 * 1000).toISOString();
       return run(
         () => api.scheduledMessages.create(channelId, value.trim(), at),
-        '1 saat sonraya planlandı',
+        t('sched.inOneHour'),
       );
     }
   }
   const titles: Record<SubView, string> = {
     main: '',
-    perms: 'İzinler',
+    perms: t('perms.title'),
     webhooks: 'Webhooks',
-    scheduled: 'Zamanlanmış',
+    scheduled: t('sched.title'),
   };
 
   if (view !== 'main') {
@@ -151,7 +157,7 @@ export function ChannelSettingsScreen({
           <FlatList
             data={overrides}
             keyExtractor={(o) => o.target_type + o.target_id}
-            ListEmptyComponent={<Empty text="İzin geçersiz kılma yok." />}
+            ListEmptyComponent={<Empty text={t('perms.noOverrides')} />}
             renderItem={({ item }) => (
               <View style={s.row}>
                 <View style={{ flex: 1 }}>
@@ -198,7 +204,7 @@ export function ChannelSettingsScreen({
           <FlatList
             data={scheduled}
             keyExtractor={(m) => m.id}
-            ListEmptyComponent={<Empty text="Zamanlanmış mesaj yok." />}
+            ListEmptyComponent={<Empty text={t('sched.none')} />}
             renderItem={({ item }) => (
               <View style={s.row}>
                 <View style={{ flex: 1 }}>
@@ -216,7 +222,7 @@ export function ChannelSettingsScreen({
           visible={!!edit}
           title={
             edit?.k === 'webhook'
-              ? 'Webhook adı'
+              ? t('webhook.name')
               : edit?.k === 'sched'
                 ? 'Mesaj (1 saat sonra)'
                 : 'Konu'
@@ -235,13 +241,13 @@ export function ChannelSettingsScreen({
       <ScrollView>
         <Section title="Genel">
           <Row label="Konu" onPress={() => setEdit({ k: 'topic' })} />
-          <Row label="Yavaş mod" onPress={slowMenu} />
+          <Row label={t('channel.slowmode')} onPress={slowMenu} />
           <Row label="NSFW (+18)" onPress={nsfwMenu} />
         </Section>
-        <Section title="Yönetim">
-          <Row label="İzinler" onPress={() => setView('perms')} />
+        <Section title={t('common.management')}>
+          <Row label={t('perms.title')} onPress={() => setView('perms')} />
           <Row label="Webhooks" onPress={() => setView('webhooks')} />
-          <Row label="Zamanlanmış mesajlar" onPress={() => setView('scheduled')} />
+          <Row label={t('sched.messages')} onPress={() => setView('scheduled')} />
         </Section>
       </ScrollView>
       <InputModal

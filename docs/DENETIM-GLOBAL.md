@@ -129,11 +129,24 @@ Kural aynı: her faz **ayrı üst-dizin** sahiplenir; iki faz aynı dosyaya yazm
 > hata kodları çevrilebilir) ama ~959 anahtarı 5 dile makine çevirisiyle doldurmak
 > kalitesiz sonuç verir; gerçek çeviri kaynağı gerektirir → bloke listesinde.
 
-## FAZ K — Mobil globalleşme (`apps/mobile/**`)
+## FAZ K — Mobil globalleşme (`apps/mobile/**`) — ✅ TAMAM
 
-- Sıfırdan i18n (238 string) — web'in sözlük yapısını yeniden kullan, cihaz dilini algıla.
-- 10 `'tr-TR'` → cihaz locale'i.
-- **Test:** cihaz dili de/en iken Türkçe metin kalmaması.
+- ✅ **Sıfırdan i18n** (`src/i18n.ts`): web'in `t(key, params)` sözleşmesi ve sözlük yapısı
+  birebir yeniden kullanıldı (iki farklı i18n API'si taşımak aynı metnin ayrışmasına yol açar).
+  Fark: locale kaynağı — webde kullanıcı seçer, **mobilde CİHAZ DİLİ varsayılan**
+  (`expo-localization`); kullanıcı tercihi varsa onu ezer, `loadLocale()` ilk çizimden önce.
+- ✅ **264 gömülü metin** tarandı → **259'u çevrildi** (270/270 tr/en paritesi); kalan 5'i
+  konsol/Error metni (kullanıcıya gitmez, İngilizceye çevrildi).
+- ✅ `errText()` mobilde de var: API `detail`'i Türkçe, ekrana gitmiyor.
+- ✅ Desteklenmeyen dilde **İngilizceye** düşer — Türkçe'ye düşmek global kullanıcıya
+  anlamadığı bir arayüz göstermek olurdu.
+- **Test:** ✅ `scripts/check-i18n.mjs` (CI'da): gömülü Türkçe YOK + tr/en paritesi.
+  İki yönden de dişli olduğu kanıtlandı (string geri konunca ve parite bozulunca düşüyor).
+  Bundle derleniyor (`expo export --platform android`).
+
+> **Cihazda doğrulama bloke:** gerçek cihaz dili testi emülatör/EAS dev client ister
+> (FAZ E ile aynı blokede). Statik denetim regresyonu üreten şeyi — kaynağa Türkçe string
+> eklemeyi — kesin yakalar.
 
 ## FAZ L — Ses bölge yönlendirme (`apps/voice/**`)
 

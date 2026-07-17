@@ -1,4 +1,5 @@
 // Ekranlar arası paylaşılan UI parçaları — başlık çubuğu, satır, bölüm, ortak stiller.
+import { t } from './i18n';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   View,
@@ -174,7 +175,7 @@ export function InputModal({
             />
             <View style={ui.modalBtns}>
               <TouchableOpacity style={[ui.btnGhost, { flex: 1 }]} onPress={onCancel}>
-                <Text style={ui.btnGhostText}>Vazgeç</Text>
+                <Text style={ui.btnGhostText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[ui.btn, { flex: 1 }]} onPress={() => onSubmit(v)}>
                 <Text style={ui.btnText}>{submitLabel ?? 'Tamam'}</Text>

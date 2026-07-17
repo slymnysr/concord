@@ -28,6 +28,7 @@ import { DeveloperScreen } from './src/screens/DeveloperScreen';
 import { QuickSwitcherScreen } from './src/screens/QuickSwitcherScreen';
 import { VoiceBar } from './src/VoiceBar';
 import { registerForPush, notifyLocal, loadNotifPref, notifOn } from './src/push';
+import { loadLocale } from './src/i18n';
 
 export default function App() {
   const [booting, setBooting] = useState(true);
@@ -49,6 +50,9 @@ export default function App() {
       await loadHost();
       await loadTokens();
       await loadNotifPref();
+      // Dil: kullanıcı tercihi varsa cihaz dilini ezer. İLK ekran çizilmeden yüklenmeli,
+      // yoksa uygulama bir an yanlış dilde açılıp sonra değişir.
+      await loadLocale();
       try {
         const u = await api.me();
         setMe(u);

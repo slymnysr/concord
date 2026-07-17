@@ -1,4 +1,5 @@
 // Bağlantı durumu çubuğu — gateway koptuğunda/yeniden bağlanırken görünür.
+import { t } from './i18n';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors } from './theme';
@@ -10,9 +11,7 @@ export function ConnectionBanner() {
   if (!state || state === 'connected') return null;
   return (
     <View style={[s.banner, state === 'disconnected' && s.bad]}>
-      <Text style={s.text}>
-        {state === 'connecting' ? 'Bağlanıyor…' : 'Bağlantı koptu — yeniden bağlanılıyor…'}
-      </Text>
+      <Text style={s.text}>{state === 'connecting' ? t('conn.connecting') : t('conn.lost')}</Text>
     </View>
   );
 }

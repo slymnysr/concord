@@ -1,5 +1,6 @@
 // Sesli/görüntülü oda — video karoları (RTCView), kamera aç/kapa, mic/sağırlaştır/ayrıl.
 // VoiceBar'a dokununca tam ekran açılır. RTCView native → yalnız dev client/native build'de render olur.
+import { t } from './i18n';
 import { useEffect, useReducer, useState } from 'react';
 import {
   View,
@@ -53,7 +54,7 @@ export function VoiceRoom({ visible, onClose }: { visible: boolean; onClose: () 
             🔊 {voice.channelName || 'Sesli'}
           </Text>
           <TouchableOpacity onPress={onClose}>
-            <Text style={s.min}>Küçült ▾</Text>
+            <Text style={s.min}>{t('common.minimize')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -69,7 +70,7 @@ export function VoiceRoom({ visible, onClose }: { visible: boolean; onClose: () 
                 }}
               >
                 <Text style={s.handBtnText}>
-                  {voice.myHandRaised() ? '✋ Eli indir' : '✋ El kaldır'}
+                  {voice.myHandRaised() ? '✋ Eli indir' : t('stage.raiseHand')}
                 </Text>
               </TouchableOpacity>
             ) : voice.handIds().length > 0 ? (
@@ -92,7 +93,7 @@ export function VoiceRoom({ visible, onClose }: { visible: boolean; onClose: () 
                 ))}
               </ScrollView>
             ) : (
-              <Text style={s.stageSub}>El kaldıran yok</Text>
+              <Text style={s.stageSub}>{t('stage.noHands')}</Text>
             )}
           </View>
         )}
@@ -181,7 +182,7 @@ export function VoiceRoom({ visible, onClose }: { visible: boolean; onClose: () 
               onClose();
             }}
           >
-            <Text style={s.leaveText}>Ayrıl</Text>
+            <Text style={s.leaveText}>{t('common.leave')}</Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -1,4 +1,5 @@
 // Kaydedilen mesajlar — liste + kaydı kaldır.
+import { t } from '../i18n';
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../theme';
@@ -38,7 +39,7 @@ export function SavedMessagesScreen({ onBack }: { onBack: () => void }) {
                   .catch(() => {})
               }
             >
-              <Text style={s.remove}>Kaldır</Text>
+              <Text style={s.remove}>{t('common.remove')}</Text>
             </TouchableOpacity>
           </View>
         )}

@@ -1,4 +1,5 @@
 // Üye listesi + moderasyon: DM, rol yönetimi, takma ad, zaman aşımı, at, yasakla.
+import { t } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import {
   View,
@@ -67,7 +68,7 @@ export function MembersScreen({
       if (ok) Alert.alert('Concord', ok);
       load();
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'İşlem başarısız');
+      Alert.alert('Concord', e?.message ?? t('common.actionFailed'));
     }
   }
 
@@ -76,50 +77,52 @@ export function MembersScreen({
       const r = await api.dms.open(mb.user_id);
       nav.push({ kind: 'chat', channel: { id: r.channel_id, name: mb.display_name } });
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'DM açılamadı');
+      Alert.alert('Concord', e?.message ?? t('dm.openFailed'));
     }
   }
 
   function timeoutMenu(mb: Member) {
-    Alert.alert('Zaman aşımı', mb.display_name, [
+    Alert.alert(t('mod.timeout'), mb.display_name, [
       {
         text: '5 dakika',
-        onPress: () => run(() => api.guilds.timeout(guildId, mb.user_id, 300), 'Uygulandı'),
+        onPress: () => run(() => api.guilds.timeout(guildId, mb.user_id, 300), t('common.applied')),
       },
       {
         text: '1 saat',
-        onPress: () => run(() => api.guilds.timeout(guildId, mb.user_id, 3600), 'Uygulandı'),
+        onPress: () =>
+          run(() => api.guilds.timeout(guildId, mb.user_id, 3600), t('common.applied')),
       },
       {
-        text: '1 gün',
-        onPress: () => run(() => api.guilds.timeout(guildId, mb.user_id, 86400), 'Uygulandı'),
+        text: t('time.oneDay'),
+        onPress: () =>
+          run(() => api.guilds.timeout(guildId, mb.user_id, 86400), t('common.applied')),
       },
       {
-        text: 'Kaldır',
-        onPress: () => run(() => api.guilds.timeout(guildId, mb.user_id, 0), 'Kaldırıldı'),
+        text: t('common.remove'),
+        onPress: () => run(() => api.guilds.timeout(guildId, mb.user_id, 0), t('common.removed2')),
       },
-      { text: 'Vazgeç', style: 'cancel' },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   }
 
   function memberMenu(mb: Member) {
     const opts: any[] = [
-      { text: 'Mesaj gönder', onPress: () => openDM(mb) },
-      { text: 'Rolleri yönet', onPress: () => setRolesFor(mb) },
+      { text: t('msg.send2'), onPress: () => openDM(mb) },
+      { text: t('roles.manage'), onPress: () => setRolesFor(mb) },
       { text: 'Takma ad', onPress: () => setNickFor(mb) },
     ];
     if (mb.user_id !== me.id) {
       opts.push(
-        { text: 'Zaman aşımı', onPress: () => timeoutMenu(mb) },
+        { text: t('mod.timeout'), onPress: () => timeoutMenu(mb) },
         {
           text: 'Sunucudan at',
           style: 'destructive',
-          onPress: () => run(() => api.guilds.kick(guildId, mb.user_id), 'Atıldı'),
+          onPress: () => run(() => api.guilds.kick(guildId, mb.user_id), t('mod.kicked')),
         },
         { text: 'Yasakla', style: 'destructive', onPress: () => setBanFor(mb) },
       );
     }
-    opts.push({ text: 'Vazgeç', style: 'cancel' });
+    opts.push({ text: t('common.cancel'), style: 'cancel' });
     Alert.alert(mb.display_name, `@${mb.username}`, opts);
   }
 
@@ -140,7 +143,7 @@ export function MembersScreen({
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand} />
         }
-        ListEmptyComponent={<Empty text="Üye yok." />}
+        ListEmptyComponent={<Empty text={t('members.none')} />}
         renderItem={({ item }) => {
           const roleNames = item.role_ids
             .map((id) => roles.find((r) => r.id === id)?.name)
@@ -236,12 +239,13 @@ export function MembersScreen({
         visible={!!nickFor}
         title={`Takma ad — ${nickFor?.display_name ?? ''}`}
         initial={nickFor?.nickname}
-        placeholder="Boş bırak = sıfırla"
+        placeholder={t('common.emptyResets')}
         onCancel={() => setNickFor(null)}
         onSubmit={(v) => {
           const mb = nickFor;
           setNickFor(null);
-          if (mb) run(() => api.guilds.setNickname(guildId, mb.user_id, v.trim()), 'Güncellendi');
+          if (mb)
+            run(() => api.guilds.setNickname(guildId, mb.user_id, v.trim()), t('common.updated'));
         }}
       />
       <InputModal
@@ -253,7 +257,7 @@ export function MembersScreen({
         onSubmit={(v) => {
           const mb = banFor;
           setBanFor(null);
-          if (mb) run(() => api.guilds.ban(guildId, mb.user_id, v.trim()), 'Yasaklandı');
+          if (mb) run(() => api.guilds.ban(guildId, mb.user_id, v.trim()), t('mod.banned'));
         }}
       />
     </View>

@@ -1,4 +1,5 @@
 // Hızlı geçiş — tüm kanallarda ve DM'lerde anında arama, dokun→zıpla (Ctrl+K tarzı).
+import { t } from '../i18n';
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../theme';
@@ -75,19 +76,19 @@ export function QuickSwitcherScreen({ nav, onBack }: { nav: Nav; onBack: () => v
 
   return (
     <View style={ui.screen}>
-      <ScreenHeader title="Hızlı Geçiş" onBack={onBack} />
+      <ScreenHeader title={t('quick.title')} onBack={onBack} />
       <TextInput
         style={[ui.input, { margin: 12 }]}
         value={q}
         onChangeText={setQ}
-        placeholder="Kanal veya kişi ara…"
+        placeholder={t('quick.placeholder')}
         placeholderTextColor={colors.inkTertiary}
         autoFocus
       />
       <FlatList
         data={filtered}
         keyExtractor={(i) => i.kind + i.id}
-        ListEmptyComponent={<Empty text="Sonuç yok." />}
+        ListEmptyComponent={<Empty text={t('common.noResults')} />}
         renderItem={({ item }) => (
           <TouchableOpacity style={s.row} onPress={() => open(item)}>
             <Text style={s.icon}>

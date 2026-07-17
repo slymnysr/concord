@@ -1,4 +1,5 @@
 // Arkadaşlar — kabul edilenler / bekleyenler / engellenenler, ekle, DM aç.
+import { t } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import {
   View,
@@ -33,7 +34,7 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
       setSelected([]);
       nav.push({ kind: 'chat', channel: { id: r.channel_id, name: r.name || 'Grup' } });
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Grup oluşturulamadı');
+      Alert.alert('Concord', e?.message ?? t('dm.groupFailed'));
     }
   }
 
@@ -68,7 +69,7 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
       const r = await api.dms.open(f.user_id);
       nav.push({ kind: 'chat', channel: { id: r.channel_id, name: f.display_name } });
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'DM açılamadı');
+      Alert.alert('Concord', e?.message ?? t('dm.openFailed'));
     }
   }
 
@@ -77,14 +78,14 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
       await fn();
       load();
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Olmadı');
+      Alert.alert('Concord', e?.message ?? t('common.failed'));
     }
   }
 
   return (
     <View style={ui.screen}>
       <ScreenHeader
-        title={groupMode ? 'Grup için seç' : 'Arkadaşlar'}
+        title={groupMode ? t('dm.selectForGroup') : t('friends.title')}
         onBack={
           groupMode
             ? () => {
@@ -118,7 +119,7 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
       <View style={s.tabs}>
         {(
           [
-            ['accepted', 'Arkadaşlar'],
+            ['accepted', t('friends.title')],
             ['pending', 'Bekleyen'],
             ['blocked', 'Engellenen'],
           ] as [Tab, string][]
@@ -143,7 +144,7 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
           <Empty
             text={
               tab === 'accepted'
-                ? 'Henüz arkadaşın yok.'
+                ? t('friends.none')
                 : tab === 'pending'
                   ? 'Bekleyen istek yok.'
                   : 'Engellenen yok.'
@@ -174,7 +175,7 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
                 {item.friendship === 'pending_received'
                   ? ' · seni ekledi'
                   : item.friendship === 'pending_sent'
-                    ? ' · istek gönderildi'
+                    ? ' ' + t('friends.pending')
                     : ''}
               </Text>
             </View>
@@ -199,7 +200,9 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
                 style={s.actBtn}
                 onPress={() => act(() => api.friends.remove(item.user_id))}
               >
-                <Text style={{ color: colors.inkSecondary, fontWeight: '700' }}>İptal</Text>
+                <Text style={{ color: colors.inkSecondary, fontWeight: '700' }}>
+                  {t('common.cancel2')}
+                </Text>
               </TouchableOpacity>
             )}
             {item.friendship === 'accepted' &&
@@ -218,9 +221,9 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
                   style={s.actBtn}
                   onPress={() =>
                     Alert.alert(item.display_name, undefined, [
-                      { text: 'Vazgeç', style: 'cancel' },
+                      { text: t('common.cancel'), style: 'cancel' },
                       {
-                        text: 'Arkadaşlıktan çıkar',
+                        text: t('friends.remove'),
                         style: 'destructive',
                         onPress: () => act(() => api.friends.remove(item.user_id)),
                       },
@@ -240,7 +243,7 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
                 style={s.actBtn}
                 onPress={() => act(() => api.unblock(item.user_id))}
               >
-                <Text style={{ color: colors.brand, fontWeight: '700' }}>Kaldır</Text>
+                <Text style={{ color: colors.brand, fontWeight: '700' }}>{t('common.remove')}</Text>
               </TouchableOpacity>
             )}
           </TouchableOpacity>
@@ -249,9 +252,9 @@ export function FriendsScreen({ me, nav, onBack }: { me: User; nav: Nav; onBack:
 
       <InputModal
         visible={adding}
-        title="Arkadaş ekle"
-        placeholder="kullanıcı adı"
-        submitLabel="Gönder"
+        title={t('friends.add')}
+        placeholder={t('user.username')}
+        submitLabel={t('common.send')}
         onCancel={() => setAdding(false)}
         onSubmit={(v) => {
           setAdding(false);

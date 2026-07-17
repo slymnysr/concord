@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useState } from 'react';
 import {
   View,
@@ -46,10 +47,10 @@ export function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
             );
       onLogin(d.user);
     } catch (e: any) {
-      const msg = e?.message ?? 'Bağlanılamadı — sunucu adresini kontrol et';
+      const msg = e?.message ?? t('auth.connectFailed');
       if (mode === 'login' && /2fa|totp|iki adım|doğrulama kodu/i.test(msg)) {
         setNeedTotp(true);
-        setErr('İki adımlı doğrulama kodunu gir.');
+        setErr(t('auth.enterTotp'));
       } else {
         setErr(msg);
       }
@@ -65,19 +66,16 @@ export function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
       await setHost(host);
       if (step === 'email') {
         await api.forgotPassword(value.trim());
-        Alert.alert(
-          'Concord',
-          'Sıfırlama bağlantısı e-postana gönderildi. Koddan sonra "Kodu girdim" ile devam et.',
-        );
+        Alert.alert('Concord', t('auth.resetSent'));
       } else if (step === 'reset_token') {
         setResetToken(value.trim());
         setForgot('reset_pw');
       } else if (step === 'reset_pw') {
         await api.resetPassword(resetToken, value);
-        Alert.alert('Concord', 'Şifren güncellendi, şimdi giriş yapabilirsin.');
+        Alert.alert('Concord', t('auth.passwordUpdated'));
       }
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'İşlem başarısız');
+      Alert.alert('Concord', e?.message ?? t('common.actionFailed'));
     }
   }
 
@@ -86,7 +84,7 @@ export function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         <Text style={s.logo}>Concord</Text>
         <Text style={s.subtitle}>
-          {mode === 'login' ? 'Hesabına giriş yap' : 'Yeni hesap oluştur'}
+          {mode === 'login' ? t('auth.signInTitle') : t('auth.signUpTitle')}
         </Text>
 
         <Text style={s.label}>Sunucu adresi</Text>
@@ -102,7 +100,7 @@ export function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
 
         {mode === 'register' && (
           <>
-            <Text style={s.label}>Kullanıcı adı</Text>
+            <Text style={s.label}>{t('user.usernameLabel')}</Text>
             <TextInput
               style={s.input}
               value={username}
@@ -111,12 +109,12 @@ export function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
               placeholder="ornek_kullanici"
               placeholderTextColor={colors.inkTertiary}
             />
-            <Text style={s.label}>Görünen ad</Text>
+            <Text style={s.label}>{t('user.displayName')}</Text>
             <TextInput
               style={s.input}
               value={displayName}
               onChangeText={setDisplayName}
-              placeholder="Adın"
+              placeholder={t('auth.yourName')}
               placeholderTextColor={colors.inkTertiary}
             />
           </>
@@ -144,7 +142,7 @@ export function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
 
         {needTotp && (
           <>
-            <Text style={s.label}>İki adımlı doğrulama kodu</Text>
+            <Text style={s.label}>{t('auth.totpCode')}</Text>
             <TextInput
               style={s.input}
               value={totp}
@@ -164,14 +162,14 @@ export function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
           disabled={busy}
         >
           <Text style={s.btnText}>
-            {busy ? 'Bekleyin…' : mode === 'login' ? 'Giriş Yap' : 'Hesap Oluştur'}
+            {busy ? 'Bekleyin…' : mode === 'login' ? t('auth.signIn') : t('auth.signUp')}
           </Text>
         </TouchableOpacity>
 
         {mode === 'login' && (
           <View style={s.linksRow}>
             <TouchableOpacity onPress={() => setForgot('email')}>
-              <Text style={s.linkSmall}>Şifreni mi unuttun?</Text>
+              <Text style={s.linkSmall}>{t('auth.forgot')}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setForgot('reset_token')}>
               <Text style={s.linkSmall}>Kodu girdim</Text>
@@ -187,7 +185,7 @@ export function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
           }}
         >
           <Text style={s.switch}>
-            {mode === 'login' ? 'Hesabın yok mu? Kayıt ol' : 'Zaten hesabın var mı? Giriş yap'}
+            {mode === 'login' ? t('auth.noAccount') : t('auth.haveAccount')}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -196,10 +194,10 @@ export function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
         visible={!!forgot}
         title={
           forgot === 'email'
-            ? 'Şifre sıfırlama — e-posta'
+            ? t('auth.resetEmail')
             : forgot === 'reset_token'
-              ? 'Sıfırlama kodu'
-              : 'Yeni şifre'
+              ? t('auth.resetCode')
+              : t('auth.newPassword')
         }
         placeholder={
           forgot === 'email'
@@ -209,7 +207,7 @@ export function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
               : '••••••••'
         }
         secure={forgot === 'reset_pw'}
-        submitLabel={forgot === 'reset_pw' ? 'Güncelle' : 'Devam'}
+        submitLabel={forgot === 'reset_pw' ? t('common.update') : 'Devam'}
         onCancel={() => setForgot(null)}
         onSubmit={submitForgot}
       />

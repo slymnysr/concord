@@ -316,6 +316,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Type check
         run: pnpm --filter @concord/mobile exec tsc --noEmit
+      # FAZ K: mobilde i18n HİÇ YOKTU (238 gömülü Türkçe string) → uygulama Türkçe-yalnızdı.
+      # Gerçek cihaz dili testi emülatör/EAS ister (bloke); ama regresyonu ÜRETEN şey —
+      # kaynağa yeni Türkçe string eklemek — burada kesin yakalanır.
+      - name: i18n denetimi (gömülü Türkçe + sözlük paritesi)
+        run: pnpm --filter @concord/mobile check:i18n
       # Bundle gerçekten derleniyor mu (tsc bunu göstermez: Metro çözümlemesi, native
       # modül importları, Babel dönüşümleri ayrı kırılır). Native araç zinciri gerekmez.
       # NOT: web platformu react-native-web istiyor, uygulama iOS/Android hedefli → android.

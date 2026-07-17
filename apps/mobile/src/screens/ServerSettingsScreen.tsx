@@ -1,4 +1,5 @@
 // Sunucu ayarları — genel, roller, davetler, yasaklar, AutoMod, denetim kaydı.
+import { t } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import {
   View,
@@ -127,7 +128,7 @@ export function ServerSettingsScreen({
       if (ok) Alert.alert('Concord', ok);
       after?.();
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'İşlem başarısız');
+      Alert.alert('Concord', e?.message ?? t('common.actionFailed'));
     }
   }
 
@@ -144,17 +145,17 @@ export function ServerSettingsScreen({
       );
       await api.guilds.update(guildId, { icon_url: up.url });
       reloadGuild();
-      Alert.alert('Concord', 'Sunucu ikonu güncellendi');
+      Alert.alert('Concord', t('guild.iconUpdated'));
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Yüklenemedi');
+      Alert.alert('Concord', e?.message ?? t('common.loadFailed'));
     }
   }
 
   function leave() {
-    Alert.alert('Sunucudan ayrıl', `"${guildName}" sunucusundan ayrılınsın mı?`, [
-      { text: 'Vazgeç', style: 'cancel' },
+    Alert.alert(t('guild.leave'), `"${guildName}" sunucusundan ayrılınsın mı?`, [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Ayrıl',
+        text: t('common.leave'),
         style: 'destructive',
         onPress: () =>
           run(
@@ -166,7 +167,7 @@ export function ServerSettingsScreen({
   }
   function destroy() {
     Alert.alert('Sunucuyu sil', `"${guildName}" kalıcı olarak silinecek. Emin misin?`, [
-      { text: 'Vazgeç', style: 'cancel' },
+      { text: t('common.cancel'), style: 'cancel' },
       {
         text: 'Sil',
         style: 'destructive',
@@ -201,22 +202,22 @@ export function ServerSettingsScreen({
       await run(
         () => api.guilds.setMyProfile(guildId, { nickname: value.trim() }),
         undefined,
-        'Takma ad güncellendi',
+        t('member.nickUpdated'),
       );
     else if (e.k === 'myBio')
       await run(
         () => api.guilds.setMyProfile(guildId, { guild_bio: value.trim() || null }),
         undefined,
-        'Profil güncellendi',
+        t('profile.updated'),
       );
   }
 
   const editMeta = {
-    name: { title: 'Sunucu adı', initial: guild?.name },
-    description: { title: 'Açıklama', initial: guild?.description, multiline: true },
-    newRole: { title: 'Yeni rol adı' },
-    roleName: { title: 'Rol adı', initial: edit?.role?.name },
-    myNick: { title: 'Bu sunucudaki takma adın' },
+    name: { title: t('guild.name'), initial: guild?.name },
+    description: { title: t('common.description'), initial: guild?.description, multiline: true },
+    newRole: { title: t('roles.newName') },
+    roleName: { title: t('roles.name'), initial: edit?.role?.name },
+    myNick: { title: t('member.yourNick') },
     myBio: { title: 'Bu sunucudaki bio', multiline: true },
   } as const;
   const m = edit ? editMeta[edit.k] : null;
@@ -229,7 +230,7 @@ export function ServerSettingsScreen({
       invites: 'Davetler',
       bans: 'Yasaklar',
       automod: 'AutoMod',
-      audit: 'Denetim Kaydı',
+      audit: t('audit.title'),
       reactionRoles: 'Tepki Rolleri',
       follows: 'Kanal Takipleri',
       bots: 'Bot Ekle',
@@ -250,7 +251,7 @@ export function ServerSettingsScreen({
                   run(
                     () => api.guilds.createInvite(guildId),
                     () => api.guilds.invites(guildId).then(setInvites),
-                    'Davet oluşturuldu',
+                    t('invite.created'),
                   )
                 }
               >
@@ -269,7 +270,10 @@ export function ServerSettingsScreen({
                 style={s.listRow}
                 onPress={() =>
                   Alert.alert(item.name, undefined, [
-                    { text: 'Adı değiştir', onPress: () => setEdit({ k: 'roleName', role: item }) },
+                    {
+                      text: t('common.changeName'),
+                      onPress: () => setEdit({ k: 'roleName', role: item }),
+                    },
                     {
                       text: 'Sil',
                       style: 'destructive',
@@ -279,7 +283,7 @@ export function ServerSettingsScreen({
                           () => api.guilds.roles(guildId).then(setRoles),
                         ),
                     },
-                    { text: 'Vazgeç', style: 'cancel' },
+                    { text: t('common.cancel'), style: 'cancel' },
                   ])
                 }
               >
@@ -330,7 +334,7 @@ export function ServerSettingsScreen({
           <FlatList
             data={bans}
             keyExtractor={(b) => b.user_id}
-            ListEmptyComponent={<Empty text="Yasaklı yok." />}
+            ListEmptyComponent={<Empty text={t('mod.noBans')} />}
             renderItem={({ item }) => (
               <View style={s.listRow}>
                 <View style={{ flex: 1 }}>
@@ -345,7 +349,7 @@ export function ServerSettingsScreen({
                     )
                   }
                 >
-                  <Text style={{ color: colors.brand }}>Kaldır</Text>
+                  <Text style={{ color: colors.brand }}>{t('common.remove')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -355,13 +359,14 @@ export function ServerSettingsScreen({
           <FlatList
             data={automod}
             keyExtractor={(r) => r.id}
-            ListEmptyComponent={<Empty text="AutoMod kuralı yok." />}
+            ListEmptyComponent={<Empty text={t('automod.none')} />}
             renderItem={({ item }) => (
               <View style={s.listRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={s.rowText}>{item.name}</Text>
                   <Text style={s.sub}>
-                    {item.trigger_type} · {item.enabled ? 'açık' : 'kapalı'}
+                    {item.trigger_type} ·{' '}
+                    {item.enabled ? t('common.onLower') : t('common.offLower')}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -373,7 +378,7 @@ export function ServerSettingsScreen({
                   }
                 >
                   <Text style={{ color: item.enabled ? colors.inkSecondary : colors.brand }}>
-                    {item.enabled ? 'Kapat' : 'Aç'}
+                    {item.enabled ? 'Kapat' : t('common.open')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -384,7 +389,7 @@ export function ServerSettingsScreen({
           <FlatList
             data={audit}
             keyExtractor={(a) => a.id}
-            ListEmptyComponent={<Empty text="Kayıt yok." />}
+            ListEmptyComponent={<Empty text={t('common.noRecords')} />}
             renderItem={({ item }) => (
               <View style={s.listRow}>
                 <View style={{ flex: 1 }}>
@@ -402,7 +407,7 @@ export function ServerSettingsScreen({
           <FlatList
             data={reactionRoles}
             keyExtractor={(r) => r.id}
-            ListEmptyComponent={<Empty text="Tepki rolü yok." />}
+            ListEmptyComponent={<Empty text={t('reactionRole.none')} />}
             renderItem={({ item }) => (
               <View style={s.listRow}>
                 <Text style={s.rowText}>
@@ -443,7 +448,7 @@ export function ServerSettingsScreen({
                     )
                   }
                 >
-                  <Text style={{ color: colors.accent }}>Kaldır</Text>
+                  <Text style={{ color: colors.accent }}>{t('common.remove')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -492,27 +497,30 @@ export function ServerSettingsScreen({
       <ScreenHeader title={`Ayarlar — ${guildName}`} onBack={onBack} />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <Section title="Genel">
-          <Row label="Sunucu ikonu (fotoğraf yükle)" onPress={pickIcon} />
+          <Row label={t('guild.iconUpload')} onPress={pickIcon} />
           <Row
-            label="Sunucu adı"
+            label={t('guild.name')}
             value={guild?.name ?? guildName}
             onPress={() => setEdit({ k: 'name' })}
           />
           <Row
-            label="Açıklama"
+            label={t('common.description')}
             value={guild?.description || '—'}
             onPress={() => setEdit({ k: 'description' })}
           />
-          <Row label="Üyeler" onPress={() => nav.push({ kind: 'members', guildId, guildName })} />
-          <Row label="Sunucudaki takma adım" onPress={() => setEdit({ k: 'myNick' })} />
+          <Row
+            label={t('members.title')}
+            onPress={() => nav.push({ kind: 'members', guildId, guildName })}
+          />
+          <Row label={t('member.myNick')} onPress={() => setEdit({ k: 'myNick' })} />
           <Row label="Sunucudaki profilim (bio)" onPress={() => setEdit({ k: 'myBio' })} />
           <Row
-            label="İçerik & Etkinlikler"
-            value="emoji · çıkartma · ses · komut"
+            label={t('content.title')}
+            value={t('content.subtitle')}
             onPress={() => nav.push({ kind: 'serverContent', guildId, guildName })}
           />
         </Section>
-        <Section title="Yönetim">
+        <Section title={t('common.management')}>
           <Row label="Roller" onPress={() => setView('roles')} />
           <Row label="Davetler" onPress={() => setView('invites')} />
           <Row label="Yasaklar" onPress={() => setView('bans')} />
@@ -520,10 +528,10 @@ export function ServerSettingsScreen({
           <Row label="Tepki rolleri" onPress={() => setView('reactionRoles')} />
           <Row label="Kanal takipleri" onPress={() => setView('follows')} />
           <Row label="Bot ekle" onPress={() => setView('bots')} />
-          <Row label="Denetim kaydı" onPress={() => setView('audit')} />
+          <Row label={t('audit.title2')} onPress={() => setView('audit')} />
         </Section>
         <Section>
-          <Row label="Sunucudan ayrıl" danger onPress={leave} />
+          <Row label={t('guild.leave')} danger onPress={leave} />
           <Row label="Sunucuyu sil" danger onPress={destroy} />
         </Section>
       </ScrollView>

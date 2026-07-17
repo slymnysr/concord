@@ -1,4 +1,5 @@
 // Anket oluşturucu modalı — soru + 2-4 seçenek.
+import { t } from './i18n';
 import { useEffect, useState } from 'react';
 import {
   View,
@@ -38,7 +39,7 @@ export function PollComposer({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
       <Pressable style={s.backdrop} onPress={onCancel}>
         <Pressable style={s.sheet} onPress={() => {}}>
-          <Text style={s.title}>📊 Anket Oluştur</Text>
+          <Text style={s.title}>{t('poll.create')}</Text>
           <TextInput
             style={ui.input}
             value={question}
@@ -58,12 +59,12 @@ export function PollComposer({
           ))}
           {answers.length < 4 && (
             <TouchableOpacity onPress={() => setAnswers((p) => [...p, ''])}>
-              <Text style={s.add}>+ Seçenek ekle</Text>
+              <Text style={s.add}>{t('poll.addOption')}</Text>
             </TouchableOpacity>
           )}
           <View style={s.btns}>
             <TouchableOpacity style={[ui.btnGhost, { flex: 1 }]} onPress={onCancel}>
-              <Text style={ui.btnGhostText}>Vazgeç</Text>
+              <Text style={ui.btnGhostText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[ui.btn, { flex: 1 }, !valid && { opacity: 0.4 }]}
@@ -72,7 +73,7 @@ export function PollComposer({
                 onCreate(question.trim(), answers.map((a) => a.trim()).filter(Boolean))
               }
             >
-              <Text style={ui.btnText}>Oluştur</Text>
+              <Text style={ui.btnText}>{t('common.create')}</Text>
             </TouchableOpacity>
           </View>
         </Pressable>

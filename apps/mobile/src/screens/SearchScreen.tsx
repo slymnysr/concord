@@ -1,4 +1,5 @@
 // Arama — mesaj arama, sonuca dokununca kanala git.
+import { t } from '../i18n';
 import { useEffect, useState } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -73,7 +74,11 @@ export function SearchScreen({
       </View>
       <View style={s.chips}>
         <Chip label="📌 Sabit" active={pinned} onPress={() => setPinned(!pinned)} />
-        <Chip label="🖼️ Görsel" active={has.includes('image')} onPress={() => toggleHas('image')} />
+        <Chip
+          label={t('media.image')}
+          active={has.includes('image')}
+          onPress={() => toggleHas('image')}
+        />
         <Chip label="🔗 Link" active={has.includes('link')} onPress={() => toggleHas('link')} />
       </View>
       {!searched && history.length > 0 && (
@@ -91,7 +96,7 @@ export function SearchScreen({
       <FlatList
         data={results}
         keyExtractor={(r) => r.message.id}
-        ListEmptyComponent={searched ? <Empty text="Sonuç yok." /> : null}
+        ListEmptyComponent={searched ? <Empty text={t('common.noResults')} /> : null}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={s.row}

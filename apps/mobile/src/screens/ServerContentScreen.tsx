@@ -1,4 +1,5 @@
 // Sunucu içeriği — özel emoji, çıkartma, soundboard, slash komutları, etkinlikler, karşılama, istatistik.
+import { t } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import {
   View,
@@ -20,12 +21,12 @@ import { ScreenHeader, InputModal, Empty, Row, ui } from '../ui';
 type Tab = 'emojis' | 'stickers' | 'sounds' | 'commands' | 'events' | 'welcome' | 'insights';
 const TABS: [Tab, string][] = [
   ['emojis', 'Emoji'],
-  ['stickers', 'Çıkartma'],
+  ['stickers', t('sticker.one')],
   ['sounds', 'Ses'],
   ['commands', 'Komut'],
   ['events', 'Etkinlik'],
-  ['welcome', 'Karşılama'],
-  ['insights', 'İstatistik'],
+  ['welcome', t('welcome.title')],
+  ['insights', t('stats.title')],
 ];
 
 type Edit =
@@ -107,7 +108,7 @@ export function ServerContentScreen({
       if (ok) Alert.alert('Concord', ok);
       reload();
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'İşlem başarısız');
+      Alert.alert('Concord', e?.message ?? t('common.actionFailed'));
     }
   }
 
@@ -124,7 +125,7 @@ export function ServerContentScreen({
       );
       setEdit({ k: setKey, url: up.url });
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Yüklenemedi');
+      Alert.alert('Concord', e?.message ?? t('common.loadFailed'));
     }
   }
   async function pickSound() {
@@ -138,18 +139,18 @@ export function ServerContentScreen({
       const up = await uploadFile(a.uri, a.name, a.mimeType || 'audio/mpeg', a.size || 0);
       setEdit({ k: 'soundName', url: up.url });
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Yüklenemedi');
+      Alert.alert('Concord', e?.message ?? t('common.loadFailed'));
     }
   }
 
   function playSound(id: string) {
     if (!voice.isConnected() || !voice.channelId) {
-      Alert.alert('Concord', 'Önce bir sesli kanala katıl, sonra çal.');
+      Alert.alert('Concord', t('sound.joinFirst'));
       return;
     }
     api.sounds
       .play(id, voice.channelId)
-      .catch((e: any) => Alert.alert('Concord', e?.message ?? 'Çalınamadı'));
+      .catch((e: any) => Alert.alert('Concord', e?.message ?? t('sound.playFailed')));
   }
 
   function createEvent(name: string) {
@@ -166,11 +167,11 @@ export function ServerContentScreen({
                 entity_type: 'external',
                 entity_location: 'Concord',
               }),
-            'Etkinlik oluşturuldu',
+            t('event.created'),
           ),
       },
       {
-        text: 'Yarın',
+        text: t('time.tomorrow'),
         onPress: () =>
           run(
             () =>
@@ -180,7 +181,7 @@ export function ServerContentScreen({
                 entity_type: 'external',
                 entity_location: 'Concord',
               }),
-            'Etkinlik oluşturuldu',
+            t('event.created'),
           ),
       },
       {
@@ -194,10 +195,10 @@ export function ServerContentScreen({
                 entity_type: 'external',
                 entity_location: 'Concord',
               }),
-            'Etkinlik oluşturuldu',
+            t('event.created'),
           ),
       },
-      { text: 'Vazgeç', style: 'cancel' },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   }
 
@@ -213,7 +214,7 @@ export function ServerContentScreen({
     if (e.k === 'stickerName' && value.trim())
       return run(
         () => api.stickers.create(guildId, { name: value.trim(), url: e.url }),
-        'Çıkartma eklendi',
+        t('sticker.added'),
       );
     if (e.k === 'soundName' && value.trim())
       return run(
@@ -240,14 +241,18 @@ export function ServerContentScreen({
   }
 
   const editMeta: Record<Edit['k'], { title: string; initial?: string; multiline?: boolean }> = {
-    emojiName: { title: 'Emoji adı' },
-    stickerName: { title: 'Çıkartma adı' },
-    soundName: { title: 'Ses adı' },
-    slashName: { title: 'Komut adı (/...)' },
-    slashDesc: { title: 'Açıklama' },
-    slashResp: { title: 'Yanıt metni', multiline: true },
-    eventName: { title: 'Etkinlik adı' },
-    welcomeDesc: { title: 'Karşılama açıklaması', initial: welcome?.description, multiline: true },
+    emojiName: { title: t('emoji.name') },
+    stickerName: { title: t('sticker.name') },
+    soundName: { title: t('sound.name') },
+    slashName: { title: t('cmd.name') },
+    slashDesc: { title: t('common.description') },
+    slashResp: { title: t('cmd.response'), multiline: true },
+    eventName: { title: t('event.name') },
+    welcomeDesc: {
+      title: t('welcome.description'),
+      initial: welcome?.description,
+      multiline: true,
+    },
     welcomeRules: { title: 'Kurallar', initial: welcome?.rules_text, multiline: true },
   };
   const m = edit ? editMeta[edit.k] : null;
@@ -320,7 +325,7 @@ export function ServerContentScreen({
           data={stickers}
           keyExtractor={(e) => e.id}
           numColumns={3}
-          ListEmptyComponent={<Empty text="Çıkartma yok." />}
+          ListEmptyComponent={<Empty text={t('sticker.none')} />}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={s.gridCell}
@@ -346,7 +351,7 @@ export function ServerContentScreen({
                 {item.name}
               </Text>
               <TouchableOpacity onPress={() => playSound(item.id)}>
-                <Text style={{ color: colors.brand, marginRight: 16 }}>Çal</Text>
+                <Text style={{ color: colors.brand, marginRight: 16 }}>{t('sound.play')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => run(() => api.sounds.delete(item.id))}>
                 <Text style={{ color: colors.accent }}>Sil</Text>
@@ -397,7 +402,7 @@ export function ServerContentScreen({
                 }
               >
                 <Text style={{ color: item.subscribed ? colors.inkSecondary : colors.brand }}>
-                  {item.subscribed ? 'Bırak' : 'İlgilen'}
+                  {item.subscribed ? t('event.leave') : t('event.interested')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -413,7 +418,7 @@ export function ServerContentScreen({
       {tab === 'welcome' && welcome && (
         <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
           <Row
-            label="Karşılama ekranı"
+            label={t('welcome.screen')}
             right={
               <TouchableOpacity
                 onPress={() =>
@@ -426,28 +431,28 @@ export function ServerContentScreen({
                     fontWeight: '700',
                   }}
                 >
-                  {welcome.enabled ? 'Açık' : 'Kapalı'}
+                  {welcome.enabled ? t('common.on') : t('common.off')}
                 </Text>
               </TouchableOpacity>
             }
           />
           <Row
-            label="Açıklama"
+            label={t('common.description')}
             value={welcome.description || '—'}
             onPress={() => setEdit({ k: 'welcomeDesc' })}
           />
           <Row
             label="Kurallar"
-            value={welcome.rules_text ? 'düzenle' : '—'}
+            value={welcome.rules_text ? t('common.editLower') : '—'}
             onPress={() => setEdit({ k: 'welcomeRules' })}
           />
         </ScrollView>
       )}
       {tab === 'insights' && insights && (
         <ScrollView contentContainerStyle={{ padding: 14 }}>
-          <Stat label="Üye sayısı" value={insights.member_count} />
-          <Stat label="Yeni üye (7g)" value={insights.new_members_7d} />
-          <Stat label="Yeni üye (30g)" value={insights.new_members_30d} />
+          <Stat label={t('stats.memberCount')} value={insights.member_count} />
+          <Stat label={t('stats.new7d')} value={insights.new_members_7d} />
+          <Stat label={t('stats.new30d')} value={insights.new_members_30d} />
           <Stat label="Mesaj (7g)" value={insights.messages_7d} />
           <Stat label="Mesaj (30g)" value={insights.messages_30d} />
         </ScrollView>

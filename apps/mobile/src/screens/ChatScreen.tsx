@@ -1,6 +1,7 @@
 // Sohbet ekranı — gerçek zamanlı mesajlar (Phoenix WS), tepkiler, yanıtlar,
 // markdown, uzun-basma menüsü, eskiyi yükleme (sayfalama), yazıyor göstergesi,
 // profil kartı, resim büyütme (lightbox), çevrimiçi durum noktaları.
+import { t } from '../i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -392,7 +393,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         headers: { 'Content-Type': contentType },
         body: blob,
       });
-      if (!put.ok) throw new Error('Dosya yüklenemedi');
+      if (!put.ok) throw new Error(t('upload.failed'));
       const content = text.trim();
       setText('');
       const reply = replyTo;
@@ -402,7 +403,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       ]);
       setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Gönderilemedi');
+      Alert.alert('Concord', e?.message ?? t('msg.sendFailed'));
     } finally {
       setSending(false);
     }
@@ -427,12 +428,12 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   }
   function attachMenu() {
     Alert.alert('Ekle', undefined, [
-      { text: 'Fotoğraf / Video', onPress: attachImage },
+      { text: t('media.photoVideo'), onPress: attachImage },
       { text: 'Dosya', onPress: attachDocument },
       { text: 'GIF', onPress: () => setGifOpen(true) },
       { text: 'Sesli mesaj', onPress: startRec },
-      { text: 'Anket oluştur', onPress: () => setPollOpen(true) },
-      { text: 'Vazgeç', style: 'cancel' },
+      { text: t('poll.create2'), onPress: () => setPollOpen(true) },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   }
 
@@ -451,7 +452,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       setRecSecs(0);
       recTimer.current = setInterval(() => setRecSecs((x) => x + 1), 1000);
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Kayıt başlamadı');
+      Alert.alert('Concord', e?.message ?? t('audio.recordFailed'));
     }
   }
   async function finishRec(send: boolean) {
@@ -475,7 +476,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
       }
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Gönderilemedi');
+      Alert.alert('Concord', e?.message ?? t('msg.sendFailed'));
     } finally {
       setSending(false);
       setRecSecs(0);
@@ -491,7 +492,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       });
       setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Anket oluşturulamadı');
+      Alert.alert('Concord', e?.message ?? t('poll.createFailed'));
     }
   }
 
@@ -501,18 +502,18 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       const r = await api.dms.open(u.id);
       nav.push({ kind: 'chat', channel: { id: r.channel_id, name: u.display_name } });
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'DM açılamadı');
+      Alert.alert('Concord', e?.message ?? t('dm.openFailed'));
     }
   }
   function profileMore(u: User) {
     Alert.alert(u.display_name, `@${u.username}`, [
       {
-        text: 'Arkadaş ekle',
+        text: t('friends.add'),
         onPress: () =>
           api.friends
             .send({ user_id: u.id })
-            .then(() => Alert.alert('Concord', 'İstek gönderildi'))
-            .catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı')),
+            .then(() => Alert.alert('Concord', t('friends.requestSent')))
+            .catch((e) => Alert.alert('Concord', e?.message ?? t('common.failed'))),
       },
       { text: 'Not ekle', onPress: () => setNoteFor(u) },
       {
@@ -528,15 +529,15 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
             .catch(() => {}),
       },
       {
-        text: 'Şikayet et',
+        text: t('report.action'),
         style: 'destructive',
         onPress: () =>
           api
             .report(u.id)
-            .then(() => Alert.alert('Concord', 'Şikayet alındı'))
+            .then(() => Alert.alert('Concord', t('report.received')))
             .catch(() => {}),
       },
-      { text: 'Vazgeç', style: 'cancel' },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   }
   async function showReactors(m: Message, emoji: string) {
@@ -585,9 +586,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         undefined,
         atts.length ? atts : undefined,
       );
-      Alert.alert('Concord', 'İletildi');
+      Alert.alert('Concord', t('msg.forwarded'));
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'İletilemedi');
+      Alert.alert('Concord', e?.message ?? t('msg.forwardFailed'));
     }
   }
 
@@ -598,9 +599,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       );
       const data = await res.json();
       const out = (data?.[0] ?? []).map((seg: any) => seg[0]).join('');
-      Alert.alert('Çeviri → Türkçe', out || 'Çevrilemedi');
+      Alert.alert(t('msg.translateTo'), out || t('msg.translateFailed'));
     } catch {
-      Alert.alert('Concord', 'Çeviri başarısız');
+      Alert.alert('Concord', t('msg.translateFailed2'));
     }
   }
 
@@ -637,7 +638,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       const m = await api.commands.run(channel.id, cmd.name);
       if (m && m.id) setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Komut çalıştırılamadı');
+      Alert.alert('Concord', e?.message ?? t('cmd.failed'));
     }
   }
 
@@ -677,7 +678,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       ]);
       setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'GIF gönderilemedi');
+      Alert.alert('Concord', e?.message ?? t('gif.sendFailed'));
     }
   }
 
@@ -702,8 +703,8 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
   }
 
   function deleteMessage(msg: Message) {
-    Alert.alert('Mesajı sil', 'Bu mesaj kalıcı olarak silinecek.', [
-      { text: 'Vazgeç', style: 'cancel' },
+    Alert.alert(t('msg.deleteTitle'), t('msg.deleteConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
         text: 'Sil',
         style: 'destructive',
@@ -725,7 +726,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       const updated = await api.messages.edit(m.id, value.trim());
       setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, ...updated } : x)));
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Düzenlenemedi');
+      Alert.alert('Concord', e?.message ?? t('msg.editFailed'));
     }
   }
 
@@ -735,17 +736,20 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       else await api.messages.pin(m.id);
       setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, pinned: !m.pinned } : x)));
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Olmadı');
+      Alert.alert('Concord', e?.message ?? t('common.failed'));
     }
   }
 
   function remindMenu(m: Message) {
     const at = (sec: number) => new Date(Date.now() + sec * 1000).toISOString();
-    Alert.alert('Hatırlat', 'Bu mesajı ne zaman hatırlatayım?', [
+    Alert.alert(t('msg.remindTitle'), t('msg.remindWhen'), [
       { text: '20 dakika', onPress: () => api.reminders.create(m.id, at(1200)).catch(() => {}) },
       { text: '1 saat', onPress: () => api.reminders.create(m.id, at(3600)).catch(() => {}) },
-      { text: 'Yarın', onPress: () => api.reminders.create(m.id, at(86400)).catch(() => {}) },
-      { text: 'Vazgeç', style: 'cancel' },
+      {
+        text: t('time.tomorrow'),
+        onPress: () => api.reminders.create(m.id, at(86400)).catch(() => {}),
+      },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   }
 
@@ -768,12 +772,12 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
     if (channel.guildId) {
       opts.push({ text: "Thread'ler", onPress: () => nav.push({ kind: 'forum', channel }) });
       opts.push({
-        text: 'Üyeler',
+        text: t('members.title'),
         onPress: () =>
           nav.push({ kind: 'members', guildId: channel.guildId!, guildName: channel.name }),
       });
       opts.push({
-        text: 'Kanal ayarları',
+        text: t('channel.settings'),
         onPress: () =>
           nav.push({
             kind: 'channelSettings',
@@ -783,20 +787,20 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           }),
       });
       opts.push({
-        text: 'Sunucu ayarları',
+        text: t('guild.settings'),
         onPress: () =>
           nav.push({ kind: 'serverSettings', guildId: channel.guildId!, guildName: channel.name }),
       });
       opts.push({
-        text: 'Bildirim ayarı',
+        text: t('notif.setting'),
         onPress: () =>
-          Alert.alert('Bildirim ayarı', channel.name, [
+          Alert.alert(t('notif.setting'), channel.name, [
             {
-              text: 'Tümü',
+              text: t('common.all'),
               onPress: () =>
                 api.channels
                   .muteSettings(channel.id, { notif_level: 'all' })
-                  .then(() => Alert.alert('Concord', 'Tüm mesajlar'))
+                  .then(() => Alert.alert('Concord', t('notif.allMessages')))
                   .catch(() => {}),
             },
             {
@@ -815,13 +819,13 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                   .then(() => Alert.alert('Concord', 'Susturuldu'))
                   .catch(() => {}),
             },
-            { text: 'Vazgeç', style: 'cancel' },
+            { text: t('common.cancel'), style: 'cancel' },
           ]),
       });
     }
     if (!channel.guildId && channel.type === 'group_dm') {
       opts.push({
-        text: 'Kişi ekle',
+        text: t('dm.addPerson'),
         onPress: () => {
           api.friends
             .list()
@@ -831,14 +835,14 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
         },
       });
       opts.push({
-        text: 'Kişi çıkar',
+        text: t('dm.removePerson'),
         onPress: () => {
           (channel.participants ?? []).forEach(resolveUser);
           setRemoveRecipOpen(true);
         },
       });
     }
-    opts.push({ text: 'Vazgeç', style: 'cancel' });
+    opts.push({ text: t('common.cancel'), style: 'cancel' });
     Alert.alert(channel.name, undefined, opts);
   }
 
@@ -950,7 +954,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
             firstUnread === item.id ? (
               <View style={s.unreadRow}>
                 <View style={s.unreadLine} />
-                <Text style={s.unreadText}>YENİ</Text>
+                <Text style={s.unreadText}>{t('common.new')}</Text>
               </View>
             ) : null;
           if (item.system) {
@@ -993,7 +997,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                     ↪{' '}
                     {replied
                       ? `${users[replied.author_id]?.display_name ?? '…'}: ${replied.content}`
-                      : 'bir mesaja yanıt'}
+                      : t('msg.replyTo')}
                   </Text>
                 </Pressable>
               )}
@@ -1170,10 +1174,10 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
           </Text>
           <View style={{ flex: 1 }} />
           <TouchableOpacity onPress={() => finishRec(false)}>
-            <Text style={s.recCancel}>İptal</Text>
+            <Text style={s.recCancel}>{t('common.cancel2')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.recSend} onPress={() => finishRec(true)}>
-            <Text style={s.recSendText}>Gönder</Text>
+            <Text style={s.recSendText}>{t('common.send')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -1254,7 +1258,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                 setMenuFor(null);
               }}
             >
-              <Text style={s.sheetItemText}>↩️ Yanıtla</Text>
+              <Text style={s.sheetItemText}>{t('msg.reply')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={s.sheetItem}
@@ -1274,7 +1278,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                   if (m?.content) translate(m.content);
                 }}
               >
-                <Text style={s.sheetItemText}>🌐 Çevir (→ Türkçe)</Text>
+                <Text style={s.sheetItemText}>{t('msg.translate')}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity
@@ -1285,7 +1289,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                 setForwardMsg(m);
               }}
             >
-              <Text style={s.sheetItemText}>↪️ İlet</Text>
+              <Text style={s.sheetItemText}>{t('msg.forward')}</Text>
             </TouchableOpacity>
             {!!channel.guildId && (
               <TouchableOpacity
@@ -1296,7 +1300,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                   setThreadFor(m);
                 }}
               >
-                <Text style={s.sheetItemText}>🧵 Thread başlat</Text>
+                <Text style={s.sheetItemText}>{t('msg.startThread')}</Text>
               </TouchableOpacity>
             )}
             {menuFor?.author_id === me.id && !menuFor?.system && (
@@ -1308,7 +1312,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                   setEditFor(m);
                 }}
               >
-                <Text style={s.sheetItemText}>✏️ Düzenle</Text>
+                <Text style={s.sheetItemText}>{t('msg.edit')}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity
@@ -1320,7 +1324,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
               }}
             >
               <Text style={s.sheetItemText}>
-                📌 {menuFor?.pinned ? 'Sabiti Kaldır' : 'Sabitle'}
+                📌 {menuFor?.pinned ? t('pins.unpin') : 'Sabitle'}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -1345,7 +1349,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                 if (m) remindMenu(m);
               }}
             >
-              <Text style={s.sheetItemText}>⏰ Hatırlat</Text>
+              <Text style={s.sheetItemText}>{t('msg.remind')}</Text>
             </TouchableOpacity>
             {!!menuFor?.edited_at && (
               <TouchableOpacity
@@ -1357,14 +1361,16 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                     try {
                       const h = await api.messages.edits(m.id);
                       Alert.alert(
-                        'Düzenleme geçmişi',
-                        h.length ? h.map((x) => '• ' + x.old_content).join('\n\n') : 'Geçmiş yok',
+                        t('msg.editHistory2'),
+                        h.length
+                          ? h.map((x) => '• ' + x.old_content).join('\n\n')
+                          : t('msg.noHistory'),
                       );
                     } catch {}
                   }
                 }}
               >
-                <Text style={s.sheetItemText}>🕘 Düzenleme geçmişi</Text>
+                <Text style={s.sheetItemText}>{t('msg.editHistory')}</Text>
               </TouchableOpacity>
             )}
             {channel.type === 'announcement' && (
@@ -1376,11 +1382,11 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                   if (m)
                     api.messages
                       .crosspost(channel.id, m.id)
-                      .then(() => Alert.alert('Concord', 'Yayınlandı'))
-                      .catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı'));
+                      .then(() => Alert.alert('Concord', t('msg.published')))
+                      .catch((e) => Alert.alert('Concord', e?.message ?? t('common.failed')));
                 }}
               >
-                <Text style={s.sheetItemText}>📣 Yayınla</Text>
+                <Text style={s.sheetItemText}>{t('msg.publish')}</Text>
               </TouchableOpacity>
             )}
             {menuFor?.author_id === me.id && (
@@ -1392,7 +1398,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                   if (m) deleteMessage(m);
                 }}
               >
-                <Text style={[s.sheetItemText, { color: colors.accent }]}>🗑️ Mesajı Sil</Text>
+                <Text style={[s.sheetItemText, { color: colors.accent }]}>{t('msg.delete')}</Text>
               </TouchableOpacity>
             )}
           </Pressable>
@@ -1452,7 +1458,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
             {profileFor && profileFor.id !== me.id && (
               <View style={s.profileActions}>
                 <TouchableOpacity style={s.profileBtn} onPress={() => profileDM(profileFor)}>
-                  <Text style={s.profileBtnText}>Mesaj Gönder</Text>
+                  <Text style={s.profileBtnText}>{t('msg.sendTitle')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.profileMore} onPress={() => profileMore(profileFor)}>
                   <Text style={s.profileMoreText}>⋯</Text>
@@ -1483,7 +1489,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       {/* Mesaj düzenleme */}
       <InputModal
         visible={!!editFor}
-        title="Mesajı düzenle"
+        title={t('msg.editTitle')}
         initial={editFor?.content}
         multiline
         submitLabel="Kaydet"
@@ -1503,7 +1509,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
             <Text style={s.pinsTitle}>📌 Sabitlenen Mesajlar</Text>
             <ScrollView style={{ maxHeight: 380 }}>
               {pins.length === 0 ? (
-                <Text style={s.pinsEmpty}>Sabitlenmiş mesaj yok.</Text>
+                <Text style={s.pinsEmpty}>{t('pins.none')}</Text>
               ) : (
                 pins.map((p) => (
                   <TouchableOpacity
@@ -1535,7 +1541,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       >
         <Pressable style={s.sheetBackdrop} onPress={() => setForwardMsg(null)}>
           <Pressable style={s.sheet} onPress={() => {}}>
-            <Text style={s.pinsTitle}>İlet</Text>
+            <Text style={s.pinsTitle}>{t('msg.forward2')}</Text>
             <TextInput
               style={s.fwdSearch}
               value={forwardQuery}
@@ -1579,10 +1585,10 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       >
         <Pressable style={s.sheetBackdrop} onPress={() => setRecipOpen(false)}>
           <Pressable style={s.sheet} onPress={() => {}}>
-            <Text style={s.pinsTitle}>Kişi ekle</Text>
+            <Text style={s.pinsTitle}>{t('dm.addPerson')}</Text>
             <ScrollView style={{ maxHeight: 360 }}>
               {friendList.length === 0 ? (
-                <Text style={s.pinsEmpty}>Eklenecek arkadaş yok.</Text>
+                <Text style={s.pinsEmpty}>{t('friends.noneToAdd')}</Text>
               ) : (
                 friendList.map((f) => (
                   <TouchableOpacity
@@ -1595,7 +1601,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                           setRecipOpen(false);
                           Alert.alert('Concord', 'Eklendi');
                         })
-                        .catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı'))
+                        .catch((e) => Alert.alert('Concord', e?.message ?? t('common.failed')))
                     }
                   >
                     <Text style={s.sheetItemText}>{f.display_name}</Text>
@@ -1616,10 +1622,10 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       >
         <Pressable style={s.sheetBackdrop} onPress={() => setRemoveRecipOpen(false)}>
           <Pressable style={s.sheet} onPress={() => {}}>
-            <Text style={s.pinsTitle}>Kişi çıkar</Text>
+            <Text style={s.pinsTitle}>{t('dm.removePerson')}</Text>
             <ScrollView style={{ maxHeight: 360 }}>
               {(channel.participants ?? []).filter((id) => id !== me.id).length === 0 ? (
-                <Text style={s.pinsEmpty}>Çıkarılacak kişi yok.</Text>
+                <Text style={s.pinsEmpty}>{t('dm.noneToRemove')}</Text>
               ) : (
                 (channel.participants ?? [])
                   .filter((id) => id !== me.id)
@@ -1632,9 +1638,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                           .removeRecipient(channel.id, id)
                           .then(() => {
                             setRemoveRecipOpen(false);
-                            Alert.alert('Concord', 'Çıkarıldı');
+                            Alert.alert('Concord', t('common.removed'));
                           })
-                          .catch((e) => Alert.alert('Concord', e?.message ?? 'Olmadı'))
+                          .catch((e) => Alert.alert('Concord', e?.message ?? t('common.failed')))
                       }
                     >
                       <Text style={s.sheetItemText}>{users[id]?.display_name ?? id}</Text>
@@ -1649,7 +1655,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       <InputModal
         visible={!!noteFor}
         title={`Not — ${noteFor?.display_name ?? ''}`}
-        placeholder="Bu kişi hakkında not (sadece sen görürsün)"
+        placeholder={t('user.note')}
         onCancel={() => setNoteFor(null)}
         onSubmit={(v) => {
           const u = noteFor;
@@ -1663,9 +1669,9 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
       />
       <InputModal
         visible={!!threadFor}
-        title="Thread başlat"
-        placeholder="Thread adı"
-        submitLabel="Başlat"
+        title={t('thread.start')}
+        placeholder={t('thread.name')}
+        submitLabel={t('common.start')}
         onCancel={() => setThreadFor(null)}
         onSubmit={async (v) => {
           const m = threadFor;
@@ -1681,7 +1687,7 @@ export function ChatScreen({ channel, me, nav, onBack }: Props) {
                 channel: { id: t.id, name: t.name, guildId: channel.guildId },
               });
             } catch (e: any) {
-              Alert.alert('Concord', e?.message ?? 'Thread oluşturulamadı');
+              Alert.alert('Concord', e?.message ?? t('thread.createFailed'));
             }
           }
         }}

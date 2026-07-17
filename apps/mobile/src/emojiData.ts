@@ -1,7 +1,8 @@
+import { t } from './i18n';
 // Kompakt emoji seti (mobil) — kategoriye göre gruplu, sık kullanılanlar.
 export const EMOJI_GROUPS: { name: string; icon: string; emojis: string[] }[] = [
   {
-    name: 'Yüzler',
+    name: t('emoji.faces'),
     icon: '😀',
     emojis: [
       '😀',
@@ -100,7 +101,7 @@ export const EMOJI_GROUPS: { name: string; icon: string; emojis: string[] }[] = 
     ],
   },
   {
-    name: 'El & İnsan',
+    name: t('emoji.people'),
     icon: '👍',
     emojis: [
       '👍',
@@ -209,7 +210,7 @@ export const EMOJI_GROUPS: { name: string; icon: string; emojis: string[] }[] = 
     ],
   },
   {
-    name: 'Hayvan & Doğa',
+    name: t('emoji.nature'),
     icon: '🐶',
     emojis: [
       '🐶',

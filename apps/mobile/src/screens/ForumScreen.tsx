@@ -1,4 +1,5 @@
 // Forum / thread listesi — gönderiler (thread'ler), etiket filtresi, yeni gönderi.
+import { t } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { colors } from '../theme';
@@ -44,7 +45,7 @@ export function ForumScreen({
       const t = await api.threads.create(channel.id, { name: name.trim() });
       openThread(t as Thread);
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Oluşturulamadı');
+      Alert.alert('Concord', e?.message ?? t('common.createFailed'));
     }
   }
 
@@ -55,7 +56,7 @@ export function ForumScreen({
         onBack={onBack}
         right={
           <TouchableOpacity onPress={() => setCreating(true)}>
-            <Text style={ui.headerBtn}>+ Gönderi</Text>
+            <Text style={ui.headerBtn}>{t('forum.newPost')}</Text>
           </TouchableOpacity>
         }
       />
@@ -70,14 +71,16 @@ export function ForumScreen({
           style={[s.filter, archived && s.filterActive]}
           onPress={() => setArchived(true)}
         >
-          <Text style={[s.filterText, archived && { color: colors.ink }]}>Arşiv</Text>
+          <Text style={[s.filterText, archived && { color: colors.ink }]}>
+            {t('forum.archive')}
+          </Text>
         </TouchableOpacity>
       </View>
       <FlatList
         data={threads}
         keyExtractor={(t) => t.id}
         contentContainerStyle={{ padding: 12 }}
-        ListEmptyComponent={<Empty text="Henüz gönderi yok. İlkini sen oluştur." />}
+        ListEmptyComponent={<Empty text={t('forum.none')} />}
         renderItem={({ item }) => {
           const itemTags = (item.tag_ids ?? [])
             .map((id) => tags.find((t) => t.id === id))
@@ -102,9 +105,9 @@ export function ForumScreen({
       />
       <InputModal
         visible={creating}
-        title="Yeni gönderi"
-        placeholder="Başlık"
-        submitLabel="Oluştur"
+        title={t('forum.newPost2')}
+        placeholder={t('common.title')}
+        submitLabel={t('common.create')}
         onCancel={() => setCreating(false)}
         onSubmit={create}
       />

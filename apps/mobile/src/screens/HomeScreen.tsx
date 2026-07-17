@@ -1,5 +1,6 @@
 // Ana ekran — Discord mobil düzeni: solda sunucu rayı, sağda kanal/DM listesi.
 // Okunmamış göstergeleri, hızlı erişim (arkadaşlar/keşfet/bildirim/üyeler/ara/ayarlar).
+import { t } from '../i18n';
 import { useCallback, useEffect, useState } from 'react';
 import {
   View,
@@ -57,7 +58,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
       await api.channels.create(selected, name.trim());
       reloadChannels();
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Kanal oluşturulamadı');
+      Alert.alert('Concord', e?.message ?? t('channel.createFailed'));
     }
   }
   async function doRenameChannel(name: string) {
@@ -68,7 +69,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
       await api.channels.update(ch.id, { name: name.trim() });
       reloadChannels();
     } catch (e: any) {
-      Alert.alert('Concord', e?.message ?? 'Olmadı');
+      Alert.alert('Concord', e?.message ?? t('common.failed'));
     }
   }
   function channelMenu(ch: Channel) {
@@ -83,7 +84,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
             guildId: ch.guild_id,
           }),
       },
-      { text: 'Yeniden adlandır', onPress: () => setRenameChan(ch) },
+      { text: t('common.rename'), onPress: () => setRenameChan(ch) },
       {
         text: 'Sustur',
         onPress: () =>
@@ -101,7 +102,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
             .then(reloadChannels)
             .catch((e) => Alert.alert('Concord', e?.message ?? 'Silinemedi')),
       },
-      { text: 'Vazgeç', style: 'cancel' },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   }
 
@@ -157,10 +158,10 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
       text: `📁 ${f.name}`,
       onPress: () => moveToFolder(g.id, f.id),
     }));
-    opts.push({ text: '➕ Yeni klasör', onPress: () => setNewFolderFor(g) });
-    if (inFolder) opts.push({ text: 'Klasörden çıkar', onPress: () => removeFromFolder(g.id) });
-    opts.push({ text: 'Vazgeç', style: 'cancel' });
-    Alert.alert(g.name, 'Klasöre taşı', opts);
+    opts.push({ text: t('folder.new'), onPress: () => setNewFolderFor(g) });
+    if (inFolder) opts.push({ text: t('folder.remove'), onPress: () => removeFromFolder(g.id) });
+    opts.push({ text: t('common.cancel'), style: 'cancel' });
+    Alert.alert(g.name, t('folder.moveTo'), opts);
   }
   const renderGuild = (item: Guild) => (
     <TouchableOpacity
@@ -245,7 +246,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
       await load();
       setSelected(g.id);
     } catch (e: any) {
-      setAddErr(e?.message ?? 'Katılınamadı');
+      setAddErr(e?.message ?? t('guild.joinFailed'));
     } finally {
       setAddBusy(false);
     }
@@ -261,7 +262,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
       await load();
       setSelected(g.id);
     } catch (e: any) {
-      setAddErr(e?.message ?? 'Oluşturulamadı');
+      setAddErr(e?.message ?? t('common.createFailed'));
     } finally {
       setAddBusy(false);
     }
@@ -270,7 +271,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
   const inAnyFolder = new Set(folders.flatMap((f) => f.guild_ids));
   const ungrouped = guilds.filter((g) => !inAnyFolder.has(g.id));
   const selectedGuild = guilds.find((g) => g.id === selected);
-  const guildName = selected === 'dm' ? 'Doğrudan Mesajlar' : (selectedGuild?.name ?? '');
+  const guildName = selected === 'dm' ? t('dm.title') : (selectedGuild?.name ?? '');
   const textChannels = channels
     .filter((c) => ['text', 'announcement', 'forum', 'media', 'voice', 'stage'].includes(c.type))
     .sort((a, b) => a.position - b.position);
@@ -279,10 +280,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
     try {
       await voice.connect(ch.id, ch.name, { meId: me.id, stage: ch.type === 'stage' });
     } catch (e: any) {
-      Alert.alert(
-        'Concord',
-        e?.message ?? 'Sesli sohbet için native build (EAS dev client) gerekiyor.',
-      );
+      Alert.alert('Concord', e?.message ?? t('voice.needsNative'));
     }
   }
 
@@ -378,10 +376,14 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
               <View style={s.quick}>
                 <QuickRow
                   icon="👥"
-                  label="Arkadaşlar"
+                  label={t('friends.title')}
                   onPress={() => nav.push({ kind: 'friends' })}
                 />
-                <QuickRow icon="🧭" label="Keşfet" onPress={() => nav.push({ kind: 'discover' })} />
+                <QuickRow
+                  icon="🧭"
+                  label={t('discover.title')}
+                  onPress={() => nav.push({ kind: 'discover' })}
+                />
                 <QuickRow
                   icon="🔔"
                   label="Bildirimler"
@@ -410,13 +412,13 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
                 >
                   <Text style={s.channelIcon}>{item.type === 'group_dm' ? '👥' : '@'}</Text>
                   <Text style={[s.channelName, unread && s.channelUnread]} numberOfLines={1}>
-                    {item.name || 'Doğrudan mesaj'}
+                    {item.name || t('dm.one')}
                   </Text>
                   {unread && <View style={s.dot} />}
                 </TouchableOpacity>
               );
             }}
-            ListEmptyComponent={<Text style={s.empty}>Henüz DM yok — Arkadaşlar'dan başlat.</Text>}
+            ListEmptyComponent={<Text style={s.empty}>{t('dm.none')}</Text>}
           />
         ) : (
           <FlatList
@@ -434,7 +436,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
                 <View style={s.quick}>
                   <QuickRow
                     icon="👥"
-                    label="Üyeler"
+                    label={t('members.title')}
                     onPress={() =>
                       nav.push({
                         kind: 'members',
@@ -448,7 +450,11 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
                     label="Ara"
                     onPress={() => nav.push({ kind: 'search', guildId: selectedGuild.id })}
                   />
-                  <QuickRow icon="➕" label="Kanal oluştur" onPress={() => setCreateChan(true)} />
+                  <QuickRow
+                    icon="➕"
+                    label={t('channel.create')}
+                    onPress={() => setCreateChan(true)}
+                  />
                 </View>
               ) : null
             }
@@ -518,13 +524,13 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
       >
         <Pressable style={s.modalBackdrop} onPress={() => setAddOpen(false)}>
           <Pressable style={s.modalCard} onPress={() => {}}>
-            <Text style={s.modalTitle}>Sunucuya Katıl</Text>
+            <Text style={s.modalTitle}>{t('guild.joinTitle')}</Text>
             <TextInput
               style={s.modalInput}
               value={inviteCode}
               onChangeText={setInviteCode}
               autoCapitalize="none"
-              placeholder="Davet kodu (örn. yazilim-tr)"
+              placeholder={t('invite.codePlaceholder')}
               placeholderTextColor={colors.inkTertiary}
             />
             <TouchableOpacity
@@ -532,7 +538,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
               onPress={joinByInvite}
               disabled={!inviteCode.trim() || addBusy}
             >
-              <Text style={s.modalBtnText}>Katıl</Text>
+              <Text style={s.modalBtnText}>{t('guild.join')}</Text>
             </TouchableOpacity>
             <View style={s.modalSep} />
             <Text style={s.modalTitle}>Yeni Sunucu</Text>
@@ -540,7 +546,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
               style={s.modalInput}
               value={newGuildName}
               onChangeText={setNewGuildName}
-              placeholder="Sunucu adı"
+              placeholder={t('guild.name')}
               placeholderTextColor={colors.inkTertiary}
             />
             <TouchableOpacity
@@ -548,7 +554,7 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
               onPress={createGuild}
               disabled={newGuildName.trim().length < 2 || addBusy}
             >
-              <Text style={s.modalBtnText}>Oluştur</Text>
+              <Text style={s.modalBtnText}>{t('common.create')}</Text>
             </TouchableOpacity>
             {addErr && <Text style={s.modalErr}>{addErr}</Text>}
           </Pressable>
@@ -558,23 +564,23 @@ export function HomeScreen({ me, nav, onLogout }: { me: User; nav: Nav; onLogout
       <InputModal
         visible={createChan}
         title="Yeni kanal"
-        placeholder="kanal-adı"
-        submitLabel="Oluştur"
+        placeholder={t('channel.namePlaceholder')}
+        submitLabel={t('common.create')}
         onCancel={() => setCreateChan(false)}
         onSubmit={doCreateChannel}
       />
       <InputModal
         visible={!!renameChan}
-        title="Kanalı yeniden adlandır"
+        title={t('channel.rename')}
         initial={renameChan?.name}
         onCancel={() => setRenameChan(null)}
         onSubmit={doRenameChannel}
       />
       <InputModal
         visible={!!newFolderFor}
-        title="Yeni klasör"
-        placeholder="Klasör adı"
-        submitLabel="Oluştur"
+        title={t('folder.newTitle')}
+        placeholder={t('folder.name')}
+        submitLabel={t('common.create')}
         onCancel={() => setNewFolderFor(null)}
         onSubmit={(v) => {
           const g = newFolderFor;

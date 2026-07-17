@@ -1,6 +1,7 @@
 // Concord mobil ses istemcisi — mediasoup-client + react-native-webrtc.
 // Ses-odaklı (mic produce + consume, mute/deafen). Web voice.ts'in mobil/ses alt kümesi.
 // NOT: react-native-webrtc native modül gerektirir → Expo Go'da DEĞİL, EAS dev client / native build'de çalışır.
+import { t } from './i18n';
 import { Device } from 'mediasoup-client';
 import { mediaDevices } from 'react-native-webrtc';
 import { voiceWsUrl } from './config';
@@ -75,7 +76,7 @@ class VoiceClient {
     await new Promise<void>((resolve, reject) => {
       if (!this.ws) return reject(new Error('ws yok'));
       this.ws.onopen = () => resolve();
-      this.ws.onerror = () => reject(new Error('Ses sunucusuna bağlanılamadı'));
+      this.ws.onerror = () => reject(new Error(t('voice.connectFailed')));
     });
     this.ws.onmessage = (evt: any) => this.onMessage(String(evt.data));
     this.ws.onclose = () => this.emit('disconnected', { channelId: this.channelId });
@@ -437,7 +438,7 @@ class VoiceClient {
   private request(type: string, payload?: any): Promise<any> {
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== 1) {
-        reject(new Error('ws kapalı'));
+        reject(new Error('ws closed'));
         return;
       }
       const id = String(++this.requestId);
@@ -446,7 +447,7 @@ class VoiceClient {
       setTimeout(() => {
         if (this.pending.has(id)) {
           this.pending.delete(id);
-          reject(new Error('zaman aşımı: ' + type));
+          reject(new Error('timeout: ' + type));
         }
       }, 10000);
     });

@@ -1,4 +1,5 @@
 // Kullanıcı ayarları — profil, durum, hesap, gizlilik, bildirim, güvenlik, bağlantılar.
+import { t } from '../i18n';
 import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -24,10 +25,10 @@ type Edit =
   | { k: 'delete_pw' };
 
 const STATUSES: { v: 'online' | 'idle' | 'dnd' | 'offline'; label: string }[] = [
-  { v: 'online', label: 'Çevrimiçi' },
-  { v: 'idle', label: 'Boşta' },
-  { v: 'dnd', label: 'Rahatsız Etmeyin' },
-  { v: 'offline', label: 'Görünmez' },
+  { v: 'online', label: t('status.online') },
+  { v: 'idle', label: t('status.idle') },
+  { v: 'dnd', label: t('status.dnd') },
+  { v: 'offline', label: t('status.invisible') },
 ];
 
 export function UserSettingsScreen({
@@ -96,9 +97,9 @@ export function UserSettingsScreen({
       );
       await api.updateProfile(kind === 'avatar' ? { avatar_url: up.url } : { banner_url: up.url });
       refreshMe();
-      toast(kind === 'avatar' ? 'Avatar güncellendi' : 'Banner güncellendi');
+      toast(kind === 'avatar' ? t('profile.avatarUpdated') : t('profile.bannerUpdated'));
     } catch (e: any) {
-      toast(e?.message ?? 'Yüklenemedi');
+      toast(e?.message ?? t('common.loadFailed'));
     }
   }
 
@@ -107,7 +108,7 @@ export function UserSettingsScreen({
       await api.updateStatus(v);
       refreshMe();
     } catch (e: any) {
-      toast(e?.message ?? 'Olmadı');
+      toast(e?.message ?? t('common.failed'));
     }
   }
 
@@ -117,7 +118,7 @@ export function UserSettingsScreen({
       await api.privacy.set(next);
       setPrivacy(next);
     } catch (e: any) {
-      toast(e?.message ?? 'Olmadı');
+      toast(e?.message ?? t('common.failed'));
     }
   }
 
@@ -132,12 +133,12 @@ export function UserSettingsScreen({
         '2FA Kurulumu',
         `Authenticator uygulamasına ekle:\n\n${r.secret}\n\nArdından üretilen 6 haneli kodu gir.`,
         [
-          { text: 'Vazgeç', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           { text: 'Kodu Gir', onPress: () => setEdit({ k: 'tfa_verify' }) },
         ],
       );
     } catch (e: any) {
-      toast(e?.message ?? 'Olmadı');
+      toast(e?.message ?? t('common.failed'));
     }
   }
 
@@ -146,7 +147,7 @@ export function UserSettingsScreen({
       const r = await api.connections.githubAuthorize();
       Linking.openURL(r.url).catch(() => {});
     } catch (e: any) {
-      toast(e?.message ?? 'GitHub bağlanamadı (sunucuda yapılandırılmamış olabilir)');
+      toast(e?.message ?? t('conn.githubFailed'));
     }
   }
 
@@ -176,7 +177,7 @@ export function UserSettingsScreen({
               avatar_color: value.trim().startsWith('#') ? value.trim() : '#' + value.trim(),
             });
             refreshMe();
-          } else toast('Geçerli bir renk kodu gir (örn. 00D9A6)');
+          } else toast(t('profile.colorInvalid'));
           break;
         case 'custom_status':
           await api.updateCustomStatus({ custom_status_text: value.trim() || null });
@@ -196,24 +197,24 @@ export function UserSettingsScreen({
           return;
         case 'pw_new':
           await api.changePassword(e.current, value);
-          toast('Şifre değiştirildi');
+          toast(t('account.passwordChanged'));
           break;
         case 'email_new':
           setEdit({ k: 'email_pw', newEmail: value });
           return;
         case 'email_pw': {
           const r = await api.changeEmail(e.newEmail, value);
-          toast(r.sent ? 'Doğrulama maili gönderildi' : 'İstek alındı');
+          toast(r.sent ? t('account.verifySent') : t('common.requestReceived'));
           break;
         }
         case 'tfa_verify':
           await api.twofa.verify(value);
-          toast('2FA açıldı');
+          toast(t('account.2faOn'));
           refreshMe();
           break;
         case 'tfa_disable':
           await api.twofa.disable(value);
-          toast('2FA kapatıldı');
+          toast(t('account.2faOff'));
           refreshMe();
           break;
         case 'delete_pw':
@@ -222,13 +223,13 @@ export function UserSettingsScreen({
           break;
       }
     } catch (err: any) {
-      toast(err?.message ?? 'İşlem başarısız');
+      toast(err?.message ?? t('common.actionFailed'));
     }
   }
 
   function confirmDelete() {
-    Alert.alert('Hesabı sil', 'Bu işlem geri alınamaz. Devam etmek için şifreni gir.', [
-      { text: 'Vazgeç', style: 'cancel' },
+    Alert.alert(t('account.delete'), t('account.deleteConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
       { text: 'Devam', style: 'destructive', onPress: () => setEdit({ k: 'delete_pw' }) },
     ]);
   }
@@ -237,8 +238,8 @@ export function UserSettingsScreen({
     string,
     { title: string; placeholder?: string; initial?: string; secure?: boolean; multiline?: boolean }
   > = {
-    display_name: { title: 'Görünen ad', initial: me.display_name },
-    bio: { title: 'Hakkımda', initial: me.bio, multiline: true },
+    display_name: { title: t('user.displayName'), initial: me.display_name },
+    bio: { title: t('profile.about'), initial: me.bio, multiline: true },
     pronouns: { title: 'Zamirler', initial: me.pronouns, placeholder: 'o / onlar' },
     avatar_color: {
       title: 'Avatar rengi (hex)',
@@ -246,18 +247,18 @@ export function UserSettingsScreen({
       placeholder: '00D9A6',
     },
     custom_status: {
-      title: 'Özel durum',
+      title: t('status.custom'),
       initial: me.custom_status_text,
-      placeholder: 'Ne yapıyorsun?',
+      placeholder: t('status.whatDoing'),
     },
-    keywords: { title: 'Bildirim anahtar kelimeleri (virgülle)', initial: keywords.join(', ') },
-    pw_current: { title: 'Mevcut şifre', secure: true },
-    pw_new: { title: 'Yeni şifre', secure: true },
+    keywords: { title: t('notif.keywords'), initial: keywords.join(', ') },
+    pw_current: { title: t('account.currentPassword'), secure: true },
+    pw_new: { title: t('auth.newPassword'), secure: true },
     email_new: { title: 'Yeni e-posta', placeholder: 'sen@ornek.com' },
-    email_pw: { title: 'Şifren (doğrulama)', secure: true },
+    email_pw: { title: t('account.passwordConfirm'), secure: true },
     tfa_verify: { title: '2FA kodu', placeholder: '123456' },
-    tfa_disable: { title: '2FA kodu (kapatmak için)', placeholder: '123456' },
-    delete_pw: { title: 'Şifren', secure: true },
+    tfa_disable: { title: t('account.2faCodeDisable'), placeholder: '123456' },
+    delete_pw: { title: t('account.yourPassword'), secure: true },
   };
   const m = edit ? editMeta[edit.k] : null;
 
@@ -280,14 +281,18 @@ export function UserSettingsScreen({
         </View>
 
         <Section title="Profil">
-          <Row label="Avatar (fotoğraf yükle)" onPress={() => pickAndUpload('avatar')} />
-          <Row label="Banner (fotoğraf yükle)" onPress={() => pickAndUpload('banner')} />
+          <Row label={t('profile.avatarUpload')} onPress={() => pickAndUpload('avatar')} />
+          <Row label={t('profile.bannerUpload')} onPress={() => pickAndUpload('banner')} />
           <Row
-            label="Görünen ad"
+            label={t('user.displayName')}
             value={me.display_name}
             onPress={() => setEdit({ k: 'display_name' })}
           />
-          <Row label="Hakkımda" value={me.bio || '—'} onPress={() => setEdit({ k: 'bio' })} />
+          <Row
+            label={t('profile.about')}
+            value={me.bio || '—'}
+            onPress={() => setEdit({ k: 'bio' })}
+          />
           <Row
             label="Zamirler"
             value={me.pronouns || '—'}
@@ -316,30 +321,30 @@ export function UserSettingsScreen({
             ))}
           </View>
           <Row
-            label="Özel durum"
+            label={t('status.custom')}
             value={me.custom_status_text || '—'}
             onPress={() => setEdit({ k: 'custom_status' })}
           />
         </Section>
 
         <Section title="Hesap">
-          <Row label="Şifre değiştir" onPress={() => setEdit({ k: 'pw_current' })} />
+          <Row label={t('account.changePassword')} onPress={() => setEdit({ k: 'pw_current' })} />
           <Row
-            label="E-posta değiştir"
+            label={t('account.changeEmail')}
             value={me.email}
             onPress={() => setEdit({ k: 'email_new' })}
           />
           <Row
-            label={me.email_verified ? 'E-posta doğrulandı' : 'E-postayı doğrula'}
+            label={me.email_verified ? t('account.emailVerified') : t('account.verifyEmail')}
             onPress={
               me.email_verified
                 ? undefined
                 : async () => {
                     try {
                       await api.verifyEmail();
-                      toast('Doğrulama maili gönderildi');
+                      toast(t('account.verifySent'));
                     } catch (e: any) {
-                      toast(e?.message ?? 'Olmadı');
+                      toast(e?.message ?? t('common.failed'));
                     }
                   }
             }
@@ -350,7 +355,7 @@ export function UserSettingsScreen({
         <Section title="Gizlilik & Bildirim">
           <Row
             label="Uygulama bildirimleri"
-            value={notifEnabled ? 'Açık' : 'Kapalı'}
+            value={notifEnabled ? t('common.on') : t('common.off')}
             onPress={() => {
               const v = !notifEnabled;
               setNotifEnabled(v);
@@ -359,7 +364,7 @@ export function UserSettingsScreen({
           />
           <Row
             label="DM'ler"
-            value={privacy === 'everyone' ? 'Herkes' : 'Sadece arkadaşlar'}
+            value={privacy === 'everyone' ? 'Herkes' : t('privacy.friendsOnly')}
             onPress={togglePrivacy}
           />
           <Row
@@ -369,28 +374,28 @@ export function UserSettingsScreen({
           />
         </Section>
 
-        <Section title="Güvenlik">
+        <Section title={t('account.security')}>
           <Row label="Aktif oturumlar" value={sessionCount !== null ? String(sessionCount) : '…'} />
           <Row
-            label="Diğer oturumları kapat"
+            label={t('account.closeOthers')}
             onPress={async () => {
               try {
                 await api.sessions.revokeOthers();
-                toast('Diğer oturumlar kapatıldı');
+                toast(t('account.othersClosed'));
                 setSessionCount(1);
               } catch (e: any) {
-                toast(e?.message ?? 'Olmadı');
+                toast(e?.message ?? t('common.failed'));
               }
             }}
           />
           <Row
-            label={me.mfa_enabled ? 'İki adımlı doğrulama (açık)' : 'İki adımlı doğrulama'}
+            label={me.mfa_enabled ? t('account.2faOnLabel') : t('account.2fa')}
             onPress={start2fa}
             right={me.mfa_enabled ? <Text style={{ color: colors.online }}>✓</Text> : undefined}
           />
         </Section>
 
-        <Section title="Bağlantılar">
+        <Section title={t('conn.title')}>
           {connections.map((c) => (
             <Row
               key={c.id}
@@ -404,20 +409,20 @@ export function UserSettingsScreen({
                     } catch {}
                   }}
                 >
-                  <Text style={{ color: colors.accent }}>Kaldır</Text>
+                  <Text style={{ color: colors.accent }}>{t('common.remove')}</Text>
                 </TouchableOpacity>
               }
             />
           ))}
-          <Row label="GitHub bağla" onPress={githubConnect} />
+          <Row label={t('conn.linkGithub')} onPress={githubConnect} />
         </Section>
 
-        <Section title="Geliştirici">
-          <Row label="Bot uygulamalarım" onPress={() => nav.push({ kind: 'developer' })} />
+        <Section title={t('dev.title')}>
+          <Row label={t('dev.myApps')} onPress={() => nav.push({ kind: 'developer' })} />
         </Section>
 
         {reminders.length > 0 && (
-          <Section title="Hatırlatıcılar">
+          <Section title={t('reminders.title')}>
             {reminders.map((r) => (
               <Row
                 key={r.id}
@@ -441,16 +446,16 @@ export function UserSettingsScreen({
 
         <Section>
           <Row
-            label="Çıkış yap"
+            label={t('auth.signOut')}
             danger
             onPress={() =>
-              Alert.alert('Çıkış', 'Çıkış yapılsın mı?', [
-                { text: 'Vazgeç', style: 'cancel' },
-                { text: 'Çıkış', style: 'destructive', onPress: onLogout },
+              Alert.alert(t('auth.signOut2'), t('auth.signOutConfirm'), [
+                { text: t('common.cancel'), style: 'cancel' },
+                { text: t('auth.signOut2'), style: 'destructive', onPress: onLogout },
               ])
             }
           />
-          <Row label="Hesabı sil" danger onPress={confirmDelete} />
+          <Row label={t('account.delete')} danger onPress={confirmDelete} />
         </Section>
       </ScrollView>
 

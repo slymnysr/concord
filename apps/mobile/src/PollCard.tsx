@@ -1,4 +1,5 @@
 // Anket kartı — mesaj içinde anketi gösterir, oy ver/geri çek, oluşturan kapatır.
+import { t } from './i18n';
 import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from './theme';
@@ -53,7 +54,7 @@ export function PollCard({ messageId, meId }: { messageId: string; meId: string 
       })}
       <View style={s.foot}>
         <Text style={s.total}>
-          {total} oy{poll.expired ? ' · kapandı' : ''}
+          {poll.expired ? t('poll.votesClosed', { n: total }) : t('poll.votesCount', { n: total })}
         </Text>
         {!poll.expired && poll.created_by === meId && (
           <TouchableOpacity

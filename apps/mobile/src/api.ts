@@ -1,4 +1,5 @@
 // Concord mobil API istemcisi — web api.ts'in tam mobil uyarlaması (namespace'li).
+import { t } from './i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiBase } from './config';
 
@@ -61,7 +62,8 @@ async function request<T>(path: string, init?: RequestInit, retried = false): Pr
     return request<T>(path, init, true);
   }
   if (!res.ok) {
-    let detail = 'İstek başarısız (' + res.status + ')';
+    // Geliştirici ipucu (kullanıcıya errText ile çevrilmiş mesaj gösterilir) → İngilizce
+    let detail = 'Request failed (' + res.status + ')';
     try {
       const e = await res.json();
       detail = e.detail || e.error || detail;
@@ -1139,6 +1141,6 @@ export async function uploadFile(uri: string, filename: string, contentType: str
     headers: { 'Content-Type': contentType },
     body: blob,
   });
-  if (!put.ok) throw new Error('Dosya yüklenemedi');
+  if (!put.ok) throw new Error(t('upload.failed'));
   return { url: pre.public_url, filename, content_type: contentType, size_bytes: size };
 }
