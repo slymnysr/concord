@@ -189,9 +189,12 @@ jobs:
           mix compile
           elixir --no-halt -S mix phx.server > /tmp/gateway.log 2>&1 &
           for i in $(seq 1 45); do
-            curl -sf http://localhost:4000/ >/dev/null 2>&1 && break || sleep 1
+            # /health — gateway'in TEK route'u (router.ex). `/` yoklamak 404 döndürüyordu
+            # ve `curl -sf` 404'te başarısız olduğu için gateway AYAKTA olmasına rağmen
+            # "ayağa kalkmadı" deyip job'u düşürüyordu.
+            curl -sf http://localhost:4000/health >/dev/null 2>&1 && break || sleep 1
           done
-          curl -sf http://localhost:4000/ >/dev/null 2>&1 || { echo "Gateway ayağa kalkmadı"; cat /tmp/gateway.log; exit 1; }
+          curl -sf http://localhost:4000/health >/dev/null 2>&1 || { echo "Gateway ayağa kalkmadı"; cat /tmp/gateway.log; exit 1; }
 
       # Ses presence sozlesmesi (/presence {id,name}[]) icin voice SFU gerekli
       - name: Build & start Voice
