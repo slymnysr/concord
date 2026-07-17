@@ -101,10 +101,32 @@ async function main() {
   const pipeKuruldu = pipedOnB.includes('pipe link kuruldu') || pipedOnB.includes('pipe link kabul edildi');
   const pipeAlindi = pipedOnB.includes('uzak producer pipe ile alındı');
 
+  // B'deki peer, pipe ile gelen UZAK producer'i GERCEKTEN consume edebiliyor mu?
+  // "Producer B'nin router'inda var" yetmez: ses akisinin B'deki kullaniciya ulasmasi
+  // icin B'nin o producer'dan CONSUMER uretebilmesi gerekir. Bu, cascade'in ses tasima
+  // yolunu PROTOKOL uzerinden dogrular (metadata degil, gercek consumer + rtpParameters).
+  let consumeSonuc = null;
+  try {
+    const bCaps = await b.rpc('getRouterRtpCapabilities', {});
+    await b.rpc('createWebRtcTransport', { direction: 'recv' });
+    const consumed = await b.rpc('consume', { producerId: pid, rtpCapabilities: bCaps.payload });
+    consumeSonuc = consumed;
+  } catch (e) {
+    consumeSonuc = { error: e.message };
+  }
+  const consumeOk =
+    consumeSonuc && consumeSonuc.type === 'consumed' &&
+    consumeSonuc.payload?.producerId === pid &&
+    consumeSonuc.payload?.kind === 'audio' &&
+    Array.isArray(consumeSonuc.payload?.rtpParameters?.codecs) &&
+    consumeSonuc.payload.rtpParameters.codecs.length > 0;
+
   console.log('\n=== SONUC ===');
   console.log('pipe link kuruldu :', pipeKuruldu);
   console.log('uzak producer pipe ile alindi :', pipeAlindi);
   console.log('B producer i gordu :', bGot.includes(pid));
+  console.log('B UZAK producer i CONSUME edebildi :', consumeOk,
+    consumeOk ? '(codec: ' + consumeSonuc.payload.rtpParameters.codecs[0].mimeType + ')' : JSON.stringify(consumeSonuc)?.slice(0, 120));
 
   // SOZLESME: /presence {id,name}[] — cok-node'da HER IKI node'un peer'lari gorunmeli
   const presA = await fetch(`http://127.0.0.1:5444/presence?channels=${CH}`).then((r) => r.json());
@@ -122,7 +144,7 @@ async function main() {
   }
 
   const basarili =
-    pipeKuruldu && pipeAlindi && bGot.includes(pid) &&
+    pipeKuruldu && pipeAlindi && bGot.includes(pid) && consumeOk &&
     JSON.stringify(idsA) === JSON.stringify(bekleniyor) &&
     JSON.stringify(idsB) === JSON.stringify(bekleniyor);
 

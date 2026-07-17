@@ -74,14 +74,25 @@ Bu 7 dizin ayrıktır → **7 AI aynı anda, sıfır çakışma.**
   ayrılıyor → liste ziplamıyor. Arama UI'ı mevcut (`SearchModal`); `sort=recent` anahtarı
   kontratta duruyor, UI'a eklenmesi isteğe bağlı.
 - **i18n tamamlama** — kalan ~40 bileşeni `t()` ile sar.
-  **Sözleşme (dışarıdan):** FAZ A'nın `## API-KONTRAT`'ını tüketir. **Test:** bileşen davranışı korunur (E2E ayar akışları).
+  **Sözleşme (dışarıdan):** FAZ A'nın `## API-KONTRAT`'ını tüketir.
+  **Test:** ✅ `e2e/tests/settings.spec.ts` — bölünmüş sekmelerin mount olduğu (server+user),
+  vanity kaydet handler'ının bağlı kaldığı doğrulanıyor. (Sunucu ADI ayarlardan düzenlenemez;
+  bu refaktör kaybı DEĞİL — bölme öncesi modal da `<div>{guild.name}</div>` basıyordu.)
 
 ## FAZ C — Ses Ölçekleme (`apps/voice/`) ✅ TAMAM
 
 **Sahiplenir:** `apps/voice/**`
 **Durum:** çok-makine cascade çalışıyor; 2 AYRI node process'iyle KANITLANDI
 (`pnpm --filter @concord/voice test:cascade`): A'daki peer produce etti → küme olayı yayıldı →
-B pipe kurdu → producer'ı aldı → B'deki peer aynı producer id ile `newProducer` aldı.
+B pipe kurdu → producer'ı aldı → B'deki peer aynı producer id ile `newProducer` aldı **ve o
+uzak producer'ı PROTOKOL üzerinden `consume` edip `audio/opus` rtpParameters aldı** (yani
+B'nin router'ı uzak yayını yerel kullanıcıya servis edebiliyor).
+
+> **Testin dürüst sınırı:** bu, ses YÖNLENDİRME yolunu uçtan uca kanıtlar (pipe + producer
+> aynası + consumer üretimi). Gerçek RTP BAYTLARININ iki makine arasında aktığı otomatik
+> test edilmiyor — o, DTLS/ICE yapan gerçek istemci (tarayıcı) veya 2 makineli bir dağıtım
+> ister. Orijinal kriter "2 worker/makine arası ses aktarımı" idi; yönlendirme katmanı
+> otomatik, bayt akışı **elle doğrulanmalı**.
 
 **Neden elle pipe:** `router.pipeToRouter({router})` yalnızca AYNI PROCESS'teki router'ları
 bağlar → çok-makinede kullanılamaz. mediasoup'un çok-makine yolu izlendi: iki tarafta
