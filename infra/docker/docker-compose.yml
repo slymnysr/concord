@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: concord
-      POSTGRES_PASSWORD: concord_dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-concord_dev}
       POSTGRES_DB: concord
     ports:
       - '5433:5432' # lokal postgres 5432'yi tutuyor, çakışmayı önle
@@ -109,7 +109,7 @@ services:
       - 'concord-host:${HOST_IP:-host-gateway}'
     environment:
       MINIO_ROOT_USER: concord
-      MINIO_ROOT_PASSWORD: concord_dev_minio
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-concord_dev_minio}
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
@@ -136,7 +136,9 @@ services:
     environment:
       # Dev anahtarı; prod'da secret'tan gelir (MEILI_MASTER_KEY). Anahtarsız çalıştırmak
       # arama indeksini herkese açık yazılabilir bırakır.
-      MEILI_MASTER_KEY: concord_dev_meili_key
+      # .env'den okunur (kök dizinde). Compose'u `pnpm db:up` ile başlat — o
+      # --env-file veriyor; düz `docker compose up` .env'i BURADAN arar ve bulamaz.
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-concord_dev_meili_key}
       MEILI_ENV: development
       MEILI_NO_ANALYTICS: 'true'
     volumes:

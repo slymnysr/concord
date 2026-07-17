@@ -34,6 +34,9 @@ type User struct {
 	// Doğum tarihi — yaş kapısı (COPPA/DSA). JSON'da GİZLİ: hassas veri, başkasının
 	// profilinde görünmemeli; kullanıcı kendi verisini data-export ile alır.
 	BirthDate *time.Time `json:"-"`
+	// Dil — işlem maillerinin dili (mailler API'den gider, çeviri sunucuda olmalı).
+	// nil = bilinmiyor → mailer İngilizceye düşer.
+	Locale *string `json:"locale,omitempty"`
 }
 
 var ErrNotFound = errors.New("repo: not found")
@@ -45,9 +48,9 @@ func NewUsers(p *pgxpool.Pool) *Users { return &Users{pool: p} }
 
 func (r *Users) Create(ctx context.Context, u *User) error {
 	_, err := r.pool.Exec(ctx, `
-        INSERT INTO users (id, username, email, display_name, password_hash, avatar_color, birth_date)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `, u.ID, u.Username, u.Email, u.DisplayName, u.PasswordHash, u.AvatarColor, u.BirthDate)
+        INSERT INTO users (id, username, email, display_name, password_hash, avatar_color, birth_date, locale)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `, u.ID, u.Username, u.Email, u.DisplayName, u.PasswordHash, u.AvatarColor, u.BirthDate, u.Locale)
 	if err != nil {
 		if isUniqueViolation(err) {
 			return ErrConflict
