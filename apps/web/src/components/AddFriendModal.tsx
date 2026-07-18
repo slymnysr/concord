@@ -2,7 +2,15 @@ import { useEffect, useState } from 'react';
 import { httpUrl } from '../serverConfig';
 import { UserPlus, Check, X, Mail } from 'lucide-react';
 import { api } from '../api';
-import { useAppDispatch, useAppSelector, openModal } from '../store';
+import {
+  useAppDispatch,
+  useAppSelector,
+  openModal,
+  setMode,
+  selectDM,
+  selectChannel,
+  setPendingDM,
+} from '../store';
 import { t, errText } from '../i18n';
 
 interface FriendItem {
@@ -87,18 +95,18 @@ export function AddFriendModal() {
   }
 
   async function openDM(userId: string) {
-    const res = await fetch(httpUrl('/api/v1/users/me/channels'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + localStorage.getItem('concord_access'),
-      },
-      body: JSON.stringify({ user_id: userId }),
-    });
-    if (res.ok) {
+    try {
+      const channelID = (await api.dms.open(userId)).channel_id;
+      // DM'e gerçekten yönlendir (UserProfileCard/NewDMModal ile aynı akış). Eskiden burada
+      // yalnızca bir "Faz 5.4.x yapılacak" alert'i vardı — kullanıcıya çıkan bir placeholder'dı.
+      dispatch(setMode('dm'));
+      dispatch(selectDM(channelID));
+      dispatch(selectChannel(channelID));
+      // Mesajsız DM olabilir → DM kenar çubuğunda pinned göster
+      dispatch(setPendingDM({ channelId: channelID, partnerId: userId }));
       dispatch(openModal(null));
-      // TODO: navigate to DM channel
-      alert('DM açıldı. Faz 5.4.x: DM sayfası entegrasyonu yapılacak.');
+    } catch {
+      // Sessiz: buton yine kapanır; hata errText ile üst akışta gösterilir
     }
   }
 
