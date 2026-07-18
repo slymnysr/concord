@@ -1,4 +1,8 @@
-@import url('https://rsms.me/inter/inter.css');
+/* Inter fontu SELF-HOST (eskiden https://rsms.me'den geliyordu). Neden: (1) harici CDN
+   kullanıcı IP'lerini görür — KVKK/GDPR açısından gereksiz veri sızıntısı, (2) CSP'yi
+   'self'e sıkı tutar (harici stylesheet origin'i gerekmez), (3) rsms.me down olsa da font
+   çalışır. @fontsource-variable/inter build'e gömülür. */
+@import '@fontsource-variable/inter';
 
 @tailwind base;
 @tailwind components;
@@ -56,7 +60,7 @@ body,
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter Variable', 'Inter', sans-serif;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
   background: rgb(var(--c-bg));
