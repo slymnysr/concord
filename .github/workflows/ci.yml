@@ -231,8 +231,8 @@ jobs:
           # tüketip 429 almasın (gerçek kullanıcılar farklı IP'lerden gelir; tek-IP bir test
           # artefaktı). Prod'da 60/dk KALIR — bu yalnızca CI. HESAP-KİLİT testi (LoginAttempts,
           # handlers/auth.go kod sabiti) bu config'den BAĞIMSIZDIR, kendini test etmeye devam eder.
-          AUTH_RATE_LIMIT_PER_MIN: "3000"
-          API_RATE_LIMIT_PER_MIN: "10000"
+          AUTH_RATE_LIMIT_PER_MIN: '3000'
+          API_RATE_LIMIT_PER_MIN: '10000'
         run: |
           cd apps/api && go build -o bin/api ./cmd/api
           ./bin/api > /tmp/api.log 2>&1 &
