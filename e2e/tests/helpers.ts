@@ -1,6 +1,37 @@
+import { createHmac } from 'node:crypto';
 import { type Page, type APIRequestContext, expect } from '@playwright/test';
 
 export const API = process.env.E2E_API_URL ?? 'http://localhost:8080';
+
+/**
+ * totp — API ile AYNI algoritmadan (SHA1 / 6 hane / 30 sn) o anki TOTP kodunu üretir.
+ * 2FA akışlarını gerçek gibi test etmek için (authenticator uygulamasının yaptığı iş).
+ */
+export function totp(secret: string): string {
+  const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = 0,
+    val = 0;
+  const bytes: number[] = [];
+  for (const ch of secret.toUpperCase().replace(/=+$/, '')) {
+    const idx = alpha.indexOf(ch);
+    if (idx < 0) continue;
+    val = (val << 5) | idx;
+    bits += 5;
+    if (bits >= 8) {
+      bytes.push((val >>> (bits - 8)) & 0xff);
+      bits -= 8;
+    }
+  }
+  const counter = Math.floor(Date.now() / 30000);
+  const cbuf = Buffer.alloc(8);
+  cbuf.writeUInt32BE(Math.floor(counter / 0x100000000), 0);
+  cbuf.writeUInt32BE(counter >>> 0, 4);
+  const hmac = createHmac('sha1', Buffer.from(bytes)).update(cbuf).digest();
+  const off = hmac[19] & 0xf;
+  const bin =
+    ((hmac[off] & 0x7f) << 24) | (hmac[off + 1] << 16) | (hmac[off + 2] << 8) | hmac[off + 3];
+  return (bin % 1_000_000).toString().padStart(6, '0');
+}
 
 export interface TestUser {
   email: string;

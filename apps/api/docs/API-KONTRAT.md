@@ -259,3 +259,33 @@ GET  /api/v1/users/me/data-exports/{id}  → 200 (JSON arşiv) | 409 not_ready |
 **Hesap silme (GDPR Md.17)** — `DELETE /api/v1/users/me { password }` → 204.
 Anonimleştirir, girişi engeller; **mesajlar kalır** (sert silme başkalarının sohbet geçmişini
 bozardı — Discord da böyle yapar). Sahip olunan sunucu varsa `409 owns_guilds`.
+
+## 2FA kurtarma kodları — YENİ
+
+Authenticator'ını kaybeden kullanıcının hesabına girebilmesi için tek kullanımlık yedek kodlar.
+
+**Kurulum** — `POST /users/me/2fa/verify { code }` artık kurtarma kodlarını DÖNER (eskiden 204):
+
+```
+→ 200 { "recovery_codes": ["xxxxx-xxxxxxxx", ... 10 adet] }
+```
+
+> Kodlar SADECE burada, bir kez döner (DB'de yalnızca SHA-256 hash). İstemci kullanıcıya
+> göstermeli/indirtmeli — bir daha alınamaz.
+
+**Login** — TOTP yerine kurtarma kodu kabul edilir (aynı `totp_code` alanı):
+
+```
+POST /auth/login { email, password, totp_code: "<TOTP veya kurtarma kodu>" }
+```
+
+Kurtarma kodu TEK KULLANIMLIK: kabul edilince tüketilir, ikinci kez `401 invalid_2fa`.
+Kod tireli/tiresiz/büyük-küçük harf girilebilir (normalize edilir).
+
+**Yenileme** — `POST /users/me/2fa/recovery-codes { code }` (geçerli TOTP ile):
+
+```
+→ 200 { "recovery_codes": [... yeni 10 adet] }   // eskiler geçersizleşir
+```
+
+Kodlar 2FA kapatılınca (`/2fa/disable`) ve hesap silinince otomatik temizlenir.

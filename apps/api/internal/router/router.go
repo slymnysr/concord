@@ -148,6 +148,7 @@ func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 			r.Post("/users/me/2fa/enable", h.Enable2FA)
 			r.Post("/users/me/2fa/verify", h.Verify2FA)
 			r.Post("/users/me/2fa/disable", h.Disable2FA)
+			r.Post("/users/me/2fa/recovery-codes", h.RegenerateRecoveryCodes)
 
 			r.Get("/guilds/{id}/reaction-roles", h.ListReactionRoles)
 			r.Post("/guilds/{id}/reaction-roles", h.CreateReactionRole)

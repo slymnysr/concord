@@ -199,16 +199,22 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2FA: etkinse geçerli TOTP kodu iste
+	// 2FA: etkinse geçerli TOTP kodu VEYA kurtarma kodu iste
 	if user.TOTPEnabled {
 		if req.TOTPCode == "" {
 			writeError(w, http.StatusUnauthorized, "2fa_required", "iki adımlı doğrulama kodu gerekli")
 			return
 		}
-		if user.TOTPSecret == nil || !auth.ValidateTOTP(*user.TOTPSecret, req.TOTPCode) {
-			_ = h.LoginAttempts.Record(r.Context(), h.IDs.Next(), req.Email, clientIP, false)
-			writeError(w, http.StatusUnauthorized, "invalid_2fa", "iki adımlı doğrulama kodu hatalı")
-			return
+		totpOK := user.TOTPSecret != nil && auth.ValidateTOTP(*user.TOTPSecret, req.TOTPCode)
+		if !totpOK {
+			// TOTP tutmadı → kurtarma kodu olabilir (authenticator kaybında tek giriş yolu).
+			// Consume ATOMİK ve tek kullanımlık: kod varsa tüketilir, tekrar kullanılamaz.
+			used, err := h.RecoveryCodes.Consume(r.Context(), user.ID, auth.HashRecoveryCode(req.TOTPCode))
+			if err != nil || !used {
+				_ = h.LoginAttempts.Record(r.Context(), h.IDs.Next(), req.Email, clientIP, false)
+				writeError(w, http.StatusUnauthorized, "invalid_2fa", "iki adımlı doğrulama kodu hatalı")
+				return
+			}
 		}
 	}
 
@@ -402,5 +408,7 @@ func (h *Handler) DeleteMyAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	// Tüm oturumları iptal et
 	_ = h.RefreshTokens.RevokeAllExcept(r.Context(), uid, 0)
+	// 2FA kurtarma kodlarını da temizle — 2FA kapatıldı, kodlar anlamsız (GDPR temizliği)
+	_ = h.RecoveryCodes.DeleteForUser(r.Context(), uid)
 	w.WriteHeader(http.StatusNoContent)
 }

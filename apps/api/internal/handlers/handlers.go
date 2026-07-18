@@ -63,6 +63,7 @@ type Handler struct {
 	Notifications *repo.Notifications
 	Friends       *repo.Friends
 	LoginAttempts *repo.LoginAttempts
+	RecoveryCodes *repo.RecoveryCodes
 }
 
 // Config — router gibi paketlerin config'e erişmesi için (CORS origin'leri vb.).
@@ -106,6 +107,7 @@ func New(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool, rdb *redis.
 		Notifications: repo.NewNotifications(pool),
 		Friends:       repo.NewFriends(pool),
 		LoginAttempts: repo.NewLoginAttempts(pool),
+		RecoveryCodes: repo.NewRecoveryCodes(pool),
 	}
 }
 
