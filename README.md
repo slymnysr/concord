@@ -94,4 +94,6 @@ Tarayıcı: `http://localhost:3000` · Gönderilen dev mailleri: `http://localho
 
 ## Lisans
 
-Henüz seçilmedi.
+Telif hakkı © 2026 Süleyman Yaşar. [PolyForm Noncommercial License 1.0.0](LICENSE.md) ile lisanslanmıştır.
+
+Ticari olmayan kullanım (kişisel, araştırma, eğitim, kâr amacı gütmeyen kuruluşlar) serbesttir. Ticari kullanım için ayrı lisans gerekir.
