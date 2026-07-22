@@ -28,8 +28,12 @@ defmodule Gateway.RedisBridge do
   def init(_opts) do
     host = System.get_env("REDIS_HOST") || "localhost"
     port = String.to_integer(System.get_env("REDIS_PORT") || "6379")
+    password = System.get_env("REDIS_PASSWORD")
 
-    case Redix.PubSub.start_link(host: host, port: port, name: :concord_pubsub) do
+    opts = [host: host, port: port, name: :concord_pubsub]
+    opts = if password in [nil, ""], do: opts, else: Keyword.put(opts, :password, password)
+
+    case Redix.PubSub.start_link(opts) do
       {:ok, pid} ->
         {:ok, ref} = Redix.PubSub.psubscribe(:concord_pubsub, @pattern, self())
         Logger.info("RedisBridge subscribed to #{@pattern}")

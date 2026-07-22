@@ -50,6 +50,7 @@ export const config = {
     redisUrl:
       process.env.REDIS_URL ??
       `redis://${process.env.REDIS_HOST ?? 'localhost'}:${process.env.REDIS_PORT ?? '6379'}`,
+    redisPassword: process.env.REDIS_PASSWORD || undefined,
     // Node kimliği sabit olmalı: yeniden başlayınca aynı kimlikle dönmezse eski kayıt
     // TTL dolana kadar hayalet node olarak kalır. k8s'te pod adı verilir.
     nodeId: process.env.VOICE_NODE_ID ?? os.hostname() ?? randomUUID(),

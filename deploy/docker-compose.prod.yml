@@ -1,0 +1,167 @@
+# Concord — tek sunucu üretim/demo dağıtımı (Oracle Cloud ARM için hazırlandı)
+#
+# Kullanım (deploy/ dizininden):
+#   ./deploy.sh            # ilk kurulum: .env üretir, imajları build eder, ayağa kaldırır
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Tek HTTP giriş noktası: Caddy (otomatik HTTPS) → web (nginx, statik + /api /socket
+# /voice-* proxy) → api / gateway / voice → postgres / redis / meilisearch / minio.
+# Ses için mediasoup RTC portları doğrudan yayınlanır + coturn (TURN) host ağında.
+#
+# ÖNEMLİ değişkenler (.env): DOMAIN, MS_ANNOUNCED_IP (VM public IP). Gerisini genkeys üretir.
+
+name: concord
+
+services:
+  # ---- Altyapı ----
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: concord
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: concord
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U concord']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes', '--requirepass', '${REDIS_PASSWORD}']
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.10
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_ENV: production
+    volumes:
+      - meili_data:/meili_data
+    healthcheck:
+      # localhost meili konteynerinde ::1 (IPv6) çözülür ama meili 0.0.0.0 (yalnız IPv4)
+      # dinler → 127.0.0.1 şart. curl imajda mevcut.
+      test: ['CMD-SHELL', 'curl -sf http://127.0.0.1:7700/health | grep -q available']
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    # minio server imajında curl/wget garanti değil; healthcheck yerine restart'a güveniyoruz.
+
+  # Virüs tarama — api üretimde (MustSecure) CLAMAV_ADDR şart koşar.
+  clamav:
+    image: clamav/clamav:latest
+    restart: unless-stopped
+    volumes:
+      - clamav_data:/var/lib/clamav
+    healthcheck:
+      test: ['CMD-SHELL', 'clamdscan --ping 1 || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 240s # ilk imza veritabanı indirmesi uzun sürer
+
+  # NOT: E-posta için ayrı bir konteyner YOK. api üretimde TLS'li SMTP şart koşar
+  # (MustSecure: SMTP_REQUIRE_TLS=true), MailHog ise TLS sunmaz — bu yüzden prod'da
+  # gerçek bir sağlayıcı (Brevo/Resend/SES) kullanılır. SMTP_* değerleri .env'den gelir.
+
+  # ---- Uygulama servisleri ----
+  api:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      meilisearch: { condition: service_healthy }
+
+  gateway:
+    build:
+      context: ../apps/gateway
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  voice:
+    build:
+      context: ..
+      dockerfile: apps/voice/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    # mediasoup RTC medyası doğrudan bu portlara gelir (ANNOUNCED_IP = VM public IP).
+    # Demo için dar aralık (40000-40040) — az eşzamanlı akış ama docker-proxy'yi boğmaz.
+    ports:
+      - '40000-40040:40000-40040/udp'
+      - '40000-40040:40000-40040/tcp'
+    depends_on:
+      - api
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+      - gateway
+      - voice
+
+  # ---- Kenar ----
+  # Otomatik HTTPS (Let's Encrypt) + web'e proxy. DOMAIN gerçek bir alan adına
+  # işaret etmeli (A kaydı VM public IP'ye).
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+# NOT: TURN (coturn) bilerek eklenmedi. mediasoup bir SFU'dur (P2P değil) — istemciler
+# doğrudan SFU'nun public IP'sine (MS_ANNOUNCED_IP) bağlanır, açık UDP portlarıyla
+# TURN gerekmez. Yalnızca çok kısıtlı kurumsal ağlardaki istemciler için sonradan bir
+# coturn servisi + iceServers eklenebilir; demo için gereksiz karmaşıklık.
+
+volumes:
+  postgres_data:
+  redis_data:
+  meili_data:
+  minio_data:
+  clamav_data:
+  caddy_data:
+  caddy_config:

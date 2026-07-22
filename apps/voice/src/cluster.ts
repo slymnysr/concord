@@ -68,10 +68,12 @@ export class VoiceCluster {
       return;
     }
     this.pub = new Redis(config.cluster.redisUrl, {
+      password: config.cluster.redisPassword,
       lazyConnect: true,
       maxRetriesPerRequest: null,
     });
     this.sub = new Redis(config.cluster.redisUrl, {
+      password: config.cluster.redisPassword,
       lazyConnect: true,
       maxRetriesPerRequest: null,
     });
