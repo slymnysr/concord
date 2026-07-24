@@ -22,6 +22,15 @@ sudo iptables -C INPUT -p tcp --dport 40000:40040 -j ACCEPT 2>/dev/null || \
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq netfilter-persistent iptables-persistent >/dev/null 2>&1 || true
 sudo netfilter-persistent save >/dev/null 2>&1 || true
 
+echo "==> 1.5/4 Swap (düşük RAM'de OOM koruması)"
+MEM_GB=$(free -g | awk '/^Mem:/{print $2}')
+if [ "${MEM_GB:-99}" -lt 16 ] && [ ! -f /swapfile ]; then
+  sudo fallocate -l 8G /swapfile 2>/dev/null || sudo dd if=/dev/zero of=/swapfile bs=1M count=8192
+  sudo chmod 600 /swapfile && sudo mkswap /swapfile >/dev/null && sudo swapon /swapfile
+  grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
+  echo "   swap açıldı (RAM=${MEM_GB}GB)"
+fi
+
 echo "==> 2/4 Docker"
 if ! command -v docker >/dev/null 2>&1; then
   curl -fsSL https://get.docker.com | sudo sh
