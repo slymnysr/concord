@@ -1,14 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Settings, Shield, Link2, Plug, Trash2, Hash, Volume2, Check, Copy, X } from 'lucide-react';
 import { api, type APIChannel, type APIRole } from '../api';
-import { useAppDispatch, useAppSelector, closeModal, fetchChannels, openChannelPerms, addToast } from '../store';
+import {
+  useAppDispatch,
+  useAppSelector,
+  closeModal,
+  fetchChannels,
+  openChannelPerms,
+  addToast,
+} from '../store';
+import { t, errText, localeTag } from '../i18n';
 
 type Tab = 'overview' | 'permissions' | 'invites' | 'integrations';
 
 const VIEW_BIT = 1n << 10n; // Kanalı Görüntüle
 
 const SLOW_MODES: { v: number; label: string }[] = [
-  { v: 0, label: 'Kapalı' },
+  { v: 0, label: t('common.off') },
   { v: 5, label: '5sn' },
   { v: 10, label: '10sn' },
   { v: 15, label: '15sn' },
@@ -21,7 +29,7 @@ const SLOW_MODES: { v: number; label: string }[] = [
 ];
 
 const ARCHIVE_OPTS: { v: number; label: string }[] = [
-  { v: 0, label: 'Kapalı' },
+  { v: 0, label: t('common.off') },
   { v: 60, label: '1 saat' },
   { v: 1440, label: '24 saat' },
   { v: 4320, label: '3 gün' },
@@ -39,16 +47,32 @@ export function ChannelSettingsModal({ channel }: { channel: APIChannel }) {
           {isVoice ? <Volume2 size={12} /> : <Hash size={12} />}
           {channel.name}
         </div>
-        <TabBtn icon={<Settings size={16} />} active={tab === 'overview'} onClick={() => setTab('overview')}>
+        <TabBtn
+          icon={<Settings size={16} />}
+          active={tab === 'overview'}
+          onClick={() => setTab('overview')}
+        >
           Genel Görünüm
         </TabBtn>
-        <TabBtn icon={<Shield size={16} />} active={tab === 'permissions'} onClick={() => setTab('permissions')}>
+        <TabBtn
+          icon={<Shield size={16} />}
+          active={tab === 'permissions'}
+          onClick={() => setTab('permissions')}
+        >
           İzinler
         </TabBtn>
-        <TabBtn icon={<Link2 size={16} />} active={tab === 'invites'} onClick={() => setTab('invites')}>
+        <TabBtn
+          icon={<Link2 size={16} />}
+          active={tab === 'invites'}
+          onClick={() => setTab('invites')}
+        >
           Davetler
         </TabBtn>
-        <TabBtn icon={<Plug size={16} />} active={tab === 'integrations'} onClick={() => setTab('integrations')}>
+        <TabBtn
+          icon={<Plug size={16} />}
+          active={tab === 'integrations'}
+          onClick={() => setTab('integrations')}
+        >
           Entegrasyonlar
         </TabBtn>
         <div className="pt-1 mt-1 border-t border-line">
@@ -82,7 +106,9 @@ function TabBtn({
       onClick={onClick}
       className={
         'w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors ' +
-        (active ? 'bg-brand-500/15 text-brand-500' : 'text-ink-secondary hover:bg-surface-3 hover:text-ink-primary')
+        (active
+          ? 'bg-brand-500/15 text-brand-500'
+          : 'text-ink-secondary hover:bg-surface-3 hover:text-ink-primary')
       }
     >
       {icon}
@@ -97,7 +123,11 @@ function OverviewTab({ channel }: { channel: APIChannel }) {
   const isVoice = channel.type === 'voice';
   const isCategory = channel.type === 'category';
   const categories = useAppSelector((s) =>
-    guildId ? (s.channels.byGuild[guildId] ?? []).filter((c) => c.type === 'category' && c.id !== channel.id) : [],
+    guildId
+      ? (s.channels.byGuild[guildId] ?? []).filter(
+          (c) => c.type === 'category' && c.id !== channel.id,
+        )
+      : [],
   );
   const [name, setName] = useState(channel.name);
   const [topic, setTopic] = useState(channel.topic ?? '');
@@ -138,14 +168,17 @@ function OverviewTab({ channel }: { channel: APIChannel }) {
 
   return (
     <div className="max-w-xl">
-      <h2 className="text-xl font-bold text-ink-primary mb-5">Genel Görünüm</h2>
+      <h2 className="text-xl font-bold text-ink-primary mb-5">{t('channel.overview')}</h2>
 
       <label className="block text-xs font-bold uppercase text-ink-tertiary tracking-wider mb-1.5">
         Kanal Adı
       </label>
       <div className="relative mb-5">
         {isVoice ? (
-          <Volume2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-tertiary" />
+          <Volume2
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-tertiary"
+          />
         ) : (
           <Hash size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-tertiary" />
         )}
@@ -166,10 +199,12 @@ function OverviewTab({ channel }: { channel: APIChannel }) {
             value={topic}
             onChange={(e) => setTopic(e.target.value.slice(0, 1024))}
             rows={2}
-            placeholder="Bu kanalın nasıl kullanılacağını anlat!"
+            placeholder={t('channel.topicPlaceholder')}
             className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2.5 text-ink-primary placeholder:text-ink-tertiary resize-none"
           />
-          <div className="text-[11px] text-ink-tertiary text-right mt-1 mb-5">{1024 - topic.length} karakter kaldı</div>
+          <div className="text-[11px] text-ink-tertiary text-right mt-1 mb-5">
+            {1024 - topic.length} karakter kaldı
+          </div>
 
           <label className="block text-xs font-bold uppercase text-ink-tertiary tracking-wider mb-2">
             Yavaş Mod
@@ -181,7 +216,9 @@ function OverviewTab({ channel }: { channel: APIChannel }) {
                 onClick={() => setSlow(s.v)}
                 className={
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ' +
-                  (slow === s.v ? 'bg-brand-500 text-white' : 'bg-surface-2 text-ink-secondary hover:bg-surface-3')
+                  (slow === s.v
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-surface-2 text-ink-secondary hover:bg-surface-3')
                 }
               >
                 {s.label}
@@ -194,12 +231,19 @@ function OverviewTab({ channel }: { channel: APIChannel }) {
 
           <label className="flex items-center justify-between gap-3 mb-5 cursor-pointer">
             <span>
-              <span className="block text-sm font-semibold text-ink-primary">Yaş Sınırlı Kanal</span>
+              <span className="block text-sm font-semibold text-ink-primary">
+                {t('msg.nsfwChannel')}
+              </span>
               <span className="block text-xs text-ink-tertiary">
                 Yaş sınırlı kanallar sakıncalı içerik filtresinden muaftır.
               </span>
             </span>
-            <input type="checkbox" checked={nsfw} onChange={(e) => setNsfw(e.target.checked)} className="w-4 h-4 accent-brand-500 shrink-0" />
+            <input
+              type="checkbox"
+              checked={nsfw}
+              onChange={(e) => setNsfw(e.target.checked)}
+              className="w-4 h-4 accent-brand-500 shrink-0"
+            />
           </label>
 
           <label className="block text-xs font-bold uppercase text-ink-tertiary tracking-wider mb-2">
@@ -212,7 +256,9 @@ function OverviewTab({ channel }: { channel: APIChannel }) {
                 onClick={() => setArchive(a.v)}
                 className={
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ' +
-                  (archive === a.v ? 'bg-brand-500 text-white' : 'bg-surface-2 text-ink-secondary hover:bg-surface-3')
+                  (archive === a.v
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-surface-2 text-ink-secondary hover:bg-surface-3')
                 }
               >
                 {a.label}
@@ -253,7 +299,7 @@ function OverviewTab({ channel }: { channel: APIChannel }) {
           disabled={!dirty || busy}
           className="px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 disabled:text-ink-tertiary text-white font-semibold"
         >
-          {busy ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
+          {busy ? t('common.saving') : t('channel.saveChanges')}
         </button>
         {saved && (
           <span className="text-sm text-emerald-400 flex items-center gap-1">
@@ -266,14 +312,19 @@ function OverviewTab({ channel }: { channel: APIChannel }) {
 }
 
 function ForumTagsManager({ channelId }: { channelId: string }) {
-  const [tags, setTags] = useState<Array<{ id: string; name: string; emoji?: string; position: number }>>([]);
+  const [tags, setTags] = useState<
+    Array<{ id: string; name: string; emoji?: string; position: number }>
+  >([]);
   const [newName, setNewName] = useState('');
   const [newEmoji, setNewEmoji] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   function load() {
-    api.forumTags.list(channelId).then(setTags).catch(() => setTags([]));
+    api.forumTags
+      .list(channelId)
+      .then(setTags)
+      .catch(() => setTags([]));
   }
   useEffect(load, [channelId]);
 
@@ -283,12 +334,15 @@ function ForumTagsManager({ channelId }: { channelId: string }) {
     setBusy(true);
     setErr(null);
     try {
-      const t = await api.forumTags.create(channelId, { name, emoji: newEmoji.trim() || undefined });
+      const t = await api.forumTags.create(channelId, {
+        name,
+        emoji: newEmoji.trim() || undefined,
+      });
       setTags((ts) => [...ts, t]);
       setNewName('');
       setNewEmoji('');
     } catch (e: any) {
-      setErr(e?.detail || e?.message || 'Etiket eklenemedi');
+      setErr(errText(e, t('forum.tagAddFailed')));
     } finally {
       setBusy(false);
     }
@@ -300,14 +354,27 @@ function ForumTagsManager({ channelId }: { channelId: string }) {
 
   return (
     <div className="mt-6 pt-5 border-t border-line">
-      <h3 className="text-sm font-bold text-ink-primary mb-1">Forum Etiketleri</h3>
-      <p className="text-xs text-ink-tertiary mb-3">Üyeler gönderi açarken bu etiketleri seçip filtreleyebilir (en fazla 20).</p>
+      <h3 className="text-sm font-bold text-ink-primary mb-1">{t('forum.tags')}</h3>
+      <p className="text-xs text-ink-tertiary mb-3">
+        Üyeler gönderi açarken bu etiketleri seçip filtreleyebilir (en fazla 20).
+      </p>
       <div className="flex flex-wrap gap-1.5 mb-3">
-        {tags.length === 0 && <span className="text-xs text-ink-tertiary">Henüz etiket yok.</span>}
-        {tags.map((t) => (
-          <span key={t.id} className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-surface-3 text-ink-secondary">
-            {t.emoji ? t.emoji + ' ' : ''}{t.name}
-            <button onClick={() => remove(t.id)} className="text-ink-tertiary hover:text-accent-500" title="Sil" aria-label="Sil">
+        {tags.length === 0 && (
+          <span className="text-xs text-ink-tertiary">{t('forum.noTags')}</span>
+        )}
+        {tags.map((tag) => (
+          <span
+            key={tag.id}
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-surface-3 text-ink-secondary"
+          >
+            {tag.emoji ? tag.emoji + ' ' : ''}
+            {tag.name}
+            <button
+              onClick={() => remove(tag.id)}
+              className="text-ink-tertiary hover:text-accent-500"
+              title={t('common.delete')}
+              aria-label={t('common.delete')}
+            >
               <X size={12} />
             </button>
           </span>
@@ -325,7 +392,7 @@ function ForumTagsManager({ channelId }: { channelId: string }) {
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
           maxLength={40}
-          placeholder="Etiket adı (ör. Soru, Hata, Duyuru)"
+          placeholder={t('forum.tagPlaceholder')}
           className="flex-1 bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-1.5 text-sm text-ink-primary"
         />
         <button
@@ -383,9 +450,14 @@ function PermissionsTab({ channel }: { channel: APIChannel }) {
         deny: deny.toString(),
       });
       setIsPrivate(next);
-      dispatch(addToast({ kind: 'success', message: next ? 'Kanal özel yapıldı' : 'Kanal herkese açık' }));
+      dispatch(
+        addToast({
+          kind: 'success',
+          message: next ? t('channel.madePrivate') : t('channel.madePublic'),
+        }),
+      );
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Güncellenemedi' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, t('common.updateFailed')) }));
     } finally {
       setBusy(false);
     }
@@ -393,16 +465,19 @@ function PermissionsTab({ channel }: { channel: APIChannel }) {
 
   return (
     <div className="max-w-xl">
-      <h2 className="text-xl font-bold text-ink-primary mb-1">Kanal İzinleri</h2>
+      <h2 className="text-xl font-bold text-ink-primary mb-1">{t('channel.permissions')}</h2>
       <p className="text-sm text-ink-secondary mb-5">
         Bu kanalda kimin ne yapabileceğini özelleştirmek için izinleri kullan.
       </p>
 
       <label className="flex items-center justify-between gap-3 bg-surface-2 border border-line rounded-xl px-4 py-3 cursor-pointer">
         <span>
-          <span className="block text-sm font-semibold text-ink-primary">Özel Kanal</span>
+          <span className="block text-sm font-semibold text-ink-primary">
+            {t('channel.private')}
+          </span>
           <span className="block text-xs text-ink-tertiary">
-            Bir kanalı özel yapmak, sadece seçilen üyelerin ve rollerin bu kanalı görüntüleyebilmesini sağlar.
+            Bir kanalı özel yapmak, sadece seçilen üyelerin ve rollerin bu kanalı
+            görüntüleyebilmesini sağlar.
           </span>
         </span>
         <input
@@ -418,8 +493,8 @@ function PermissionsTab({ channel }: { channel: APIChannel }) {
         onClick={() => dispatch(openChannelPerms(channel.id))}
         className="mt-4 w-full flex items-center justify-between px-4 py-3 rounded-xl border border-line hover:border-brand-500/50 hover:bg-surface-2 transition-colors"
       >
-        <span className="text-sm font-semibold text-ink-primary">Gelişmiş izinler</span>
-        <span className="text-xs text-ink-tertiary">Roller / Üyeler →</span>
+        <span className="text-sm font-semibold text-ink-primary">{t('channel.advancedPerms')}</span>
+        <span className="text-xs text-ink-tertiary">{t('ui.rollerUyeler')}</span>
       </button>
     </div>
   );
@@ -438,7 +513,7 @@ function InvitesTab({ channel }: { channel: APIChannel }) {
       const inv = await api.guilds.createInvite(guildId, { max_uses: 0, expires_in_sec: 604800 });
       setLink(`${location.host}/davet/${inv.code}`);
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Davet oluşturulamadı' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Davet oluşturulamadı') }));
     } finally {
       setBusy(false);
     }
@@ -454,8 +529,10 @@ function InvitesTab({ channel }: { channel: APIChannel }) {
 
   return (
     <div className="max-w-xl">
-      <h2 className="text-xl font-bold text-ink-primary mb-1">Davetler</h2>
-      <p className="text-sm text-ink-secondary mb-5">#{channel.name} için bir davet bağlantısı oluştur.</p>
+      <h2 className="text-xl font-bold text-ink-primary mb-1">{t('invite.listTitle')}</h2>
+      <p className="text-sm text-ink-secondary mb-5">
+        #{channel.name} için bir davet bağlantısı oluştur.
+      </p>
       {link ? (
         <div className="flex gap-2">
           <input
@@ -463,7 +540,10 @@ function InvitesTab({ channel }: { channel: APIChannel }) {
             value={link}
             className="flex-1 bg-surface-2 border border-line rounded-lg px-3 py-2.5 text-ink-primary font-mono text-sm"
           />
-          <button onClick={copy} className="px-4 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white font-semibold flex items-center gap-1.5">
+          <button
+            onClick={copy}
+            className="px-4 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white font-semibold flex items-center gap-1.5"
+          >
             <Copy size={15} /> Kopyala
           </button>
         </div>
@@ -506,11 +586,11 @@ function IntegrationsTab({ channel }: { channel: APIChannel }) {
     setCreating(true);
     setNewUrl(null);
     try {
-      const wh = await api.webhooks.create(channel.id, 'Sidcord Webhook');
+      const wh = await api.webhooks.create(channel.id, 'Concord Webhook');
       setNewUrl(`${location.origin}/api/v1/webhooks/${wh.id}/${wh.token}`);
       await refresh();
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Webhook oluşturulamadı' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Webhook oluşturulamadı') }));
     } finally {
       setCreating(false);
     }
@@ -522,14 +602,14 @@ function IntegrationsTab({ channel }: { channel: APIChannel }) {
       await api.webhooks.delete(id);
       await refresh();
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Silinemedi' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Silinemedi') }));
     }
   }
 
   return (
     <div className="max-w-xl">
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-xl font-bold text-ink-primary">Entegrasyonlar</h2>
+        <h2 className="text-xl font-bold text-ink-primary">{t('channel.integrations')}</h2>
         <button
           onClick={create}
           disabled={creating}
@@ -544,7 +624,9 @@ function IntegrationsTab({ channel }: { channel: APIChannel }) {
 
       {newUrl && (
         <div className="bg-brand-500/10 border border-brand-500/30 rounded-xl p-3 mb-4">
-          <div className="text-xs font-bold text-brand-300 mb-1">Webhook URL'i (bir kez gösterilir, kopyala!)</div>
+          <div className="text-xs font-bold text-brand-300 mb-1">
+            Webhook URL'i (bir kez gösterilir, kopyala!)
+          </div>
           <div className="flex gap-2">
             <input
               readOnly
@@ -565,23 +647,29 @@ function IntegrationsTab({ channel }: { channel: APIChannel }) {
       )}
 
       {loading ? (
-        <p className="text-sm text-ink-tertiary">Yükleniyor...</p>
+        <p className="text-sm text-ink-tertiary">{t('ui.yukleniyor')}</p>
       ) : hooks.length === 0 ? (
-        <p className="text-sm text-ink-tertiary">Henüz webhook yok.</p>
+        <p className="text-sm text-ink-tertiary">{t('ui.henuzWebhookYok')}</p>
       ) : (
         <ul className="space-y-2">
           {hooks.map((wh) => (
-            <li key={wh.id} className="flex items-center gap-3 bg-surface-2 border border-line rounded-xl px-4 py-3">
+            <li
+              key={wh.id}
+              className="flex items-center gap-3 bg-surface-2 border border-line rounded-xl px-4 py-3"
+            >
               <span className="w-9 h-9 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center shrink-0">
                 <Plug size={16} />
               </span>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-ink-primary truncate">{wh.name}</div>
                 <div className="text-xs text-ink-tertiary">
-                  {new Date(wh.created_at).toLocaleDateString('tr-TR')}
+                  {new Date(wh.created_at).toLocaleDateString(localeTag())}
                 </div>
               </div>
-              <button onClick={() => remove(wh.id)} className="text-ink-tertiary hover:text-accent-500">
+              <button
+                onClick={() => remove(wh.id)}
+                className="text-ink-tertiary hover:text-accent-500"
+              >
                 <Trash2 size={15} />
               </button>
             </li>
@@ -596,13 +684,13 @@ function DeleteChannelButton({ channel }: { channel: APIChannel }) {
   const dispatch = useAppDispatch();
   const guildId = useAppSelector((s) => s.guilds.selectedId);
   async function del() {
-    if (!confirm(`#${channel.name} kanalı silinsin mi? Bu işlem geri alınamaz.`)) return;
+    if (!confirm(t('channel.deleteConfirm', { name: channel.name }))) return;
     try {
       await api.channels.delete(channel.id);
       if (guildId) await dispatch(fetchChannels(guildId));
       dispatch(closeModal());
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Silinemedi' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Silinemedi') }));
     }
   }
   return (

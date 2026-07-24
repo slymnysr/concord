@@ -1,4 +1,4 @@
-// Sidcord WebSocket bağlantısı (Phoenix Channels) + presence
+// Concord WebSocket bağlantısı (Phoenix Channels) + presence
 import { Socket, Channel, Presence } from 'phoenix';
 import { tokenStore } from './api';
 import { wsUrl } from './serverConfig';
@@ -15,11 +15,25 @@ export function connectGateway(): Socket | null {
 
   if (socket) return socket;
 
-  socket = new Socket(wsUrl('/socket'), { params: { token }, logger: () => {} });
+  // params FONKSİYON olmalı: Phoenix onu closure()'la sarar ve HER yeniden bağlanmada
+  // yeniden değerlendirir. Sabit `{ token }` verilirse soket kurulum anındaki token'a
+  // KİLİTLENİR; access token TTL'i 15 dk olduğu için ağ kopması/uyku sonrası yeniden
+  // bağlanma süresi dolmuş token'la yapılır → gateway 403 → Phoenix aynı ölü token'la
+  // sonsuza dek dener → realtime, sayfa yenilenene kadar SESSİZCE ölür.
+  socket = new Socket(wsUrl('/socket'), {
+    params: () => ({ token: tokenStore.access() }),
+    logger: () => {},
+  });
   // Bağlantı durumu olaylarını yayınla → ConnectionBanner dinler
-  socket.onOpen(() => { window.dispatchEvent(new CustomEvent('sidcord:gw', { detail: 'connected' })); });
-  socket.onClose(() => { window.dispatchEvent(new CustomEvent('sidcord:gw', { detail: 'disconnected' })); });
-  socket.onError(() => { window.dispatchEvent(new CustomEvent('sidcord:gw', { detail: 'disconnected' })); });
+  socket.onOpen(() => {
+    window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'connected' }));
+  });
+  socket.onClose(() => {
+    window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'disconnected' }));
+  });
+  socket.onError(() => {
+    window.dispatchEvent(new CustomEvent('concord:gw', { detail: 'disconnected' }));
+  });
   socket.connect();
   return socket;
 }
@@ -58,7 +72,7 @@ export function setPresenceStatus(status: 'online' | 'idle' | 'dnd' | 'offline')
 // Aktif aktivite — localStorage'da kalıcı; yeni guild kanallarına join'de otomatik gönderilir
 let currentActivity: UserActivity | null = null;
 try {
-  const raw = localStorage.getItem('sidcord_activity');
+  const raw = localStorage.getItem('concord_activity');
   if (raw) currentActivity = JSON.parse(raw);
 } catch {}
 
@@ -76,8 +90,9 @@ export function setActivity(
   // elle ayarladığı aktivite localStorage'da korunur, oyun kapanınca ona dönülür.
   if (persist) {
     try {
-      if (currentActivity) localStorage.setItem('sidcord_activity', JSON.stringify(currentActivity));
-      else localStorage.removeItem('sidcord_activity');
+      if (currentActivity)
+        localStorage.setItem('concord_activity', JSON.stringify(currentActivity));
+      else localStorage.removeItem('concord_activity');
     } catch {}
   }
   for (const ch of guildChannels.values()) {
@@ -168,7 +183,10 @@ export function onGuildEvent(guildId: string, event: string, handler: (ev: any) 
     const m = guildEventHandlers.get(guildId);
     if (!m) return;
     const list = m.get(event) ?? [];
-    m.set(event, list.filter((h) => h !== handler));
+    m.set(
+      event,
+      list.filter((h) => h !== handler),
+    );
   };
 }
 
@@ -213,7 +231,10 @@ export function sendTyping(guildId: string, channelId: string) {
 // === DM "yazıyor" göstergesi (dm:<channelId> Phoenix kanalı) ===
 const dmChannels = new Map<string, Channel>();
 
-export function joinDMChannel(channelId: string, onTyping?: (userId: string) => void): Channel | null {
+export function joinDMChannel(
+  channelId: string,
+  onTyping?: (userId: string) => void,
+): Channel | null {
   const s = connectGateway();
   if (!s) return null;
   const existing = dmChannels.get(channelId);

@@ -7,12 +7,13 @@ import pino from 'pino';
 const log = pino({ name: 'voice/room', level: 'info' });
 
 export interface Peer {
-  id: string;          // user_id (snowflake string)
-  socketId: string;    // websocket bağlantısı kimliği
+  id: string; // user_id (snowflake string)
+  name?: string; // görünen ad — presence'ta doğrudan gösterim için
+  socketId: string; // websocket bağlantısı kimliği
   sendTransport?: msTypes.WebRtcTransport;
   recvTransport?: msTypes.WebRtcTransport;
-  producers: Map<string, msTypes.Producer>;   // producerId -> producer
-  consumers: Map<string, msTypes.Consumer>;   // consumerId -> consumer
+  producers: Map<string, msTypes.Producer>; // producerId -> producer
+  consumers: Map<string, msTypes.Consumer>; // consumerId -> consumer
 }
 
 export class Room {
@@ -20,7 +21,7 @@ export class Room {
   peers = new Map<string, Peer>();
   // Sahne (stage) durumu
   stageSpeakers = new Set<string>(); // konuşmacı userId'leri
-  stageHands = new Set<string>();    // el kaldıranlar
+  stageHands = new Set<string>(); // el kaldıranlar
 
   constructor(channelId: string) {
     this.channelId = channelId;
@@ -30,9 +31,10 @@ export class Room {
     return await getRouter(this.channelId);
   }
 
-  async addPeer(userId: string, socketId: string): Promise<Peer> {
+  async addPeer(userId: string, socketId: string, name?: string): Promise<Peer> {
     const peer: Peer = {
       id: userId,
+      name,
       socketId,
       producers: new Map(),
       consumers: new Map(),
@@ -76,7 +78,7 @@ export class Room {
   }
 }
 
-const rooms = new Map<string, Room>();
+export const rooms = new Map<string, Room>();
 
 export function getRoom(channelId: string): Room {
   let room = rooms.get(channelId);
@@ -89,6 +91,14 @@ export function getRoom(channelId: string): Room {
 
 export function listPeerIds(channelId: string): string[] {
   return Array.from(rooms.get(channelId)?.peers.keys() ?? []);
+}
+
+// Presence için id + görünen ad — istemci ID→ad lookup'ı gerektirmeden gösterir
+export function listPeers(channelId: string): { id: string; name: string }[] {
+  return Array.from(rooms.get(channelId)?.peers.values() ?? []).map((p) => ({
+    id: p.id,
+    name: p.name ?? '',
+  }));
 }
 
 // === Sunucu susturma / sağırlaştırma (mod yetkisi, enforced) ===
@@ -124,7 +134,10 @@ export function applyVoiceStateToPeer(userId: string): void {
 }
 
 // Mod komutu: durumu kaydet + bağlıysa anında uygula
-export function setVoiceState(userId: string, partial: { mute?: boolean; deafen?: boolean }): { mute: boolean; deafen: boolean } {
+export function setVoiceState(
+  userId: string,
+  partial: { mute?: boolean; deafen?: boolean },
+): { mute: boolean; deafen: boolean } {
   const cur = getVoiceState(userId);
   const next = { mute: partial.mute ?? cur.mute, deafen: partial.deafen ?? cur.deafen };
   voiceStates.set(userId, next);

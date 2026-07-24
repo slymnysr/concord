@@ -1,5 +1,12 @@
--- Sidcord ilk şema
+-- Concord ilk şema
 -- Snowflake ID = BIGINT (64-bit), uygulamada üretilir
+
+-- Uzantılar BURADA kurulur: şema onlara bağımlı (users.username/email CITEXT).
+-- Eskiden hiçbir migration uzantı oluşturmuyordu; geliştirme veritabanında ELLE kurulu
+-- oldukları için fark edilmiyordu → SIFIRDAN kurulum (CI, yeni ortam, prod) daha ilk
+-- migration'da "type citext does not exist" ile patlıyordu. Migration seti kendi kendine
+-- yeterli olmalı: çalıştırıldığı yerde başka hiçbir elle adım gerektirmemeli.
+CREATE EXTENSION IF NOT EXISTS citext;
 
 CREATE TABLE users (
     id              BIGINT PRIMARY KEY,
@@ -90,9 +97,10 @@ CREATE TABLE member_roles (
     FOREIGN KEY (guild_id, user_id) REFERENCES guild_members(guild_id, user_id) ON DELETE CASCADE
 );
 
--- Mesaj METADATASI burada, mesaj İÇERİĞİ ScyllaDB'de
--- Discord 2017+ patterni: mesaj metadata Postgres'te değil tamamen Scylla'da
--- Ama biz şimdilik tek DB ile yaşıyoruz; gerektiğinde Scylla'ya migrate edeceğiz
+-- Mesaj metadatası VE içeriği burada (tek DB). Discord 2017+ mesajları ayrı bir
+-- geniş-kolon store'a taşır; bizde o ihtiyaç henüz yok — gelirse planlı bir faz
+-- olarak ele alınır (ROADMAP-FAZLAR.md TIER 4). Bu yorum eskiden var olmayan bir
+-- Scylla kurulumunu tarif ediyordu; kaldırıldı.
 CREATE TABLE messages (
     id              BIGINT PRIMARY KEY,
     channel_id      BIGINT NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
@@ -114,7 +122,7 @@ CREATE TABLE attachments (
 );
 
 -- Otomatik updated_at trigger
-CREATE OR REPLACE FUNCTION sidcord_set_updated_at() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION concord_set_updated_at() RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
@@ -122,8 +130,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_users_updated BEFORE UPDATE ON users
-    FOR EACH ROW EXECUTE FUNCTION sidcord_set_updated_at();
+    FOR EACH ROW EXECUTE FUNCTION concord_set_updated_at();
 CREATE TRIGGER trg_guilds_updated BEFORE UPDATE ON guilds
-    FOR EACH ROW EXECUTE FUNCTION sidcord_set_updated_at();
+    FOR EACH ROW EXECUTE FUNCTION concord_set_updated_at();
 CREATE TRIGGER trg_channels_updated BEFORE UPDATE ON channels
-    FOR EACH ROW EXECUTE FUNCTION sidcord_set_updated_at();
+    FOR EACH ROW EXECUTE FUNCTION concord_set_updated_at();

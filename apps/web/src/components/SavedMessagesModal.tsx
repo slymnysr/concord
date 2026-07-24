@@ -2,13 +2,17 @@ import { useEffect, useState } from 'react';
 import { X, Bookmark, Trash2 } from 'lucide-react';
 import { api, type APISavedMessage } from '../api';
 import { useAppDispatch, selectChannel, selectDM, switchToGuild, switchToDM } from '../store';
+import { t } from '../i18n';
 
 export function SavedMessagesModal({ onClose }: { onClose: () => void }) {
   const dispatch = useAppDispatch();
   const [items, setItems] = useState<APISavedMessage[] | null>(null);
 
   useEffect(() => {
-    api.savedMessages.list().then(setItems).catch(() => setItems([]));
+    api.savedMessages
+      .list()
+      .then(setItems)
+      .catch(() => setItems([]));
   }, []);
 
   async function unsave(id: string) {
@@ -27,19 +31,26 @@ export function SavedMessagesModal({ onClose }: { onClose: () => void }) {
     }
     onClose();
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('sidcord:jump-to-message', { detail: { messageId: sm.message_id, channelId: sm.channel_id } }));
+      window.dispatchEvent(
+        new CustomEvent('concord:jump-to-message', {
+          detail: { messageId: sm.message_id, channelId: sm.channel_id },
+        }),
+      );
     }, 700);
   }
 
   return (
-    <div className="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
       <div
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-lg bg-surface-1 border border-line rounded-2xl shadow-2xl flex flex-col max-h-[80vh]"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-line">
           <h2 className="text-lg font-bold text-ink-primary flex items-center gap-2">
-            <Bookmark size={18} className="text-brand-500" /> Kaydedilen Mesajlar
+            <Bookmark size={18} className="text-brand-500" /> {t('saved.title')}
           </h2>
           <button onClick={onClose} className="text-ink-tertiary hover:text-ink-primary">
             <X size={18} />
@@ -48,12 +59,12 @@ export function SavedMessagesModal({ onClose }: { onClose: () => void }) {
 
         <div className="overflow-y-auto flex-1 p-3">
           {items === null ? (
-            <p className="text-sm text-ink-tertiary text-center py-10">Yükleniyor…</p>
+            <p className="text-sm text-ink-tertiary text-center py-10">{t('common.loading')}</p>
           ) : items.length === 0 ? (
             <div className="text-center py-12 text-ink-tertiary">
               <Bookmark size={36} className="mx-auto mb-2 opacity-40" />
-              <p className="text-sm">Henüz kaydedilen mesaj yok.</p>
-              <p className="text-xs mt-1">Bir mesaja sağ tıklayıp "🔖 Kaydet" ile başla.</p>
+              <p className="text-sm">{t('saved.empty')}</p>
+              <p className="text-xs mt-1">{t('saved.emptyHint')}</p>
             </div>
           ) : (
             <ul className="space-y-1">
@@ -76,13 +87,21 @@ export function SavedMessagesModal({ onClose }: { onClose: () => void }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 text-xs">
                       <span className="font-semibold text-ink-primary">{m.author_name}</span>
-                      {m.channel_name && <span className="text-ink-tertiary truncate">#{m.channel_name}</span>}
+                      {m.channel_name && (
+                        <span className="text-ink-tertiary truncate">#{m.channel_name}</span>
+                      )}
                     </div>
-                    <div className="text-sm text-ink-secondary truncate">{m.content || '📎 Dosya / anket'}</div>
+                    <div className="text-sm text-ink-secondary truncate">
+                      {m.content || t('saved.fileOrPoll')}
+                    </div>
                   </div>
                   <button
-                    onClick={(e) => { e.stopPropagation(); unsave(m.message_id); }}
-                    title="Kayıttan çıkar" aria-label="Kayıttan çıkar"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      unsave(m.message_id);
+                    }}
+                    title={t('saved.unsave')}
+                    aria-label={t('saved.unsave')}
                     className="opacity-0 group-hover:opacity-100 text-ink-tertiary hover:text-accent-500 shrink-0"
                   >
                     <Trash2 size={15} />

@@ -1,4 +1,8 @@
-@import url('https://rsms.me/inter/inter.css');
+/* Inter fontu SELF-HOST (eskiden https://rsms.me'den geliyordu). Neden: (1) harici CDN
+   kullanıcı IP'lerini görür — KVKK/GDPR açısından gereksiz veri sızıntısı, (2) CSP'yi
+   'self'e sıkı tutar (harici stylesheet origin'i gerekmez), (3) rsms.me down olsa da font
+   çalışır. @fontsource-variable/inter build'e gömülür. */
+@import '@fontsource-variable/inter';
 
 @tailwind base;
 @tailwind components;
@@ -56,7 +60,7 @@ body,
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter Variable', 'Inter', sans-serif;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
   background: rgb(var(--c-bg));
@@ -137,43 +141,43 @@ select:focus-visible {
 }
 
 /* Mesaja zıplama vurgusu (arama/sabit/yanıt → mesaja git) */
-@keyframes sidcord-jump-flash {
+@keyframes concord-jump-flash {
   0%, 60% { background-color: rgb(0 217 166 / 0.18); }
   100% { background-color: transparent; }
 }
-.sidcord-jump-flash {
-  animation: sidcord-jump-flash 1.8s ease-out;
+.concord-jump-flash {
+  animation: concord-jump-flash 1.8s ease-out;
   border-radius: 6px;
 }
 
 /* Super-reaction patlama animasyonu */
-@keyframes sidcord-burst {
+@keyframes concord-burst {
   0%   { transform: translate(0, 0) scale(0.6); opacity: 1; }
   100% { transform: translate(var(--bx), -42px) scale(1.4); opacity: 0; }
 }
-.sidcord-burst-particle {
+.concord-burst-particle {
   position: absolute;
   left: 50%;
   top: 0;
   pointer-events: none;
-  animation: sidcord-burst 700ms ease-out forwards;
+  animation: concord-burst 700ms ease-out forwards;
   font-size: 14px;
   z-index: 20;
 }
 
 /* === Mikro animasyonlar (cila turu) — reduced-motion bloğu yukarıda hepsini kapsar === */
-@keyframes sidcord-modal-in {
+@keyframes concord-modal-in {
   from { opacity: 0; transform: scale(0.96) translateY(6px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
-@keyframes sidcord-pop-in {
+@keyframes concord-pop-in {
   from { opacity: 0; transform: scale(0.97); }
   to   { opacity: 1; transform: scale(1); }
 }
-@keyframes sidcord-fade-in {
+@keyframes concord-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-.anim-modal-in { animation: sidcord-modal-in 0.16s ease-out; }
-.anim-pop-in   { animation: sidcord-pop-in 0.12s ease-out; transform-origin: top left; }
-.anim-fade-in  { animation: sidcord-fade-in 0.12s ease-out; }
+.anim-modal-in { animation: concord-modal-in 0.16s ease-out; }
+.anim-pop-in   { animation: concord-pop-in 0.12s ease-out; transform-origin: top left; }
+.anim-fade-in  { animation: concord-fade-in 0.12s ease-out; }

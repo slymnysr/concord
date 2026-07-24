@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Compass } from 'lucide-react';
 import { useAppDispatch, acceptInviteThunk, closeModal, selectGuild } from '../store';
 import { api, type APIInvitePreview } from '../api';
+import { t, errText } from '../i18n';
 
 export function JoinGuildModal() {
   const dispatch = useAppDispatch();
@@ -12,7 +13,7 @@ export function JoinGuildModal() {
 
   // Davet bağlantısı da yapıştırılırsa kodu çıkar
   function normalize(input: string) {
-    const m = input.trim().match(/(?:sidcord\.com\/(?:invite|davet)\/)?([a-z0-9]{4,16})/i);
+    const m = input.trim().match(/(?:concord\.com\/(?:invite|davet)\/)?([a-z0-9]{4,16})/i);
     return m ? m[1] : input.trim();
   }
 
@@ -26,7 +27,7 @@ export function JoinGuildModal() {
       setPreview(p);
     } catch (e: any) {
       setPreview(null);
-      setError(e?.message || 'Davet bulunamadı');
+      setError(errText(e, t('invite.notFound')));
     } finally {
       setLoading(false);
     }
@@ -41,7 +42,7 @@ export function JoinGuildModal() {
       dispatch(selectGuild(guild.id));
       dispatch(closeModal());
     } catch (e: any) {
-      setError(typeof e === 'string' ? e : e?.message || 'Katılma başarısız');
+      setError(typeof e === 'string' ? e : errText(e, t('invite.joinFailed2')));
     } finally {
       setLoading(false);
     }
@@ -53,22 +54,20 @@ export function JoinGuildModal() {
         <div className="w-10 h-10 rounded-xl bg-brand-500/15 text-brand-500 flex items-center justify-center">
           <Compass size={20} />
         </div>
-        <h2 className="text-xl font-bold text-ink-primary">Sunucuya katıl</h2>
+        <h2 className="text-xl font-bold text-ink-primary">{t('invite.joinGuild')}</h2>
       </div>
       <p className="text-sm text-ink-secondary mb-5">
         Arkadaşından aldığın davet kodunu veya bağlantısını gir.
       </p>
 
-      <label className="block text-sm font-semibold text-ink-primary mb-1.5">
-        Davet kodu
-      </label>
+      <label className="block text-sm font-semibold text-ink-primary mb-1.5">Davet kodu</label>
       <div className="flex gap-2">
         <input
           autoFocus
           value={code}
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && lookup()}
-          placeholder="örn. abcd1234"
+          placeholder={t('invite.codePlaceholder')}
           className="flex-1 bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2.5 text-ink-primary placeholder:text-ink-tertiary font-mono"
         />
         <button
@@ -102,7 +101,7 @@ export function JoinGuildModal() {
             disabled={loading}
             className="w-full mt-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 disabled:text-ink-tertiary text-white font-semibold transition-colors"
           >
-            {loading ? 'Katılıyor...' : 'Katıl'}
+            {loading ? t('common.joiningShort') : t('common.join')}
           </button>
         </div>
       )}

@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
+	"github.com/concord/api/internal/repo"
 )
 
 // DispatchDueEventReminders — 15 dk içinde başlayacak etkinliklerin abonelerine bir kez hatırlatma gönderir.
@@ -71,7 +71,7 @@ func (h *Handler) DispatchDueEventReminders(ctx context.Context) {
 					"event_name":   e.name,
 					"ts":           time.Now().UnixMilli(),
 				})
-				_, _ = h.Redis.Publish(ctx, "sidcord:user:"+strconv.FormatInt(uid, 10), payload).Result()
+				_, _ = h.Redis.Publish(ctx, "concord:user:"+strconv.FormatInt(uid, 10), payload).Result()
 			}
 		}
 		_, _ = h.Pool.Exec(ctx, `UPDATE guild_events SET reminder_sent = TRUE WHERE id = $1`, e.id)
@@ -79,32 +79,32 @@ func (h *Handler) DispatchDueEventReminders(ctx context.Context) {
 }
 
 type eventView struct {
-	ID               string    `json:"id"`
-	GuildID          string    `json:"guild_id"`
-	ChannelID        *string   `json:"channel_id,omitempty"`
-	CreatorID        string    `json:"creator_id"`
-	Name             string    `json:"name"`
-	Description      *string   `json:"description,omitempty"`
-	ScheduledStartAt time.Time `json:"scheduled_start_at"`
+	ID               string     `json:"id"`
+	GuildID          string     `json:"guild_id"`
+	ChannelID        *string    `json:"channel_id,omitempty"`
+	CreatorID        string     `json:"creator_id"`
+	Name             string     `json:"name"`
+	Description      *string    `json:"description,omitempty"`
+	ScheduledStartAt time.Time  `json:"scheduled_start_at"`
 	ScheduledEndAt   *time.Time `json:"scheduled_end_at,omitempty"`
-	EntityType       string    `json:"entity_type"`
-	EntityLocation   *string   `json:"entity_location,omitempty"`
-	Status           string    `json:"status"`
-	ImageURL         *string   `json:"image_url,omitempty"`
-	SubscriberCount  int       `json:"subscriber_count"`
-	Subscribed       bool      `json:"subscribed"`
-	CreatedAt        time.Time `json:"created_at"`
+	EntityType       string     `json:"entity_type"`
+	EntityLocation   *string    `json:"entity_location,omitempty"`
+	Status           string     `json:"status"`
+	ImageURL         *string    `json:"image_url,omitempty"`
+	SubscriberCount  int        `json:"subscriber_count"`
+	Subscribed       bool       `json:"subscribed"`
+	CreatedAt        time.Time  `json:"created_at"`
 }
 
 type createEventReq struct {
-	ChannelID        string  `json:"channel_id,omitempty"`
-	Name             string  `json:"name"`
-	Description      string  `json:"description,omitempty"`
-	ScheduledStartAt string  `json:"scheduled_start_at"`
-	ScheduledEndAt   string  `json:"scheduled_end_at,omitempty"`
-	EntityType       string  `json:"entity_type"` // 'voice'|'stage_instance'|'external'
-	EntityLocation   string  `json:"entity_location,omitempty"`
-	ImageURL         string  `json:"image_url,omitempty"`
+	ChannelID        string `json:"channel_id,omitempty"`
+	Name             string `json:"name"`
+	Description      string `json:"description,omitempty"`
+	ScheduledStartAt string `json:"scheduled_start_at"`
+	ScheduledEndAt   string `json:"scheduled_end_at,omitempty"`
+	EntityType       string `json:"entity_type"` // 'voice'|'stage_instance'|'external'
+	EntityLocation   string `json:"entity_location,omitempty"`
+	ImageURL         string `json:"image_url,omitempty"`
 }
 
 // POST /api/v1/guilds/:id/events

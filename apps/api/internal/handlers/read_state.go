@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/sidcord/api/internal/middleware"
+	"github.com/concord/api/internal/middleware"
 )
 
 type readStateReq struct {

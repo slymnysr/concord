@@ -1,7 +1,7 @@
 DROP TRIGGER IF EXISTS trg_channels_updated ON channels;
 DROP TRIGGER IF EXISTS trg_guilds_updated ON guilds;
 DROP TRIGGER IF EXISTS trg_users_updated ON users;
-DROP FUNCTION IF EXISTS sidcord_set_updated_at;
+DROP FUNCTION IF EXISTS concord_set_updated_at;
 
 DROP TABLE IF EXISTS attachments;
 DROP TABLE IF EXISTS messages;

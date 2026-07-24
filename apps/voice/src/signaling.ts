@@ -13,13 +13,29 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuid } from 'uuid';
 import pino from 'pino';
 import { config } from './config.js';
-import { getRoom, listPeerIds, getVoiceState, setVoiceState, applyVoiceStateToPeer } from './room.js';
+import { cluster } from './cluster.js';
+import {
+  initCascade,
+  setNewProducerNotifier,
+  syncExistingRemoteProducers,
+  onChannelEmpty,
+} from './cascade.js';
+import { pipedProducersFor, handlePrepare, handleConsume } from './pipe.js';
+import {
+  rooms,
+  getRoom,
+  listPeerIds,
+  getVoiceState,
+  setVoiceState,
+  applyVoiceStateToPeer,
+} from './room.js';
 
 const log = pino({ name: 'voice/signaling', level: 'info' });
 
 // API'den kalıcı server-mute/deaf durumunu çekmek için (voice server restart durabilitesi)
 const API_INTERNAL_URL = process.env.API_INTERNAL_URL ?? 'http://localhost:8080/api/v1';
-const VOICE_CONTROL_SECRET = process.env.VOICE_CONTROL_SECRET ?? 'dev_voice_control_secret_change_me';
+const VOICE_CONTROL_SECRET =
+  process.env.VOICE_CONTROL_SECRET ?? 'dev_voice_control_secret_change_me';
 
 // Kanal join politikası: kullanıcı limiti + ses bitrate'i + limit muafiyeti (API'den)
 async function fetchJoinPolicy(
@@ -62,7 +78,11 @@ export function broadcastToChannel(channelId: string, m: { type: string; payload
   for (const client of wssRef.clients) {
     const c = client as AuthedSocket;
     if (c.readyState === WebSocket.OPEN && c.channelId === channelId) {
-      try { c.send(JSON.stringify(m)); } catch { /* yoksay */ }
+      try {
+        c.send(JSON.stringify(m));
+      } catch {
+        /* yoksay */
+      }
     }
   }
 }
@@ -74,9 +94,20 @@ interface Message {
   replyTo?: string;
 }
 
-type AuthedSocket = WebSocket & { userId?: string; channelId?: string; socketId?: string };
+type AuthedSocket = WebSocket & {
+  userId?: string;
+  userName?: string;
+  channelId?: string;
+  socketId?: string;
+};
 
 export function startSignaling() {
+  // Cascade uzak bir producer'ı pipe'ladığında yerel peer'lara haber vermeli.
+  // Enjeksiyon: cascade.ts, signaling'in broadcast'ini bilmez (döngüsel import olurdu).
+  setNewProducerNotifier((channelId, payload) => {
+    broadcastToChannel(channelId, { type: 'newProducer', payload });
+  });
+
   const wss = new WebSocketServer({ port: config.port });
   wssRef = wss;
   log.info({ port: config.port }, 'voice signaling listening');
@@ -91,8 +122,15 @@ export function startSignaling() {
     }
 
     try {
-      const decoded = jwt.verify(token, config.jwtSecret) as { uid?: number; sub?: string };
-      ws.userId = String(decoded.uid ?? decoded.sub ?? '');
+      const decoded = jwt.verify(token, config.jwtSecret) as {
+        uid?: string | number;
+        sub?: string;
+        name?: string;
+      };
+      // sub (JWT'de string) tercih edilir; uid JS'te sayı olarak gelirse Snowflake
+      // ID'si 2^53 sınırını aşıp hassasiyet kaybeder (…792 → …790). sub kayıpsızdır.
+      ws.userId = String(decoded.sub ?? decoded.uid ?? '');
+      ws.userName = typeof decoded.name === 'string' ? decoded.name : '';
       if (!ws.userId) throw new Error('uid missing');
     } catch (e) {
       log.warn({ err: String(e) }, 'auth failed');
@@ -109,7 +147,7 @@ export function startSignaling() {
     // Diğer üyelere bildir (yeni peer geldi)
     broadcast(wss, channelId, ws.userId!, {
       type: 'peer:joined',
-      payload: { userId: ws.userId },
+      payload: { userId: ws.userId, name: ws.userName },
     });
 
     ws.on('message', async (raw) => {
@@ -135,6 +173,13 @@ export function startSignaling() {
         type: 'peer:left',
         payload: { userId: ws.userId },
       });
+      if (cluster.enabled) {
+        cluster.setLoad(totalPeers());
+        // Kanal bu node'da boşaldıysa pipe'ları kapat + küme kaydından çık.
+        // Yapmazsak: kimseye hizmet etmeyen pipe'lar RTP port aralığını sızdırır ve
+        // diğer node'lar boş node'a boşuna yayın taşımaya devam eder.
+        if (r.peers.size === 0) void onChannelEmpty(ws.channelId);
+      }
     });
   });
 }
@@ -167,7 +212,15 @@ async function handleMessage(ws: AuthedSocket, wss: WebSocketServer, msg: Messag
           return;
         }
       }
-      await room.addPeer(ws.userId, ws.socketId!);
+      await room.addPeer(ws.userId, ws.socketId!, ws.userName);
+      // Cascade: bu node artık o kanalda peer barındırıyor → kümeye kaydol ve ZATEN
+      // yayında olan uzak producer'ları çek. Yalnızca olayları dinlemek yetmez: katılmadan
+      // önce başlamış yayınlar kaçar, kullanıcı odaya girip kimseyi duymaz.
+      if (cluster.enabled) {
+        await cluster.joinChannel(ws.channelId);
+        cluster.setLoad(totalPeers());
+        await syncExistingRemoteProducers(ws.channelId);
+      }
       // Kalıcı server-mute/deaf durumunu API'den yükle (voice server yeniden başlamış olabilir)
       await loadPersistedVoiceState(ws.channelId, ws.userId);
       const peerIds = listPeerIds(ws.channelId).filter((id) => id !== ws.userId);
@@ -177,6 +230,18 @@ async function handleMessage(ws: AuthedSocket, wss: WebSocketServer, msg: Messag
         kind: x.producer.kind,
         appData: x.producer.appData,
       }));
+      // Cascade: pipe ile gelen UZAK yayınlar da join yanıtında olmalı. otherProducers
+      // yalnızca YEREL peer'lara bakar; bunlar eklenmezse kullanıcı odaya girer ve başka
+      // node'daki kimseyi duymaz (yalnızca katılımdan SONRAKİ yayınları alır).
+      for (const { producer, userId } of pipedProducersFor(ws.channelId)) {
+        if (userId === ws.userId) continue;
+        existing.push({
+          producerId: producer.id,
+          userId,
+          kind: producer.kind,
+          appData: producer.appData,
+        });
+      }
       send(ws, {
         type: 'joined',
         replyTo: msg.id,
@@ -243,6 +308,24 @@ async function handleMessage(ws: AuthedSocket, wss: WebSocketServer, msg: Messag
         type: 'newProducer',
         payload: { producerId: producer.id, userId: ws.userId, kind, appData },
       });
+      // Cascade: DİĞER node'lardaki peer'lar da bu yayını almalı → kümeye duyur.
+      // Duyurmazsak çok-node'da kullanıcı yalnızca kendi node'undakileri duyar (sessiz bölünme).
+      void cluster.publish({
+        type: 'producer:created',
+        channelId: ws.channelId!,
+        nodeId: cluster.nodeId,
+        producerId: producer.id,
+        userId: ws.userId!,
+        kind,
+      });
+      producer.observer.once('close', () => {
+        void cluster.publish({
+          type: 'producer:closed',
+          channelId: ws.channelId!,
+          nodeId: cluster.nodeId,
+          producerId: producer.id,
+        });
+      });
       return;
     }
 
@@ -302,7 +385,10 @@ async function handleMessage(ws: AuthedSocket, wss: WebSocketServer, msg: Messag
       const raised = !!msg.payload?.raised;
       if (raised) room.stageHands.add(ws.userId);
       else room.stageHands.delete(ws.userId);
-      broadcast(wss, ws.channelId, '', { type: 'stageHand', payload: { userId: ws.userId, raised } });
+      broadcast(wss, ws.channelId, '', {
+        type: 'stageHand',
+        payload: { userId: ws.userId, raised },
+      });
       return;
     }
 
@@ -312,9 +398,14 @@ async function handleMessage(ws: AuthedSocket, wss: WebSocketServer, msg: Messag
       const targetId = String(msg.payload?.userId ?? '');
       const isSpeaker = !!msg.payload?.isSpeaker;
       if (!targetId) return;
-      if (isSpeaker) { room.stageSpeakers.add(targetId); room.stageHands.delete(targetId); }
-      else room.stageSpeakers.delete(targetId);
-      broadcast(wss, ws.channelId, '', { type: 'stageSpeaker', payload: { userId: targetId, isSpeaker } });
+      if (isSpeaker) {
+        room.stageSpeakers.add(targetId);
+        room.stageHands.delete(targetId);
+      } else room.stageSpeakers.delete(targetId);
+      broadcast(wss, ws.channelId, '', {
+        type: 'stageSpeaker',
+        payload: { userId: targetId, isSpeaker },
+      });
       return;
     }
 
@@ -325,8 +416,19 @@ async function handleMessage(ws: AuthedSocket, wss: WebSocketServer, msg: Messag
     }
 
     default:
-      send(ws, { type: 'error', replyTo: msg.id, payload: { message: 'unknown type ' + msg.type } });
+      send(ws, {
+        type: 'error',
+        replyTo: msg.id,
+        payload: { message: 'unknown type ' + msg.type },
+      });
   }
+}
+
+/** Bu node'daki toplam peer sayısı — SFU seçicinin yük göstergesi. */
+function totalPeers(): number {
+  let n = 0;
+  for (const r of rooms.values()) n += r.peers.size;
+  return n;
 }
 
 function send(ws: WebSocket, m: Message) {

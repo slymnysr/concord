@@ -9,17 +9,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
+	"github.com/concord/api/internal/repo"
 )
 
 // Mention pattern'leri
-//   @kullaniciadi            → username (kullanıcı)
-//   <@123456789>             → user_id direkt
-//   <@&123456789>            → role_id (rol mention)
-//   @everyone                → tüm üyeler (MENTION_EVERYONE perm gerekli)
-//   @here                    → sadece online üyeler (MENTION_EVERYONE perm gerekli)
+//
+//	@kullaniciadi            → username (kullanıcı)
+//	<@123456789>             → user_id direkt
+//	<@&123456789>            → role_id (rol mention)
+//	@everyone                → tüm üyeler (MENTION_EVERYONE perm gerekli)
+//	@here                    → sadece online üyeler (MENTION_EVERYONE perm gerekli)
 var (
 	mentionUserRegex     = regexp.MustCompile(`@([a-z0-9_.]{3,32})`)
 	mentionUserIDRegex   = regexp.MustCompile(`<@(\d{10,21})>`)
@@ -218,13 +219,17 @@ func (h *Handler) parseAndPersistMentions(ctx context.Context, ch *repo.Channel,
 			n.GuildID = ch.GuildID
 		}
 		_ = h.Notifications.Create(ctx, n)
+		// Push: kullanıcı uygulamayı KAPALIYKEN de haberdar olmalı — WS olayı yalnızca
+		// açık istemciye ulaşır. Bu bağlanmadan önce abonelikler kaydedilip hiç
+		// kullanılmıyordu (izin istenir, token yazılır, bildirim asla gitmez).
+		h.pushForNotification(n, h.actorName(ctx, m.AuthorID), pushPreview(m.Content))
 		if h.Redis != nil {
 			payload, _ := json.Marshal(map[string]any{
 				"type":         "NOTIFICATION",
 				"notification": n,
 				"ts":           time.Now().UnixMilli(),
 			})
-			_, _ = h.Redis.Publish(ctx, "sidcord:user:"+strconv.FormatInt(uid, 10), payload).Result()
+			_, _ = h.Redis.Publish(ctx, "concord:user:"+strconv.FormatInt(uid, 10), payload).Result()
 		}
 	}
 	return userIDs

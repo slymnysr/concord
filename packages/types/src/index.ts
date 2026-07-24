@@ -18,7 +18,15 @@ export interface Guild {
   createdAt: number;
 }
 
-export type ChannelType = 'text' | 'voice' | 'category' | 'announcement' | 'forum' | 'stage' | 'dm' | 'group_dm';
+export type ChannelType =
+  | 'text'
+  | 'voice'
+  | 'category'
+  | 'announcement'
+  | 'forum'
+  | 'stage'
+  | 'dm'
+  | 'group_dm';
 
 export interface Channel {
   id: Snowflake;

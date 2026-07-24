@@ -6,13 +6,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
 	"github.com/jackc/pgx/v5"
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
 )
 
 func parseInt64(s string) (int64, error) { return strconv.ParseInt(s, 10, 64) }
-func int64ToStr(n int64) string           { return strconv.FormatInt(n, 10) }
+func int64ToStr(n int64) string          { return strconv.FormatInt(n, 10) }
 
 type stageInstanceView struct {
 	ChannelID    string    `json:"channel_id"`

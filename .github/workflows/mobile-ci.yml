@@ -1,0 +1,39 @@
+# Concord Mobil CI — her PR/push'ta tip kontrolü (tsc) + Metro paketleme (expo export).
+# Cihaz/backend testi değil; ama derleme/paketleme regresyonlarını yakalar.
+name: Mobile CI
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'apps/mobile/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/mobile-ci.yml'
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - 'pnpm-lock.yaml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Bağımlılıkları kur
+        run: pnpm install --frozen-lockfile
+
+      - name: Tip kontrolü (tsc)
+        working-directory: apps/mobile
+        run: pnpm exec tsc --noEmit
+
+      - name: Metro paketleme (expo export, android)
+        working-directory: apps/mobile
+        run: npx expo export --platform android

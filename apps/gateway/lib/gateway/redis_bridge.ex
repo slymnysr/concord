@@ -1,13 +1,24 @@
 defmodule Gateway.RedisBridge do
   @moduledoc """
-  Redis PubSub köprüsü — `sidcord:guild:*` pattern'ini dinler, gelen olayları
+  Redis PubSub köprüsü — `concord:guild:*` pattern'ini dinler, gelen olayları
   Phoenix kanalına yayar (`guild:<id>` topic'i).
   Go API mesaj attığında bu köprü gerçek zamanlı dağıtımı sağlar.
+
+  ## Çok-node: neden `local_broadcast`?
+
+  Redis pubsub mesajı HER aboneye gider → kümedeki N node'un HEPSİ aynı olayı alır.
+  Eğer her node `broadcast!` çağırsaydı, Phoenix.PubSub olayı tekrar TÜM node'lara
+  dağıtırdı → her istemci mesajı **N kez** görürdü (ve küme içi trafik N²'ye çıkardı).
+
+  Doğru iş bölümü: **node'lar arası dağıtımı Redis yapar**, PubSub'ın işi yalnızca
+  o node'a bağlı YEREL soketlere ulaşmak. Bu yüzden `local_broadcast`.
+
+  (Presence bundan etkilenmez: kendi CRDT senkronunu dağıtık PubSub üzerinden yapar.)
   """
   use GenServer
   require Logger
 
-  @pattern "sidcord:guild:*"
+  @pattern "concord:guild:*"
 
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -17,10 +28,14 @@ defmodule Gateway.RedisBridge do
   def init(_opts) do
     host = System.get_env("REDIS_HOST") || "localhost"
     port = String.to_integer(System.get_env("REDIS_PORT") || "6379")
+    password = System.get_env("REDIS_PASSWORD")
 
-    case Redix.PubSub.start_link(host: host, port: port, name: :sidcord_pubsub) do
+    opts = [host: host, port: port, name: :concord_pubsub]
+    opts = if password in [nil, ""], do: opts, else: Keyword.put(opts, :password, password)
+
+    case Redix.PubSub.start_link(opts) do
       {:ok, pid} ->
-        {:ok, ref} = Redix.PubSub.psubscribe(:sidcord_pubsub, @pattern, self())
+        {:ok, ref} = Redix.PubSub.psubscribe(:concord_pubsub, @pattern, self())
         Logger.info("RedisBridge subscribed to #{@pattern}")
         {:ok, %{conn: pid, ref: ref}}
 
@@ -54,12 +69,14 @@ defmodule Gateway.RedisBridge do
     {:noreply, state}
   end
 
-  defp decode_and_forward("sidcord:guild:" <> guild_id, payload) do
+  defp decode_and_forward("concord:guild:" <> guild_id, payload) do
     case Jason.decode(payload) do
       {:ok, %{"type" => event_type} = event} ->
         topic = "guild:#{guild_id}"
-        Logger.info("RedisBridge forwarding #{event_type} → #{topic}")
-        GatewayWeb.Endpoint.broadcast!(topic, event_type, event)
+        Logger.debug("RedisBridge forwarding #{event_type} → #{topic}")
+        # local_broadcast: küme dağıtımını Redis yapıyor (bkz. modül dokümanı) — broadcast!
+        # kullanmak her istemciye N kopya gönderirdi.
+        GatewayWeb.Endpoint.local_broadcast(topic, event_type, event)
         :ok
 
       {:error, reason} ->

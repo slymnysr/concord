@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
+	"github.com/concord/api/internal/repo"
 	"github.com/go-chi/chi/v5"
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
-	"github.com/sidcord/api/internal/repo"
 )
 
 // computeChannelPerms — sunucu seviyesi izinleri + kanal overrides'ları uygular
@@ -182,6 +182,10 @@ func (h *Handler) DeleteChannelOverride(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	targetType := chi.URLParam(r, "targetType")
+	if targetType != "role" && targetType != "user" {
+		writeError(w, http.StatusBadRequest, "bad_request", "target_type 'role' veya 'user'")
+		return
+	}
 	targetID, err := strconv.ParseInt(chi.URLParam(r, "targetID"), 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "bad_request", "target_id parse")

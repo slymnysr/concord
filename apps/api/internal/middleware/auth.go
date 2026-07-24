@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/sidcord/api/internal/auth"
+	"github.com/concord/api/internal/auth"
 )
 
 type ctxKey string

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Check, Search, Users } from 'lucide-react';
 import { api } from '../api';
 import { useAppDispatch, closeModal, selectDM, selectChannel, setMode } from '../store';
+import { t, errText } from '../i18n';
 
 interface Friend {
   user_id: string;
@@ -42,8 +43,7 @@ export function NewDMModal() {
     const q = query.trim().toLowerCase();
     if (!q) return friends;
     return friends.filter(
-      (f) =>
-        f.display_name.toLowerCase().includes(q) || f.username.toLowerCase().includes(q),
+      (f) => f.display_name.toLowerCase().includes(q) || f.username.toLowerCase().includes(q),
     );
   }, [friends, query]);
 
@@ -75,7 +75,7 @@ export function NewDMModal() {
       dispatch(selectChannel(channelId));
       dispatch(closeModal());
     } catch (e: any) {
-      setError(e?.message || 'Sohbet oluşturulamadı');
+      setError(errText(e, t('dm.createFailed')));
     } finally {
       setBusy(false);
     }
@@ -88,7 +88,7 @@ export function NewDMModal() {
       <div className="mb-1 flex items-center gap-2">
         <Users size={18} className="text-brand-500" />
         <h2 className="text-lg font-bold text-ink-primary">
-          {isGroup ? 'Grup Sohbeti Oluştur' : 'Mesaj Oluştur'}
+          {isGroup ? t('dm.createGroup') : t('dm.createMessage')}
         </h2>
       </div>
       <p className="text-sm text-ink-secondary mb-3">
@@ -106,7 +106,8 @@ export function NewDMModal() {
                 key={id}
                 onClick={() => toggle(id)}
                 className="flex items-center gap-1.5 bg-brand-500/15 text-brand-300 text-xs font-medium pl-1 pr-2 py-1 rounded-full hover:bg-brand-500/25"
-                title="Kaldır" aria-label="Kaldır"
+                title={t('common.remove')}
+                aria-label={t('common.remove')}
               >
                 <span
                   className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold"
@@ -127,7 +128,7 @@ export function NewDMModal() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Arkadaş ara..."
+          placeholder={t('dm.searchFriend')}
           autoFocus
           className="w-full bg-surface-2 border border-line rounded-lg pl-9 pr-3 py-2 text-sm text-ink-primary focus:border-brand-500/50 focus:outline-none"
         />
@@ -135,12 +136,10 @@ export function NewDMModal() {
 
       <div className="max-h-72 overflow-y-auto -mx-1 px-1 space-y-0.5">
         {loading ? (
-          <p className="text-sm text-ink-tertiary px-2 py-4 text-center">Yükleniyor...</p>
+          <p className="text-sm text-ink-tertiary px-2 py-4 text-center">{t('common.loading')}</p>
         ) : filtered.length === 0 ? (
           <p className="text-sm text-ink-tertiary px-2 py-4 text-center">
-            {friends.length === 0
-              ? 'Henüz arkadaşın yok. Önce arkadaş ekle.'
-              : 'Eşleşen arkadaş yok.'}
+            {friends.length === 0 ? t('dm.noFriends') : t('dm.noMatchFriend')}
           </p>
         ) : (
           filtered.map((f) => {
@@ -188,12 +187,12 @@ export function NewDMModal() {
         className="mt-4 w-full py-2.5 rounded-lg bg-brand-500 hover:bg-brand-400 disabled:bg-surface-3 disabled:text-ink-tertiary text-white font-semibold transition-colors"
       >
         {busy
-          ? 'Oluşturuluyor...'
+          ? t('common.creating')
           : selected.size === 0
-            ? 'Kişi seç'
+            ? t('dm.pickPerson')
             : isGroup
-              ? `Grup Sohbeti Başlat (${selected.size})`
-              : 'Mesaj Gönder'}
+              ? t('dm.startGroup', { n: selected.size })
+              : t('dm.sendMessage')}
       </button>
     </div>
   );

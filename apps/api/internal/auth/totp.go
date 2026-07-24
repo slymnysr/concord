@@ -64,5 +64,5 @@ func ValidateTOTP(secret, code string) bool {
 
 // OtpauthURL — authenticator uygulamalarına eklemek için otpauth:// URI'si.
 func OtpauthURL(secret, account string) string {
-	return fmt.Sprintf("otpauth://totp/Sidcord:%s?secret=%s&issuer=Sidcord&algorithm=SHA1&digits=6&period=30", account, secret)
+	return fmt.Sprintf("otpauth://totp/Concord:%s?secret=%s&issuer=Concord&algorithm=SHA1&digits=6&period=30", account, secret)
 }

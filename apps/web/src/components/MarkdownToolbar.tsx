@@ -1,4 +1,5 @@
 import { Bold, Italic, Underline, Strikethrough, Code, Quote, EyeOff } from 'lucide-react';
+import { t } from '../i18n';
 
 interface Props {
   textarea: HTMLTextAreaElement | null;
@@ -32,13 +33,13 @@ export function MarkdownToolbar({ textarea, onChange }: Props) {
   }
 
   const buttons = [
-    { icon: Bold, fn: () => apply('**'), title: 'Kalın (Ctrl+B)' },
-    { icon: Italic, fn: () => apply('*'), title: 'İtalik (Ctrl+I)' },
-    { icon: Underline, fn: () => apply('__'), title: 'Altı çizili (Ctrl+U)' },
-    { icon: Strikethrough, fn: () => apply('~~'), title: 'Üstü çizili' },
-    { icon: Code, fn: () => apply('`'), title: 'Kod (Ctrl+E)' },
-    { icon: Quote, fn: () => apply('> ', ''), title: 'Alıntı' },
-    { icon: EyeOff, fn: () => apply('||'), title: 'Spoiler' },
+    { icon: Bold, fn: () => apply('**'), title: t('md.bold') },
+    { icon: Italic, fn: () => apply('*'), title: t('md.italic') },
+    { icon: Underline, fn: () => apply('__'), title: t('md.underline') },
+    { icon: Strikethrough, fn: () => apply('~~'), title: t('md.strike') },
+    { icon: Code, fn: () => apply('`'), title: t('md.code') },
+    { icon: Quote, fn: () => apply('> ', ''), title: t('md.quote') },
+    { icon: EyeOff, fn: () => apply('||'), title: t('md.spoiler') },
   ];
 
   return (

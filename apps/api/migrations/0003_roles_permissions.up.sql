@@ -2,7 +2,7 @@
 -- Position tablosu zaten var. Şimdi @everyone otomatik oluşturma + member_roles ile çalışan permission sistemi
 
 -- @everyone rolünü otomatik oluşturan trigger
-CREATE OR REPLACE FUNCTION sidcord_create_everyone_role() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION concord_create_everyone_role() RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO roles (id, guild_id, name, color, position, permissions, is_everyone)
     VALUES (
@@ -22,7 +22,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_guilds_create_everyone
     AFTER INSERT ON guilds
-    FOR EACH ROW EXECUTE FUNCTION sidcord_create_everyone_role();
+    FOR EACH ROW EXECUTE FUNCTION concord_create_everyone_role();
 
 -- Mevcut guildler için @everyone rolü
 INSERT INTO roles (id, guild_id, name, color, position, permissions, is_everyone)

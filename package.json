@@ -1,8 +1,8 @@
 {
-  "name": "sidcord",
+  "name": "concord",
   "version": "0.0.1",
   "private": true,
-  "description": "Sidcord - Türkiye Discord alternatifi",
+  "description": "Concord - Türkiye Discord alternatifi",
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "build": "turbo run build",
@@ -11,9 +11,9 @@
     "test": "turbo run test",
     "type-check": "turbo run type-check",
     "clean": "turbo run clean && rm -rf node_modules",
-    "db:up": "docker compose -f infra/docker/docker-compose.yml up -d",
-    "db:down": "docker compose -f infra/docker/docker-compose.yml down",
-    "db:logs": "docker compose -f infra/docker/docker-compose.yml logs -f"
+    "db:up": "docker compose --env-file .env -f infra/docker/docker-compose.yml up -d",
+    "db:down": "docker compose --env-file .env -f infra/docker/docker-compose.yml down",
+    "db:logs": "docker compose --env-file .env -f infra/docker/docker-compose.yml logs -f"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
@@ -24,5 +24,19 @@
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
+  },
+  "pnpm": {
+    "packageExtensions": {
+      "lucide-react": {
+        "peerDependencies": {
+          "@types/react": "*"
+        },
+        "peerDependenciesMeta": {
+          "@types/react": {
+            "optional": true
+          }
+        }
+      }
+    }
   }
 }

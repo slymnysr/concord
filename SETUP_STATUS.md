@@ -1,26 +1,28 @@
-# Sidcord — Kurulum Durumu (Faz 0 Doğrulama)
+# Concord — Kurulum Durumu (Faz 0 Doğrulama)
 
 Tarih: 2026-05-24
 
 ## Otomatik tamamlanan ✓
 
-| Bileşen | Durum | Test |
-|---------|-------|------|
-| Klasör yapısı + Turborepo | ✓ | dosyalar oluştu |
-| Go 1.22.5 (`~/.local/go`) | ✓ | `go version` |
-| pnpm 9 (global) | ✓ | `pnpm --version` |
-| pnpm workspace bağımlılıkları (web + paketler) | ✓ | 283 paket yüklü |
-| Go API bağımlılıkları + build (`apps/api/bin/api`) | ✓ | binary oluştu (~9MB) |
-| Go API runtime | ✓ ÇALIŞIYOR | `curl localhost:8080/health` → `{"status":"ok"}` |
-| Web (Vite dev) | ✓ ÇALIŞIYOR | `curl localhost:3000/` → HTTP 200 |
+| Bileşen                                            | Durum       | Test                                             |
+| -------------------------------------------------- | ----------- | ------------------------------------------------ |
+| Klasör yapısı + Turborepo                          | ✓           | dosyalar oluştu                                  |
+| Go 1.22.5 (`~/.local/go`)                          | ✓           | `go version`                                     |
+| pnpm 9 (global)                                    | ✓           | `pnpm --version`                                 |
+| pnpm workspace bağımlılıkları (web + paketler)     | ✓           | 283 paket yüklü                                  |
+| Go API bağımlılıkları + build (`apps/api/bin/api`) | ✓           | binary oluştu (~9MB)                             |
+| Go API runtime                                     | ✓ ÇALIŞIYOR | `curl localhost:8080/health` → `{"status":"ok"}` |
+| Web (Vite dev)                                     | ✓ ÇALIŞIYOR | `curl localhost:3000/` → HTTP 200                |
 
 **Çalışan servisler:**
-- API: PID `/tmp/sidcord-api.pid` — port 8080
-- Web: PID `/tmp/sidcord-web.pid` — port 3000
+
+- API: PID `/tmp/concord-api.pid` — port 8080
+- Web: PID `/tmp/concord-web.pid` — port 3000
 
 Durdurmak için:
+
 ```bash
-kill $(cat /tmp/sidcord-api.pid) $(cat /tmp/sidcord-web.pid)
+kill $(cat /tmp/concord-api.pid) $(cat /tmp/concord-web.pid)
 ```
 
 ## Engellenen (manuel müdahale gerekiyor)
@@ -32,9 +34,10 @@ kill $(cat /tmp/sidcord-api.pid) $(cat /tmp/sidcord-web.pid)
 **Çözüm:** Windows tarafında Docker Desktop'ı aç → Settings → Resources → WSL Integration → Ubuntu-24.04 için aç → Apply & Restart.
 
 **Sonrası:**
+
 ```bash
 docker --version  # çalışmalı
-cd /home/slmnys/sidcord && pnpm db:up
+cd /home/slmnys/concord && pnpm db:up
 ```
 
 ### 2. Elixir + Erlang/OTP
@@ -42,6 +45,7 @@ cd /home/slmnys/sidcord && pnpm db:up
 **Sorun:** Erlang derlemek için sudo gerektiren build dep'leri eksik (libssl-dev, libncurses-dev, vs.). asdf precompiled binary yok, kerl kaynaktan derliyor.
 
 **Çözüm (sudo şifresi gerekli, tek seferlik):**
+
 ```bash
 # Build deps
 sudo apt-get update
@@ -70,8 +74,9 @@ elixir --version
 Erlang derleme **15-25 dakika** sürer.
 
 **Sonrası:**
+
 ```bash
-cd /home/slmnys/sidcord/apps/gateway
+cd /home/slmnys/concord/apps/gateway
 mix local.hex --force
 mix local.rebar --force
 mix deps.get
@@ -81,8 +86,9 @@ mix phx.server  # port 4000
 ## Sıradaki
 
 Yukarıdaki 2 manuel adım tamamlandığında:
+
 1. `pnpm db:up` (DB'ler ayağa kalkar)
 2. `mix phx.server` (gateway)
-3. `tarayıcı → localhost:3000` (Sidcord landing + app shell görünmeli)
+3. `tarayıcı → localhost:3000` (Concord landing + app shell görünmeli)
 
 Bunlar bitince Faz 1'e geçilecek (Snowflake ID, auth, postgres şeması, ilk mesaj akışı).

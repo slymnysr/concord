@@ -1,0 +1,38 @@
+# Ingress — tek origin: web (SPA) + /api (REST) + /socket (Phoenix WS)
+#
+# NOT: Voice RTC medyası buradan GEÇMEZ (UDP, proxy'lenemez) — voice.yaml hostNetwork
+# ile doğrudan node'a açılır. Yalnızca voice SIGNALING (WS) buradan geçebilir.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: concord
+  namespace: concord
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600' # WS uzun ömürlü
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-body-size: '100m' # upload presign limiti ile uyumlu
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: ['concord.example.com']
+      secretName: concord-tls
+  rules:
+    - host: concord.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: api, port: { number: 8080 } } }
+          - path: /socket
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { number: 4000 } } }
+          - path: /voice-ws
+            pathType: Prefix
+            backend: { service: { name: voice, port: { number: 4443 } } }
+          - path: /voice-api
+            pathType: Prefix
+            backend: { service: { name: voice, port: { number: 4444 } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: web, port: { number: 80 } } }

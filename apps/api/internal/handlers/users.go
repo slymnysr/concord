@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/concord/api/internal/middleware"
 	"github.com/go-chi/chi/v5"
-	"github.com/sidcord/api/internal/middleware"
 )
 
 type updateStatusReq struct {
@@ -116,23 +116,23 @@ type mutualFriendView struct {
 }
 
 type publicUserView struct {
-	ID          string    `json:"id"`
-	Username    string    `json:"username"`
-	DisplayName string    `json:"display_name"`
-	AvatarColor string    `json:"avatar_color"`
-	AvatarURL   *string   `json:"avatar_url,omitempty"`
-	BannerURL   *string   `json:"banner_url,omitempty"`
-	Bio         *string   `json:"bio,omitempty"`
-	Pronouns    *string   `json:"pronouns,omitempty"`
-	AccentColor *string   `json:"accent_color,omitempty"`
-	CustomStatusText  *string `json:"custom_status_text,omitempty"`
-	CustomStatusEmoji *string `json:"custom_status_emoji,omitempty"`
-	EmailVerified bool      `json:"email_verified"`
-	TOTPEnabled   bool      `json:"totp_enabled"`
-	AvatarDecoration *string `json:"avatar_decoration,omitempty"`
-	Status      string    `json:"status"`
-	Bot         bool      `json:"bot"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID                string    `json:"id"`
+	Username          string    `json:"username"`
+	DisplayName       string    `json:"display_name"`
+	AvatarColor       string    `json:"avatar_color"`
+	AvatarURL         *string   `json:"avatar_url,omitempty"`
+	BannerURL         *string   `json:"banner_url,omitempty"`
+	Bio               *string   `json:"bio,omitempty"`
+	Pronouns          *string   `json:"pronouns,omitempty"`
+	AccentColor       *string   `json:"accent_color,omitempty"`
+	CustomStatusText  *string   `json:"custom_status_text,omitempty"`
+	CustomStatusEmoji *string   `json:"custom_status_emoji,omitempty"`
+	EmailVerified     bool      `json:"email_verified"`
+	TOTPEnabled       bool      `json:"totp_enabled"`
+	AvatarDecoration  *string   `json:"avatar_decoration,omitempty"`
+	Status            string    `json:"status"`
+	Bot               bool      `json:"bot"`
+	CreatedAt         time.Time `json:"created_at"`
 	// Friendship state with the requesting user (none / pending_sent / pending_received / accepted / self)
 	FriendshipState string `json:"friendship_state,omitempty"`
 	// Has open DM with the requesting user

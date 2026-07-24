@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
+	"github.com/concord/api/internal/repo"
 )
 
 // publishPollUpdate — oy değişince bağlı istemcilere POLL_UPDATE yayar (canlı sonuç)
@@ -34,7 +34,7 @@ func (h *Handler) publishPollUpdate(ctx context.Context, pollID int64) {
 		"ts":         time.Now().UnixMilli(),
 	})
 	if ch.GuildID != nil {
-		h.Redis.Publish(ctx, "sidcord:guild:"+strconv.FormatInt(*ch.GuildID, 10), payload)
+		h.Redis.Publish(ctx, "concord:guild:"+strconv.FormatInt(*ch.GuildID, 10), payload)
 		return
 	}
 	rows, err := h.Pool.Query(ctx, `SELECT user_id FROM dm_participants WHERE channel_id = $1`, channelID)
@@ -45,7 +45,7 @@ func (h *Handler) publishPollUpdate(ctx context.Context, pollID int64) {
 	for rows.Next() {
 		var uid int64
 		if err := rows.Scan(&uid); err == nil {
-			h.Redis.Publish(ctx, "sidcord:user:"+strconv.FormatInt(uid, 10), payload)
+			h.Redis.Publish(ctx, "concord:user:"+strconv.FormatInt(uid, 10), payload)
 		}
 	}
 }

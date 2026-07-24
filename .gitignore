@@ -114,8 +114,8 @@ tmp/
 *.orig
 
 # ===== Process PIDs (geliştirme) =====
-/tmp/sidcord-*.pid
-/tmp/sidcord-*.log
+/tmp/concord-*.pid
+/tmp/concord-*.log
 
 # ===== TLS / Certs =====
 *.crt
@@ -139,6 +139,6 @@ backups/
 .turbo
 .eslintcache
 designden gelen/
-.sidcord-state.md
+.concord-state.md
 apps/mobile/dist/
 apps/mobile/.expo/

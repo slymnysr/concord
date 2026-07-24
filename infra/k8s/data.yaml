@@ -1,0 +1,173 @@
+# Veri katmanı: postgres, redis, minio, clamav
+#
+# NOT: Bunlar TEK-replica, basit StatefulSet'lerdir — küçük/self-host kurulum içindir.
+# Ciddi üretimde yönetilen servis (RDS/ElastiCache/S3) veya operatör (CloudNativePG,
+# Redis Operator) tercih edilmelidir; burada "çalışan bir taban" hedeflenmiştir.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: concord
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector: { matchLabels: { app: postgres } }
+  template:
+    metadata:
+      labels: { app: postgres }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports: [{ name: pg, containerPort: 5432 }]
+          env:
+            - name: POSTGRES_USER
+              value: concord
+            - name: POSTGRES_DB
+              value: concord
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: POSTGRES_PASSWORD } }
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/postgresql/data }
+          readinessProbe:
+            exec: { command: ['pg_isready', '-U', 'concord'] }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 200m, memory: 256Mi }
+            limits: { cpu: '2', memory: 2Gi }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ['ReadWriteOnce']
+        resources: { requests: { storage: 20Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: postgres, namespace: concord }
+spec:
+  selector: { app: postgres }
+  ports: [{ port: 5432, targetPort: pg }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: concord
+spec:
+  serviceName: redis
+  replicas: 1
+  selector: { matchLabels: { app: redis } }
+  template:
+    metadata:
+      labels: { app: redis }
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args: ['redis-server', '--appendonly', 'yes']
+          ports: [{ name: redis, containerPort: 6379 }]
+          volumeMounts: [{ name: data, mountPath: /data }]
+          readinessProbe:
+            exec: { command: ['redis-cli', 'ping'] }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: '1', memory: 1Gi }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ['ReadWriteOnce']
+        resources: { requests: { storage: 5Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: redis, namespace: concord }
+spec:
+  selector: { app: redis }
+  ports: [{ port: 6379, targetPort: redis }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  namespace: concord
+spec:
+  serviceName: minio
+  replicas: 1
+  selector: { matchLabels: { app: minio } }
+  template:
+    metadata:
+      labels: { app: minio }
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          args: ['server', '/data', '--console-address', ':9001']
+          ports:
+            - { name: s3, containerPort: 9000 }
+            - { name: console, containerPort: 9001 }
+          env:
+            - name: MINIO_ROOT_USER
+              value: concord
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: MINIO_SECRET_KEY } }
+          volumeMounts: [{ name: data, mountPath: /data }]
+          readinessProbe:
+            httpGet: { path: /minio/health/live, port: s3 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: '1', memory: 1Gi }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ['ReadWriteOnce']
+        resources: { requests: { storage: 50Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: minio, namespace: concord }
+spec:
+  selector: { app: minio }
+  ports:
+    - { name: s3, port: 9000, targetPort: s3 }
+    - { name: console, port: 9001, targetPort: console }
+---
+# Virüs tarama — FAZ A internal/media.Scan CLAMAV_ADDR ile buraya bağlanır
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clamav
+  namespace: concord
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: clamav } }
+  template:
+    metadata:
+      labels: { app: clamav }
+    spec:
+      containers:
+        - name: clamav
+          image: clamav/clamav:latest
+          ports: [{ name: clamd, containerPort: 3310 }]
+          readinessProbe:
+            exec: { command: ['sh', '-c', 'clamdscan --ping 1'] }
+            # İlk imza veritabanı indirmesi uzun sürer → cömert start period
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 10
+          resources:
+            requests: { cpu: 200m, memory: 1Gi } # ClamAV imza DB'si RAM'de tutulur
+            limits: { cpu: '1', memory: 2Gi }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: clamav, namespace: concord }
+spec:
+  selector: { app: clamav }
+  ports: [{ port: 3310, targetPort: clamd }]

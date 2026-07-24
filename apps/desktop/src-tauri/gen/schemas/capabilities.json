@@ -1,1 +1,9 @@
-{"default":{"identifier":"default","description":"Ana pencere varsayılan izinleri","local":true,"windows":["main"],"permissions":["core:default","opener:default"]}}
+{
+  "default": {
+    "identifier": "default",
+    "description": "Ana pencere varsayılan izinleri",
+    "local": true,
+    "windows": ["main"],
+    "permissions": ["core:default", "opener:default"]
+  }
+}

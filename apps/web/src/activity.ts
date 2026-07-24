@@ -1,3 +1,4 @@
+import { t } from './i18n';
 // Rich presence aktivite yardımcıları (üye listesi + profil kartı ortak)
 export interface Activity {
   type: string;
@@ -38,7 +39,7 @@ export function activityVerb(type: string): string {
 export function activityElapsed(startedAt?: number): string {
   if (!startedAt) return '';
   const mins = Math.max(0, Math.floor((Date.now() - startedAt) / 60000));
-  if (mins < 1) return 'az önce başladı';
+  if (mins < 1) return t('activity.justStarted');
   if (mins < 60) return `${mins} dakikadır`;
   const h = Math.floor(mins / 60);
   return `${h} saat ${mins % 60} dakikadır`;

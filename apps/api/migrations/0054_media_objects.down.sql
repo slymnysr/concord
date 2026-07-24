@@ -1,0 +1,2 @@
+ALTER TABLE attachments DROP COLUMN IF EXISTS thumb_url, DROP COLUMN IF EXISTS height, DROP COLUMN IF EXISTS width;
+DROP TABLE IF EXISTS media_objects;

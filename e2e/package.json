@@ -1,0 +1,16 @@
+{
+  "name": "@concord/e2e",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Concord uçtan uca (E2E) testleri — kara kutu, UI/API sözleşmesine dayalı",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/ws": "^8.5.13",
+    "ws": "^8.18.0"
+  }
+}

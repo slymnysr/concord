@@ -1,9 +1,18 @@
 import { useEffect, useState } from 'react';
 import { UserPlus, Hash, Plus, Users, Bookmark } from 'lucide-react';
 import { api, type APIDMChannel, type APIPublicUser } from '../api';
-import { useAppDispatch, useAppSelector, openModal, selectDM, selectChannel, setPendingDM, switchToGuild } from '../store';
+import {
+  useAppDispatch,
+  useAppSelector,
+  openModal,
+  selectDM,
+  selectChannel,
+  setPendingDM,
+  switchToGuild,
+} from '../store';
 import { VoiceStatusBar } from './VoiceStatusBar';
 import { SavedMessagesModal } from './SavedMessagesModal';
+import { t } from '../i18n';
 
 export function DMSidebar() {
   const dispatch = useAppDispatch();
@@ -18,7 +27,10 @@ export function DMSidebar() {
 
   useEffect(() => {
     if (savedOpen) return; // modal açıkken tazeleme gereksiz
-    api.savedMessages.list().then((l) => setSavedCount(l.length)).catch(() => {});
+    api.savedMessages
+      .list()
+      .then((l) => setSavedCount(l.length))
+      .catch(() => {});
   }, [savedOpen, me?.id]);
 
   async function refresh() {
@@ -33,9 +45,7 @@ export function DMSidebar() {
       }
       if (pendingDM) userIds.add(pendingDM.partnerId);
       const ids = Array.from(userIds);
-      const results = await Promise.all(
-        ids.map((id) => api.users.user(id).catch(() => null)),
-      );
+      const results = await Promise.all(ids.map((id) => api.users.user(id).catch(() => null)));
       const next: Record<string, APIPublicUser> = {};
       for (let i = 0; i < ids.length; i++) {
         const u = results[i];
@@ -58,22 +68,20 @@ export function DMSidebar() {
 
   // Pending DM listede mevcutsa zaten gösteriliyor, ekstra satır gereksiz
   const showPending =
-    pendingDM && !dms.some((d) => d.id === pendingDM.channelId)
-      ? pendingDM
-      : null;
+    pendingDM && !dms.some((d) => d.id === pendingDM.channelId) ? pendingDM : null;
 
   function dmTitle(dm: APIDMChannel): string {
     if (dm.type === 'group_dm') {
-      if (dm.name && dm.name !== 'Grup Sohbeti') return dm.name;
+      if (dm.name && dm.name !== t('dm.groupChat')) return dm.name;
       // İsimsiz grup: katılımcı adlarından otomatik başlık üret
       const names = dm.participants
         .filter((p) => p !== me?.id)
-        .map((p) => partners[p]?.display_name ?? `Kullanıcı ${p.slice(-4)}`);
-      return names.length > 0 ? names.join(', ') : dm.name || 'Grup Sohbeti';
+        .map((p) => partners[p]?.display_name ?? t('user.unknownShort', { id: p.slice(-4) }));
+      return names.length > 0 ? names.join(', ') : dm.name || t('dm.groupChat');
     }
     const other = dm.participants.find((p) => p !== me?.id);
     if (!other) return dm.name || 'DM';
-    return partners[other]?.display_name ?? `Kullanıcı ${other.slice(-4)}`;
+    return partners[other]?.display_name ?? t('user.unknownShort', { id: other.slice(-4) });
   }
 
   function dmColor(dm: APIDMChannel): string {
@@ -85,7 +93,7 @@ export function DMSidebar() {
   return (
     <aside className="w-64 bg-surface-1 flex flex-col border-r border-line">
       <header className="h-14 px-4 flex items-center border-b border-line">
-        <h2 className="text-ink-primary font-semibold text-[15px]">Direkt Mesajlar</h2>
+        <h2 className="text-ink-primary font-semibold text-[15px]">{t('dm.title')}</h2>
       </header>
 
       <div className="px-2.5 py-3 border-b border-line space-y-1.5">
@@ -119,7 +127,7 @@ export function DMSidebar() {
           <button
             onClick={() => dispatch(openModal('new_dm'))}
             className="relative group w-5 h-5 rounded flex items-center justify-center text-ink-tertiary hover:text-ink-primary hover:bg-surface-2 transition-colors"
-            aria-label="Mesaj Oluştur"
+            aria-label={t('dm.createMessage')}
           >
             <Plus size={15} />
             <span className="pointer-events-none absolute right-0 top-full mt-1.5 z-20 whitespace-nowrap rounded-md bg-surface-3 px-2 py-1 text-[11px] font-semibold text-ink-primary shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
@@ -128,40 +136,44 @@ export function DMSidebar() {
           </button>
         </div>
         {dms.length === 0 && !showPending && (
-          <p className="px-2 text-xs text-ink-tertiary">
-            Henüz DM yok. "Arkadaş Ekle" ile başla.
-          </p>
+          <p className="px-2 text-xs text-ink-tertiary">{t('ui.henuzDmYokArkadasEkleIle')}</p>
         )}
-        {showPending && (() => {
-          const partner = partners[showPending.partnerId];
-          const title = partner?.display_name ?? `Kullanıcı ${showPending.partnerId.slice(-4)}`;
-          const color = partner?.avatar_color ?? '#6B7280';
-          const active = showPending.channelId === selectedDMId;
-          return (
-            <button
-              onClick={() => {
-                dispatch(selectDM(showPending.channelId));
-                dispatch(selectChannel(showPending.channelId));
-              }}
-              className={
-                'w-full text-left px-2 py-1.5 rounded-md flex items-center gap-2.5 transition-colors ' +
-                (active
-                  ? 'bg-brand-500/10 text-ink-primary'
-                  : 'text-ink-secondary hover:bg-surface-2 hover:text-ink-primary')
-              }
-              title="Henüz mesaj atılmadı" aria-label="Henüz mesaj atılmadı"
-            >
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 ring-1 ring-brand-500/40"
-                style={{ backgroundColor: color }}
+        {showPending &&
+          (() => {
+            const partner = partners[showPending.partnerId];
+            const title =
+              partner?.display_name ??
+              t('user.unknownShort', { id: showPending.partnerId.slice(-4) });
+            const color = partner?.avatar_color ?? '#6B7280';
+            const active = showPending.channelId === selectedDMId;
+            return (
+              <button
+                onClick={() => {
+                  dispatch(selectDM(showPending.channelId));
+                  dispatch(selectChannel(showPending.channelId));
+                }}
+                className={
+                  'w-full text-left px-2 py-1.5 rounded-md flex items-center gap-2.5 transition-colors ' +
+                  (active
+                    ? 'bg-brand-500/10 text-ink-primary'
+                    : 'text-ink-secondary hover:bg-surface-2 hover:text-ink-primary')
+                }
+                title={t('dm.noMessagesYet')}
+                aria-label={t('dm.noMessagesYet')}
               >
-                {title.slice(0, 1).toUpperCase()}
-              </div>
-              <span className="text-sm truncate font-medium flex-1">{title}</span>
-              <span className="text-[9px] uppercase font-bold text-brand-500 tracking-wider">Yeni</span>
-            </button>
-          );
-        })()}
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 ring-1 ring-brand-500/40"
+                  style={{ backgroundColor: color }}
+                >
+                  {title.slice(0, 1).toUpperCase()}
+                </div>
+                <span className="text-sm truncate font-medium flex-1">{title}</span>
+                <span className="text-[9px] uppercase font-bold text-brand-500 tracking-wider">
+                  {t('common.new')}
+                </span>
+              </button>
+            );
+          })()}
         {dms.map((dm) => {
           const active = dm.id === selectedDMId;
           const rs = readStates[dm.id];
@@ -191,18 +203,43 @@ export function DMSidebar() {
                   className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold"
                   style={{ backgroundColor: dmColor(dm) }}
                 >
-                  {dm.type === 'group_dm' ? <Users size={14} /> : dmTitle(dm).slice(0, 1).toUpperCase()}
+                  {dm.type === 'group_dm' ? (
+                    <Users size={14} />
+                  ) : (
+                    dmTitle(dm).slice(0, 1).toUpperCase()
+                  )}
                 </div>
-                {dm.type !== 'group_dm' && (() => {
-                  const other = dm.participants.find((p) => p !== me?.id);
-                  const st = partners[other ?? '']?.status ?? 'offline';
-                  const c =
-                    st === 'online' ? 'bg-status-online' : st === 'idle' ? 'bg-status-idle' : st === 'dnd' ? 'bg-status-dnd' : 'bg-status-offline';
-                  return <span className={'absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-surface-1 ' + c} />;
-                })()}
+                {dm.type !== 'group_dm' &&
+                  (() => {
+                    const other = dm.participants.find((p) => p !== me?.id);
+                    const st = partners[other ?? '']?.status ?? 'offline';
+                    const c =
+                      st === 'online'
+                        ? 'bg-status-online'
+                        : st === 'idle'
+                          ? 'bg-status-idle'
+                          : st === 'dnd'
+                            ? 'bg-status-dnd'
+                            : 'bg-status-offline';
+                    return (
+                      <span
+                        className={
+                          'absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-surface-1 ' +
+                          c
+                        }
+                      />
+                    );
+                  })()}
               </div>
               <span className="flex-1 min-w-0">
-                <span className={'block text-sm truncate ' + (unread ? 'font-bold text-ink-primary' : 'font-medium')}>{dmTitle(dm)}</span>
+                <span
+                  className={
+                    'block text-sm truncate ' +
+                    (unread ? 'font-bold text-ink-primary' : 'font-medium')
+                  }
+                >
+                  {dmTitle(dm)}
+                </span>
                 {dm.type === 'group_dm' && (
                   <span className="block text-[11px] text-ink-tertiary truncate">
                     {dm.participants.length} üye
@@ -234,4 +271,3 @@ export function DMSidebar() {
     </aside>
   );
 }
-

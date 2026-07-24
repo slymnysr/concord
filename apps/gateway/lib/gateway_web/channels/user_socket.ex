@@ -1,6 +1,6 @@
 defmodule GatewayWeb.UserSocket do
   @moduledoc """
-  Sidcord WebSocket giriş noktası.
+  Concord WebSocket giriş noktası.
   İstemci `?token=<access_jwt>` parametresi ile bağlanır.
   """
   use Phoenix.Socket

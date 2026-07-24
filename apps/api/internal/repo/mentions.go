@@ -34,15 +34,15 @@ func (r *Mentions) Add(ctx context.Context, messageID int64, userIDs []int64) er
 }
 
 type Notification struct {
-	ID         int64      `json:"id,string"`
-	UserID     int64      `json:"user_id,string"`
-	Type       string     `json:"type"`
-	ChannelID  *int64     `json:"channel_id,string,omitempty"`
-	GuildID    *int64     `json:"guild_id,string,omitempty"`
-	MessageID  *int64     `json:"message_id,string,omitempty"`
-	ActorID    *int64     `json:"actor_id,string,omitempty"`
-	ReadAt     *time.Time `json:"read_at,omitempty"`
-	CreatedAt  time.Time  `json:"created_at"`
+	ID        int64      `json:"id,string"`
+	UserID    int64      `json:"user_id,string"`
+	Type      string     `json:"type"`
+	ChannelID *int64     `json:"channel_id,string,omitempty"`
+	GuildID   *int64     `json:"guild_id,string,omitempty"`
+	MessageID *int64     `json:"message_id,string,omitempty"`
+	ActorID   *int64     `json:"actor_id,string,omitempty"`
+	ReadAt    *time.Time `json:"read_at,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
 }
 
 type Notifications struct{ pool *pgxpool.Pool }
@@ -108,20 +108,20 @@ func (r *Notifications) Unread(ctx context.Context, userID int64) (int, error) {
 }
 
 type EnrichedNotification struct {
-	ID                 int64      `json:"id,string"`
-	Type               string     `json:"type"`
-	ChannelID          *int64     `json:"channel_id,string,omitempty"`
-	ChannelName        *string    `json:"channel_name,omitempty"`
-	GuildID            *int64     `json:"guild_id,string,omitempty"`
-	GuildName          *string    `json:"guild_name,omitempty"`
-	MessageID          *int64     `json:"message_id,string,omitempty"`
-	MessagePreview     *string    `json:"message_preview,omitempty"`
-	ActorID            *int64     `json:"actor_id,string,omitempty"`
-	ActorUsername      *string    `json:"actor_username,omitempty"`
-	ActorDisplayName   *string    `json:"actor_display_name,omitempty"`
-	ActorAvatarColor   *string    `json:"actor_avatar_color,omitempty"`
-	ReadAt             *time.Time `json:"read_at,omitempty"`
-	CreatedAt          time.Time  `json:"created_at"`
+	ID               int64      `json:"id,string"`
+	Type             string     `json:"type"`
+	ChannelID        *int64     `json:"channel_id,string,omitempty"`
+	ChannelName      *string    `json:"channel_name,omitempty"`
+	GuildID          *int64     `json:"guild_id,string,omitempty"`
+	GuildName        *string    `json:"guild_name,omitempty"`
+	MessageID        *int64     `json:"message_id,string,omitempty"`
+	MessagePreview   *string    `json:"message_preview,omitempty"`
+	ActorID          *int64     `json:"actor_id,string,omitempty"`
+	ActorUsername    *string    `json:"actor_username,omitempty"`
+	ActorDisplayName *string    `json:"actor_display_name,omitempty"`
+	ActorAvatarColor *string    `json:"actor_avatar_color,omitempty"`
+	ReadAt           *time.Time `json:"read_at,omitempty"`
+	CreatedAt        time.Time  `json:"created_at"`
 }
 
 func (r *Notifications) ListEnriched(ctx context.Context, userID int64, limit int) ([]EnrichedNotification, error) {

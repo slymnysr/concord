@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
+	"github.com/concord/api/internal/repo"
 )
 
 func (h *Handler) PinMessage(w http.ResponseWriter, r *http.Request) {

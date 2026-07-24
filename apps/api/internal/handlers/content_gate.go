@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/repo"
 )
 
 // === Mesaj kapıları: doğrulama seviyesi + müstehcen içerik filtresi ===
@@ -25,7 +25,7 @@ func (h *Handler) assignedRoleCount(ctx context.Context, guildID, uid int64) int
 // 1: e-posta doğrulanmış olmalı
 // 2: + hesap en az 5 dakikalık olmalı
 // 3: + sunucuya katılalı en az 10 dakika geçmiş olmalı
-// 4: + iki adımlı doğrulama (2FA) etkin olmalı (telefon doğrulamasının Sidcord karşılığı)
+// 4: + iki adımlı doğrulama (2FA) etkin olmalı (telefon doğrulamasının Concord karşılığı)
 func (h *Handler) checkVerificationGate(ctx context.Context, g *repo.Guild, uid int64, roleCount int) (code, msg string) {
 	if g.VerificationLevel <= 0 {
 		return "", ""

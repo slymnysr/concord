@@ -1,8 +1,8 @@
 {
-  "name": "@sidcord/voice",
+  "name": "@concord/voice",
   "version": "0.0.1",
   "private": true,
-  "description": "Sidcord voice SFU — mediasoup tabanlı WebRTC sunucusu",
+  "description": "Concord voice SFU — mediasoup tabanlı WebRTC sunucusu",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -10,14 +10,18 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "lint": "echo 'no lint'",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test:cascade": "node test/cascade.test.mjs",
+    "test:region": "node test/region.test.mjs"
   },
   "dependencies": {
-    "mediasoup": "^3.14.13",
-    "ws": "^8.18.0",
+    "dotenv": "^17.4.2",
+    "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.2",
+    "mediasoup": "^3.14.13",
+    "pino": "^9.5.0",
     "uuid": "^9.0.1",
-    "pino": "^9.5.0"
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.7",

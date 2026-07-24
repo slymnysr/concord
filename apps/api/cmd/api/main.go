@@ -11,13 +11,13 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/sidcord/api/internal/auth"
-	"github.com/sidcord/api/internal/config"
-	"github.com/sidcord/api/internal/db"
-	"github.com/sidcord/api/internal/handlers"
-	"github.com/sidcord/api/internal/router"
-	"github.com/sidcord/api/internal/snowflake"
-	"github.com/sidcord/api/internal/storage"
+	"github.com/concord/api/internal/auth"
+	"github.com/concord/api/internal/config"
+	"github.com/concord/api/internal/db"
+	"github.com/concord/api/internal/handlers"
+	"github.com/concord/api/internal/router"
+	"github.com/concord/api/internal/snowflake"
+	"github.com/concord/api/internal/storage"
 	"go.uber.org/zap"
 )
 
@@ -29,6 +29,10 @@ func main() {
 	defer logger.Sync()
 
 	cfg := config.Load()
+	// Üretimde zayıf dev-default secret ile başlatmayı reddet (fail-fast).
+	if err := cfg.MustSecure(); err != nil {
+		logger.Fatal("güvenli olmayan yapılandırma", zap.Error(err))
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -76,7 +80,7 @@ func main() {
 	}
 
 	go func() {
-		logger.Info("sidcord-api başlatılıyor", zap.String("port", cfg.Port))
+		logger.Info("concord-api başlatılıyor", zap.String("port", cfg.Port))
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatal("sunucu hatası", zap.Error(err))
 		}

@@ -15,7 +15,7 @@ type DMs struct{ pool *pgxpool.Pool }
 func NewDMs(p *pgxpool.Pool) *DMs { return &DMs{pool: p} }
 
 type DMChannel struct {
-	OwnerID *int64 `json:"owner_id,string,omitempty"`
+	OwnerID       *int64    `json:"owner_id,string,omitempty"`
 	ID            int64     `json:"id,string"`
 	Type          string    `json:"type"` // 'dm' veya 'group_dm'
 	Name          string    `json:"name"`

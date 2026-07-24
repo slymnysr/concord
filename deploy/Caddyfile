@@ -1,0 +1,16 @@
+# Caddy — otomatik HTTPS (Let's Encrypt) + web'e ters proxy.
+#
+# {$DOMAIN} ortam değişkeninden gelir (docker-compose environment: DOMAIN).
+# DOMAIN gerçek bir alan adıysa Caddy sertifikayı otomatik alır ve yeniler.
+# DOMAIN=localhost ise Caddy dahili (self-signed) sertifika kullanır — yerel test için.
+#
+# web (nginx) zaten /api /socket /voice-ws /voice-api yollarını backend'lere proxy'liyor;
+# Caddy'nin tek işi TLS sonlandırma + web'e iletmek.
+
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy web:80 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Real-IP {remote_host}
+	}
+}

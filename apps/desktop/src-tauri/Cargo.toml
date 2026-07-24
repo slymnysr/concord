@@ -1,7 +1,7 @@
 [package]
-name = "sidcord-desktop"
+name = "concord-desktop"
 version = "0.1.1"
-description = "Sidcord masaüstü uygulaması"
+description = "Concord masaüstü uygulaması"
 edition = "2021"
 
 [build-dependencies]

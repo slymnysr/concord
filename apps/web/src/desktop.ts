@@ -1,4 +1,4 @@
-// Sidcord masaüstü (Tauri) köprüsü — tarayıcıda tamamen no-op.
+// Concord masaüstü (Tauri) köprüsü — tarayıcıda tamamen no-op.
 // Tauri API'leri dinamik import edilir; web bundle'ında ayrı lazy chunk olarak kalır
 // ve yalnızca masaüstü penceresinde yüklenir.
 import { setActivity, getMyActivity } from './gateway';
@@ -20,9 +20,7 @@ export function initDesktopBridge() {
       const href = a.href;
       if (/^https?:\/\//i.test(href) && !href.startsWith(location.origin)) {
         e.preventDefault();
-        import('@tauri-apps/plugin-opener')
-          .then((m) => m.openUrl(href))
-          .catch(() => {});
+        import('@tauri-apps/plugin-opener').then((m) => m.openUrl(href)).catch(() => {});
       }
     },
     true,
@@ -35,7 +33,7 @@ export function initDesktopBridge() {
       void listen<string>('game-detected', (ev) => {
         const manual = (() => {
           try {
-            return localStorage.getItem('sidcord_activity');
+            return localStorage.getItem('concord_activity');
           } catch {
             return null;
           }
@@ -50,7 +48,7 @@ export function initDesktopBridge() {
         // Elle ayarlanmış aktivite varsa ona geri dön, yoksa temizle
         const stored = (() => {
           try {
-            const raw = localStorage.getItem('sidcord_activity');
+            const raw = localStorage.getItem('concord_activity');
             return raw ? (JSON.parse(raw) as { type: any; name: string }) : null;
           } catch {
             return null;

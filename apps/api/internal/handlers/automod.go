@@ -2,12 +2,34 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
+	"github.com/concord/api/internal/automod"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
 )
+
+// validateAutomodActions — actions dizisindeki her aksiyonun tipini denetler;
+// geçersiz tip sessizce işlevsiz kural oluşmasını engeller.
+func validateAutomodActions(raw json.RawMessage) error {
+	if len(raw) == 0 {
+		return nil
+	}
+	var acts []automod.Action
+	if err := json.Unmarshal(raw, &acts); err != nil {
+		return errors.New("actions bir JSON dizisi olmalı: [{\"type\":\"block\"}]")
+	}
+	for _, a := range acts {
+		switch a.Type {
+		case automod.ActionBlock, automod.ActionTimeout, automod.ActionAlert, automod.ActionDelete:
+		default:
+			return errors.New("geçersiz action type '" + string(a.Type) + "' (block|timeout|alert|delete)")
+		}
+	}
+	return nil
+}
 
 type automodRuleReq struct {
 	Name             string          `json:"name"`
@@ -88,6 +110,10 @@ func (h *Handler) CreateAutomodRule(w http.ResponseWriter, r *http.Request) {
 	if len(req.Actions) == 0 {
 		req.Actions = []byte(`[]`)
 	}
+	if err := validateAutomodActions(req.Actions); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_actions", err.Error())
+		return
+	}
 	enabled := true
 	if req.Enabled != nil {
 		enabled = *req.Enabled
@@ -106,11 +132,11 @@ func (h *Handler) CreateAutomodRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"id":            strconv.FormatInt(id, 10),
-		"guild_id":      strconv.FormatInt(guildID, 10),
-		"name":          req.Name,
-		"enabled":       enabled,
-		"trigger_type":  req.TriggerType,
+		"id":           strconv.FormatInt(id, 10),
+		"guild_id":     strconv.FormatInt(guildID, 10),
+		"name":         req.Name,
+		"enabled":      enabled,
+		"trigger_type": req.TriggerType,
 	})
 }
 

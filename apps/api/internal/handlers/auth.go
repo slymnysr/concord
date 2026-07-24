@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sidcord/api/internal/auth"
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/auth"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/repo"
 	"go.uber.org/zap"
 )
 
@@ -44,6 +44,11 @@ type registerReq struct {
 	Email       string `json:"email"`
 	DisplayName string `json:"display_name"`
 	Password    string `json:"password"`
+	// YYYY-MM-DD. Yaş kapısı için ZORUNLU (COPPA/DSA — bkz. handlers/compliance.go).
+	BirthDate string `json:"birth_date"`
+	// Dil (isteğe bağlı) — verilmezse Accept-Language'dan çıkarılır. İşlem maillerinin
+	// dilini belirler (mailler API'den gider, çeviri sunucuda olmak zorunda).
+	Locale string `json:"locale"`
 }
 
 type authResp struct {
@@ -72,8 +77,28 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid_email", "geçerli bir e-posta gir")
 		return
 	}
-	if len(req.Password) < 8 {
-		writeError(w, http.StatusBadRequest, "weak_password", "parola en az 8 karakter olmalı")
+	// Parola politikası (auth.CheckPassword): tek "8 karakter" kuralı "password",
+	// "12345678", "qwertyui" gibi dünyanın en yaygın parolalarını kabul ediyordu — hesap
+	// kilidi bile korumaz, saldırgan İLK denemede tutturur.
+	if pe := auth.CheckPassword(req.Password, req.Username, req.Email); pe != nil {
+		writeError(w, http.StatusBadRequest, pe.Code, pe.Msg)
+		return
+	}
+	// YAŞ KAPISI (COPPA/DSA — uygulama global). Doğum tarihi olmadan kayıt YOK: sonradan
+	// sormak, veri toplandıktan sonra sormak demek — yasal olarak anlamsız.
+	birth, err := time.Parse("2006-01-02", req.BirthDate)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_birth_date", "doğum tarihi gerekli (YYYY-MM-DD)")
+		return
+	}
+	if birth.After(time.Now()) {
+		writeError(w, http.StatusBadRequest, "invalid_birth_date", "doğum tarihi gelecekte olamaz")
+		return
+	}
+	if !ageOK(birth, time.Now()) {
+		// Reddedilen kaydın e-postası/kullanıcı adı DB'ye YAZILMAZ: 13 yaş altından veri
+		// toplamamak COPPA'nın asıl gereği.
+		writeError(w, http.StatusForbidden, "underage", "kayıt için en az 13 yaşında olmalısın")
 		return
 	}
 	if req.DisplayName == "" {
@@ -87,6 +112,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	loc := localeFrom(r, req.Locale)
 	user := &repo.User{
 		ID:           h.IDs.Next(),
 		Username:     req.Username,
@@ -95,6 +121,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		PasswordHash: hash,
 		AvatarColor:  randomBrandColor(),
 		Status:       "online",
+		BirthDate:    &birth,
+		Locale:       &loc,
 	}
 	if err := h.Users.Create(r.Context(), user); err != nil {
 		if errors.Is(err, repo.ErrConflict) {
@@ -115,6 +143,16 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, resp)
 }
 
+// Brute-force eşikleri (loginFailWindow içinde, e-postanın son başarılı girişinden beri).
+// Asıl savunma hesap kapsamlı olanlar; IP eşiği yalnızca kaba bir kötüye kullanım tavanıdır ve
+// paylaşımlı çıkış IP'lerini (operatör CGNAT'ı) cezalandırmayacak kadar yüksek tutulur.
+const (
+	loginFailWindow   = 15 * time.Minute
+	maxFailPerEmailIP = 5   // bu hesap + bu IP → saldırgan kendi IP'sini kilitler, kurban etkilenmez
+	maxFailPerEmail   = 20  // bu hesap, her IP → dağıtık saldırı tavanı
+	maxFailPerIP      = 100 // bu IP, her hesap → credential-stuffing tavanı
+)
+
 type loginReq struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -130,9 +168,16 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 	clientIP := parseClientIP(r)
 
-	// Brute-force kontrolü: 15 dakikada 5 başarısızdan fazlaysa engelle
-	failures, _ := h.LoginAttempts.RecentFailures(r.Context(), req.Email, clientIP, 15*time.Minute)
-	if failures >= 5 {
+	// Brute-force kontrolü — katmanlı: IP başına GEVŞEK, hesap başına SIKI.
+	// Tek bir "email VEYA ip >= 5" eşiği İKİ şeyi birden kırıyordu: saldırgan kurbanın
+	// e-postasına 5 yanlış parola atıp hesabı kilitliyordu (hedefli DoS) ve CGNAT arkasındaki
+	// paylaşımlı IP'de 5 hata o IP'deki herkesi kilitliyordu. Bkz. repo.FailureCounts.
+	f, err := h.LoginAttempts.RecentFailures(r.Context(), req.Email, clientIP, loginFailWindow)
+	if err != nil {
+		// Sayaç okunamıyorsa girişi kapatma (fail-open) — ama görünür olsun.
+		h.logger.Warn("brute-force sayacı okunamadı", zap.Error(err))
+	} else if f.EmailIP >= maxFailPerEmailIP || f.Email >= maxFailPerEmail || f.IP >= maxFailPerIP {
+		w.Header().Set("Retry-After", strconv.Itoa(int(loginFailWindow.Seconds())))
 		writeError(w, http.StatusTooManyRequests, "rate_limited",
 			"çok fazla başarısız giriş; lütfen 15 dakika sonra tekrar dene")
 		return
@@ -154,16 +199,22 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2FA: etkinse geçerli TOTP kodu iste
+	// 2FA: etkinse geçerli TOTP kodu VEYA kurtarma kodu iste
 	if user.TOTPEnabled {
 		if req.TOTPCode == "" {
 			writeError(w, http.StatusUnauthorized, "2fa_required", "iki adımlı doğrulama kodu gerekli")
 			return
 		}
-		if user.TOTPSecret == nil || !auth.ValidateTOTP(*user.TOTPSecret, req.TOTPCode) {
-			_ = h.LoginAttempts.Record(r.Context(), h.IDs.Next(), req.Email, clientIP, false)
-			writeError(w, http.StatusUnauthorized, "invalid_2fa", "iki adımlı doğrulama kodu hatalı")
-			return
+		totpOK := user.TOTPSecret != nil && auth.ValidateTOTP(*user.TOTPSecret, req.TOTPCode)
+		if !totpOK {
+			// TOTP tutmadı → kurtarma kodu olabilir (authenticator kaybında tek giriş yolu).
+			// Consume ATOMİK ve tek kullanımlık: kod varsa tüketilir, tekrar kullanılamaz.
+			used, err := h.RecoveryCodes.Consume(r.Context(), user.ID, auth.HashRecoveryCode(req.TOTPCode))
+			if err != nil || !used {
+				_ = h.LoginAttempts.Record(r.Context(), h.IDs.Next(), req.Email, clientIP, false)
+				writeError(w, http.StatusUnauthorized, "invalid_2fa", "iki adımlı doğrulama kodu hatalı")
+				return
+			}
 		}
 	}
 
@@ -220,7 +271,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) issueTokens(r *http.Request, user *repo.User) (*authResp, error) {
-	access, exp, err := h.Iss.AccessToken(user.ID)
+	access, exp, err := h.Iss.AccessToken(user.ID, user.DisplayName)
 	if err != nil {
 		return nil, err
 	}
@@ -270,19 +321,21 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "bad_request", err.Error())
 		return
 	}
-	if len(req.NewPassword) < 8 {
-		writeError(w, http.StatusBadRequest, "weak_password", "yeni parola en az 8 karakter")
-		return
-	}
 	uid := middleware.UserIDFrom(r.Context())
 	user, err := h.Users.ByID(r.Context(), uid)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "kullanıcı")
 		return
 	}
+	// Politika kontrolü parola DOĞRULANDIKTAN sonra: aksi halde yanlış parolayla gelen
+	// saldırgan, hata mesajından politikayı öğrenir (bilgi sızıntısı).
 	ok, err := auth.VerifyPassword(req.CurrentPassword, user.PasswordHash)
 	if err != nil || !ok {
 		writeError(w, http.StatusForbidden, "wrong_password", "mevcut parola yanlış")
+		return
+	}
+	if pe := auth.CheckPassword(req.NewPassword, user.Username, user.Email); pe != nil {
+		writeError(w, http.StatusBadRequest, pe.Code, pe.Msg)
 		return
 	}
 	newHash, err := auth.HashPassword(req.NewPassword)
@@ -293,6 +346,15 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	if _, err := h.Pool.Exec(r.Context(), `UPDATE users SET password_hash = $1 WHERE id = $2`, newHash, uid); err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "kaydedilemedi")
 		return
+	}
+
+	// DİĞER OTURUMLARI KAPAT — bu satır yoktu ve gerçek bir açıktı: parolası çalınan
+	// kullanıcı parolasını değiştirse bile SALDIRGANIN OTURUMU CANLI KALIYORDU.
+	// (ResetPassword bunu zaten doğru yapıyordu; ChangePassword'de unutulmuş.)
+	// Kullanıcının KENDİ oturumu da kapanır — parola değişimi sonrası yeniden giriş
+	// istemek standart davranıştır (Discord/Google aynısını yapar).
+	if _, err := h.Pool.Exec(r.Context(), `DELETE FROM refresh_tokens WHERE user_id = $1`, uid); err != nil {
+		h.logger.Error("parola değişiminde oturumlar kapatılamadı", zap.Error(err), zap.Int64("user", uid))
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -346,5 +408,7 @@ func (h *Handler) DeleteMyAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	// Tüm oturumları iptal et
 	_ = h.RefreshTokens.RevokeAllExcept(r.Context(), uid, 0)
+	// 2FA kurtarma kodlarını da temizle — 2FA kapatıldı, kodlar anlamsız (GDPR temizliği)
+	_ = h.RecoveryCodes.DeleteForUser(r.Context(), uid)
 	w.WriteHeader(http.StatusNoContent)
 }

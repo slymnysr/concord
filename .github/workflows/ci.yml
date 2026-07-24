@@ -20,8 +20,8 @@ jobs:
           version: 9
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "pnpm"
+          node-version: '20'
+          cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
       - name: Install
         run: pnpm install --frozen-lockfile
@@ -43,11 +43,52 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          # go.mod'dan OKU, sabit sürüm yazma: go.mod 1.25 isterken CI 1.22 kuruyordu →
+          # Go yeni toolchain'i otomatik indiriyor ama o indirmede `covdata` yok →
+          # `go test -coverprofile` "no such tool covdata" ile patlıyordu. Sürümü tek
+          # kaynaktan okumak bu ayrışmayı yapısal olarak engeller.
+          go-version-file: apps/api/go.mod
           cache-dependency-path: apps/api/go.sum
       - run: go mod download
       - run: go vet ./...
-      - run: go test -race -cover ./...
+      # Bilinen güvenlik açığı taraması. govulncheck yalnızca kodun GERÇEKTEN ULAŞTIĞI
+      # açıkları raporlar (çağrı grafiği analizi) → gürültü düşük, çıkanlar gerçek. Bir
+      # bağımlılıkta ya da Go stdlib'inde yamalı bir CVE'ye ulaşan kod yolu varsa PR kırılır.
+      # Bu adım eklenirken 21 ulaşılabilir açık vardı (eski Go 1.25.0 yaması + 2019'dan kalma
+      # x/image); toolchain 1.25.12 + bağımlılık güncellemesiyle sıfırlandı.
+      - name: Güvenlik açığı taraması (govulncheck)
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+      # Arama sürücüsü testleri GERÇEK Meilisearch'e karşı koşar (mock YOK: CJK
+      # segmentasyonu ve filtre dili motorun kendi davranışı; mock'lasak kendi
+      # varsayımımızı test etmiş olurduk). Yoksa o testler atlanır.
+      - name: Meilisearch başlat (arama sürücüsü testleri)
+        run: |
+          docker run -d --name meili -p 7700:7700 \
+            -e MEILI_MASTER_KEY=ci_meili_key -e MEILI_NO_ANALYTICS=true \
+            getmeili/meilisearch:v1.11
+          for i in $(seq 1 30); do curl -sf http://localhost:7700/health && break || sleep 1; done
+          curl -sf http://localhost:7700/health || { echo "Meili kalkmadı"; docker logs meili; exit 1; }
+      - env:
+          MEILI_ADDR: http://localhost:7700
+          MEILI_KEY: ci_meili_key
+        run: go test -race -coverprofile=coverage.out ./...
+      # Kapsam görünür olsun — yoksa "-cover" çıktısı log'da kaybolur ve kimse bakmaz
+      - name: Coverage özeti
+        run: |
+          go tool cover -func=coverage.out | tail -1
+          {
+            echo "### API kapsamı"
+            echo '```'
+            go tool cover -func=coverage.out | tail -1
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/coverage.out
+          retention-days: 7
       - run: go build -o bin/api ./cmd/api
 
   gateway:
@@ -60,8 +101,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.16"
-          otp-version: "26"
+          elixir-version: '1.16'
+          otp-version: '26'
       - name: Cache deps
         uses: actions/cache@v4
         with:
@@ -71,7 +112,263 @@ jobs:
           key: ${{ runner.os }}-mix-${{ hashFiles('apps/gateway/mix.lock') }}
       - run: mix deps.get
       - run: mix compile --warnings-as-errors
-      - run: mix test
+      # epmd ŞART: küme testleri gerçek bir ikinci BEAM node'u açıyor (:peer). GitHub
+      # runner'larında epmd kendiliğinden çalışmaz → :net_kernel.start :nodistribution ile
+      # patlıyordu. Testi dışlamak kolay yol olurdu ama FAZ D'nin "çapraz-node yayın" kabul
+      # kriteri o zaman CI'da HİÇ doğrulanmazdı.
+      - name: epmd başlat (küme testleri için)
+        run: epmd -daemon
+      - run: mix test --include cluster
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: concord
+          POSTGRES_PASSWORD: concord_dev
+          POSTGRES_DB: concord
+        ports: ['5433:5432']
+        options: >-
+          --health-cmd "pg_isready -U concord" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      meilisearch:
+        image: getmeili/meilisearch:v1.11
+        ports: ['7700:7700']
+        env:
+          MEILI_MASTER_KEY: ci_meili_key
+          MEILI_NO_ANALYTICS: 'true'
+        options: >-
+          --health-cmd "curl -fsS http://localhost:7700/health || exit 1"
+          --health-interval 5s --health-timeout 3s --health-retries 12
+    env:
+      POSTGRES_DSN: postgres://concord:concord_dev@localhost:5433/concord?sslmode=disable
+      JWT_SECRET: ci_jwt_secret_at_least_32_characters_long_x
+      REDIS_HOST: localhost
+      REDIS_PORT: '6379'
+      E2E_BASE_URL: http://localhost:3000
+      E2E_API_URL: http://localhost:8080
+      E2E_VOICE_WS: ws://localhost:4443
+      E2E_VOICE_HTTP: http://localhost:4444
+      # Medya boru hattı CI'da GERÇEKTEN koşsun: secret boşsa webhook kapanır ve
+      # attachments testi (thumbnail/tarama sözleşmesi) sessizce anlamsızlaşır.
+      MEDIA_EVENT_SECRET: ci_media_event_secret
+      # Meilisearch olmadan arama Postgres FTS'e düşer ve CJK testleri (FAZ H'nin varlık
+      # sebebi) sessizce anlamsızlaşır.
+      MEILI_ADDR: http://localhost:7700
+      MEILI_KEY: ci_meili_key
+      MINIO_ENDPOINT: localhost:9000
+      MINIO_ACCESS_KEY: concord
+      MINIO_SECRET_KEY: concord_dev_minio
+      MINIO_BUCKET: concord-uploads
+      MINIO_PUBLIC_BASE: http://localhost:9000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: actions/setup-go@v5
+        with:
+          # go.mod'dan OKU, sabit sürüm yazma: go.mod 1.25 isterken CI 1.22 kuruyordu →
+          # Go yeni toolchain'i otomatik indiriyor ama o indirmede `covdata` yok →
+          # `go test -coverprofile` "no such tool covdata" ile patlıyordu. Sürümü tek
+          # kaynaktan okumak bu ayrışmayı yapısal olarak engeller.
+          go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.16'
+          otp-version: '26'
+      - name: Cache gateway deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/gateway/deps
+            apps/gateway/_build
+          key: ${{ runner.os }}-mix-${{ hashFiles('apps/gateway/mix.lock') }}
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      # MinIO: service container OLARAK tanımlanamıyor — minio image'i `server /data`
+      # komutunu ister, GitHub service container'ları command'ı geçersiz kılamaz.
+      - name: MinIO başlat (medya boru hattı)
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=concord \
+            -e MINIO_ROOT_PASSWORD=concord_dev_minio \
+            --add-host=host.docker.internal:host-gateway \
+            minio/minio:latest server /data
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9000/minio/health/live && break || sleep 1
+          done
+          curl -sf http://localhost:9000/minio/health/live || { echo "MinIO kalkmadı"; docker logs minio; exit 1; }
+
+      # Şema: migration aracı yok → *.up.sql sırayla uygulanır (README ile aynı yöntem)
+      - name: Apply migrations
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          for f in $(ls apps/api/migrations/*.up.sql | sort); do
+            PGPASSWORD=concord_dev psql -h localhost -p 5433 -U concord -d concord -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+
+      - name: Build & start API
+        env:
+          # E2E'nin TÜM testleri tek IP'den (CI runner) gelir → gerçekçi olmayan bir yoğunluk.
+          # Per-IP kaba çiti (varsayılan 60/dk) yükselt ki testler birbirinin auth kotasını
+          # tüketip 429 almasın (gerçek kullanıcılar farklı IP'lerden gelir; tek-IP bir test
+          # artefaktı). Prod'da 60/dk KALIR — bu yalnızca CI. HESAP-KİLİT testi (LoginAttempts,
+          # handlers/auth.go kod sabiti) bu config'den BAĞIMSIZDIR, kendini test etmeye devam eder.
+          AUTH_RATE_LIMIT_PER_MIN: '3000'
+          API_RATE_LIMIT_PER_MIN: '10000'
+        run: |
+          cd apps/api && go build -o bin/api ./cmd/api
+          ./bin/api > /tmp/api.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8080/health && break || sleep 1
+          done
+          curl -sf http://localhost:8080/health || { echo "API ayağa kalkmadı"; cat /tmp/api.log; exit 1; }
+
+      # MinIO → API webhook'u: API ayağa kalktıktan SONRA bağlanmalı (webhook API'yi çağırır).
+      # API host'ta çalışıyor → MinIO container'ından host.docker.internal ile erişilir.
+      - name: MinIO bucket-notification bağla
+        run: |
+          docker exec -e MEDIA_EVENT_SECRET=ci_media_event_secret \
+            -e API_URL=http://host.docker.internal:8080 \
+            -e MINIO_URL=http://localhost:9000 \
+            minio sh -c "$(cat infra/docker/minio/setup-notifications.sh)"
+
+      # Realtime (mesaj/tipografi olaylari) Gateway uzerinden akar → E2E icin ZORUNLU.
+      # Yoksa "realtime CIFT YONLU" testi CI'da duser, yerelde gecer (yaniltici yesil).
+      - name: Start Gateway
+        working-directory: apps/gateway
+        env:
+          MIX_ENV: dev
+          # API ile AYNI olmali, yoksa WS token dogrulamasi 403 verir
+          JWT_SECRET: ci_jwt_secret_at_least_32_characters_long_x
+        run: |
+          mix deps.get
+          mix compile
+          elixir --no-halt -S mix phx.server > /tmp/gateway.log 2>&1 &
+          for i in $(seq 1 45); do
+            # /health — gateway'in TEK route'u (router.ex). `/` yoklamak 404 döndürüyordu
+            # ve `curl -sf` 404'te başarısız olduğu için gateway AYAKTA olmasına rağmen
+            # "ayağa kalkmadı" deyip job'u düşürüyordu.
+            curl -sf http://localhost:4000/health >/dev/null 2>&1 && break || sleep 1
+          done
+          curl -sf http://localhost:4000/health >/dev/null 2>&1 || { echo "Gateway ayağa kalkmadı"; cat /tmp/gateway.log; exit 1; }
+
+      # Ses presence sozlesmesi (/presence {id,name}[]) icin voice SFU gerekli
+      - name: Build & start Voice
+        env:
+          JWT_SECRET: ci_jwt_secret_at_least_32_characters_long_x
+        run: |
+          pnpm --filter @concord/voice build
+          node apps/voice/dist/index.js > /tmp/voice.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf "http://localhost:4444/presence?channels=1" >/dev/null && break || sleep 1
+          done
+          curl -sf "http://localhost:4444/presence?channels=1" >/dev/null || { echo "Voice ayağa kalkmadı"; cat /tmp/voice.log; exit 1; }
+
+      - name: Build & serve web
+        run: |
+          pnpm --filter @concord/web exec vite build
+          pnpm --filter @concord/web exec vite preview --port 3000 --host > /tmp/web.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/ >/dev/null && break || sleep 1
+          done
+          curl -sf http://localhost:3000/ >/dev/null || { echo "web ayağa kalkmadı"; cat /tmp/web.log; exit 1; }
+
+      - name: Install Playwright browser
+        run: pnpm --filter @concord/e2e exec playwright install chromium --with-deps
+
+      - name: Run E2E
+        run: pnpm --filter @concord/e2e exec playwright test
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7
+
+      # Test duserse hangi servisin patladigini gormeden teshis edilemiyor
+      - name: Upload service logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-service-logs
+          path: |
+            /tmp/api.log
+            /tmp/gateway.log
+            /tmp/voice.log
+            /tmp/web.log
+          retention-days: 7
+
+  mobile:
+    name: Mobil (tsc + expo export)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Type check
+        run: pnpm --filter @concord/mobile exec tsc --noEmit
+      # FAZ K: mobilde i18n HİÇ YOKTU (238 gömülü Türkçe string) → uygulama Türkçe-yalnızdı.
+      # Gerçek cihaz dili testi emülatör/EAS ister (bloke); ama regresyonu ÜRETEN şey —
+      # kaynağa yeni Türkçe string eklemek — burada kesin yakalanır.
+      - name: i18n denetimi (gömülü Türkçe + sözlük paritesi)
+        run: pnpm --filter @concord/mobile check:i18n
+      # Bundle gerçekten derleniyor mu (tsc bunu göstermez: Metro çözümlemesi, native
+      # modül importları, Babel dönüşümleri ayrı kırılır). Native araç zinciri gerekmez.
+      # NOT: web platformu react-native-web istiyor, uygulama iOS/Android hedefli → android.
+      - name: Expo export (bundle)
+        run: pnpm --filter @concord/mobile exec expo export --platform android --output-dir /tmp/expo-out
+
+  voice:
+    name: Voice (Node/mediasoup)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Type-check
+        run: pnpm --filter @concord/voice exec tsc --noEmit
+      - name: Build
+        run: pnpm --filter @concord/voice build
+      # FAZ C + FAZ L: gerçek 2-node küme testleri (cascade + bölge yönlendirme).
+      # Redis şart — küme koordinasyonu onun üzerinden.
+      - name: Redis başlat (küme testleri)
+        run: docker run -d --name voice-redis -p 6379:6379 redis:7-alpine
+      - name: Cascade testi (2 node, çok-makine)
+        run: pnpm --filter @concord/voice test:cascade
+      - name: Bölge yönlendirme testi (2 bölge)
+        run: pnpm --filter @concord/voice test:region
 
   lint-format:
     name: Format check
@@ -83,6 +380,6 @@ jobs:
           version: 9
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec prettier --check "**/*.{ts,tsx,js,jsx,json,md,yaml,yml}"

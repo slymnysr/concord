@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
+	"github.com/concord/api/internal/repo"
 	"github.com/go-chi/chi/v5"
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
-	"github.com/sidcord/api/internal/repo"
 )
 
 func (h *Handler) AddReaction(w http.ResponseWriter, r *http.Request) {
@@ -32,6 +32,14 @@ func (h *Handler) AddReaction(w http.ResponseWriter, r *http.Request) {
 	if !ok || ch == nil {
 		writeError(w, http.StatusForbidden, "forbidden", "bu mesaja tepki veremezsin")
 		return
+	}
+	// Zaman aşımı (timeout) yaptırımı — süresi dolana kadar tepki eklenemez
+	if ch.GuildID != nil {
+		if until, terr := h.Moderation.ActiveTimeout(r.Context(), *ch.GuildID, uid); terr == nil && until != nil {
+			writeError(w, http.StatusForbidden, "communication_disabled",
+				"zaman aşımı uygulandı — "+until.Format(time.RFC3339)+" tarihine kadar tepki ekleyemezsin")
+			return
+		}
 	}
 	if err := h.Reactions.Add(r.Context(), messageID, uid, emoji); err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "tepki eklenemedi")
@@ -138,7 +146,7 @@ func (h *Handler) publishReaction(ctx context.Context, ch *repo.Channel, message
 	if ch.GuildID != nil {
 		base["guild_id"] = strconv.FormatInt(*ch.GuildID, 10)
 		payload, _ := json.Marshal(base)
-		h.Redis.Publish(ctx, "sidcord:guild:"+strconv.FormatInt(*ch.GuildID, 10), payload)
+		h.Redis.Publish(ctx, "concord:guild:"+strconv.FormatInt(*ch.GuildID, 10), payload)
 	} else {
 		payload, _ := json.Marshal(base)
 		rows, err := h.Pool.Query(ctx, `SELECT user_id FROM dm_participants WHERE channel_id = $1`, ch.ID)
@@ -149,12 +157,11 @@ func (h *Handler) publishReaction(ctx context.Context, ch *repo.Channel, message
 		for rows.Next() {
 			var uid int64
 			if err := rows.Scan(&uid); err == nil {
-				h.Redis.Publish(ctx, "sidcord:user:"+strconv.FormatInt(uid, 10), payload)
+				h.Redis.Publish(ctx, "concord:user:"+strconv.FormatInt(uid, 10), payload)
 			}
 		}
 	}
 }
-
 
 // GET /messages/{messageID}/reactions/{emoji}/users — bir emojiye kim tepki verdi
 func (h *Handler) ListReactionUsers(w http.ResponseWriter, r *http.Request) {

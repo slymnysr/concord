@@ -17,7 +17,13 @@ const (
 )
 
 type Claims struct {
-	UserID int64 `json:"uid"`
+	// uid,string: Snowflake ID'ler 64-bit; JS Number 53-bit tutar. JSON'a string
+	// olarak yazılır ki JS tüketiciler (voice sunucusu) hassasiyet kaybetmesin.
+	// Go tarafı yine int64 okur (kayıpsız).
+	UserID int64 `json:"uid,string"`
+	// name: kullanıcının görünen adı — voice presence gibi yerlerde ID→ad lookup'ı
+	// gerektirmeden doğrudan gösterim için taşınır.
+	Name string `json:"name,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -29,15 +35,16 @@ func NewIssuer(secret string) *Issuer {
 	return &Issuer{secret: []byte(secret)}
 }
 
-func (i *Issuer) AccessToken(userID int64) (string, time.Time, error) {
+func (i *Issuer) AccessToken(userID int64, name string) (string, time.Time, error) {
 	exp := time.Now().Add(AccessTTL)
 	claims := Claims{
 		UserID: userID,
+		Name:   name,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   strconv.FormatInt(userID, 10),
 			ExpiresAt: jwt.NewNumericDate(exp),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "sidcord-api",
+			Issuer:    "concord-api",
 		},
 	}
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

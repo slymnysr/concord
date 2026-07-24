@@ -1,5 +1,5 @@
-// Sidcord masaüstü — web istemcisini Tauri (webkit2gtk / WebView2) penceresinde sarar.
-// Dev: devUrl Vite (:3000). Prod: frontendDist + serverConfig.ts (sidcord_server_base).
+// Concord masaüstü — web istemcisini Tauri (webkit2gtk / WebView2) penceresinde sarar.
+// Dev: devUrl Vite (:3000). Prod: frontendDist + serverConfig.ts (concord_server_base).
 // Masaüstü cilası: sistem tepsisi, kapatınca tepsiye küçülme, açılışta başlatma,
 // pencere durumu hatırlama, harici linkler sistem tarayıcısında, global susturma
 // kısayolu (Ctrl+Shift+M) ve oyun algılama → otomatik "Oynuyor" durumu.
@@ -111,7 +111,7 @@ fn spawn_update_check(app: tauri::AppHandle) {
                     let restart = app
                         .dialog()
                         .message(format!(
-                            "Sidcord {} indirildi ve kuruldu.\nŞimdi yeniden başlatılsın mı?",
+                            "Concord {} indirildi ve kuruldu.\nŞimdi yeniden başlatılsın mı?",
                             update.version
                         ))
                         .title("Güncelleme hazır")
@@ -158,7 +158,7 @@ fn main() {
         )
         .setup(|app| {
             // Sistem tepsisi: Göster · Açılışta Başlat (işaretli) · Çıkış
-            let show = MenuItem::with_id(app, "show", "Sidcord'u Göster", true, None::<&str>)?;
+            let show = MenuItem::with_id(app, "show", "Concord'u Göster", true, None::<&str>)?;
             let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
             let autostart_item = CheckMenuItem::with_id(
                 app,
@@ -172,9 +172,9 @@ fn main() {
             let menu = Menu::with_items(app, &[&show, &autostart_item, &quit])?;
 
             let autostart_for_handler = autostart_item.clone();
-            let _tray = TrayIconBuilder::with_id("sidcord-tray")
+            let _tray = TrayIconBuilder::with_id("concord-tray")
                 .icon(app.default_window_icon().unwrap().clone())
-                .tooltip("Sidcord")
+                .tooltip("Concord")
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(move |app, event| match event.id.as_ref() {
@@ -247,5 +247,5 @@ fn main() {
             }
         })
         .run(tauri::generate_context!())
-        .expect("Sidcord başlatılamadı");
+        .expect("Concord başlatılamadı");
 }

@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 import { api } from '../api';
 import { useAppSelector } from '../store';
 import { loadEmojiGroups, type EmojiGroup } from '../emojiData';
+import { t } from '../i18n';
 
 // Unicode emoji isim/anahtar kelime araması için (Türkçe + İngilizce)
 const EMOJI_KEYWORDS: Record<string, string[]> = {
@@ -76,25 +77,25 @@ interface Props {
 export function EmojiPicker({ onPick, onClose }: Props) {
   const guildId = useAppSelector((s) => s.guilds.selectedId);
   const [q, setQ] = useState('');
-  const [customEmojis, setCustomEmojis] = useState<
-    Awaited<ReturnType<typeof api.emojis.list>>
-  >([]);
+  const [customEmojis, setCustomEmojis] = useState<Awaited<ReturnType<typeof api.emojis.list>>>([]);
   const [recent, setRecent] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('sidcord_recent_emojis') || '[]');
+      return JSON.parse(localStorage.getItem('concord_recent_emojis') || '[]');
     } catch {
       return [];
     }
   });
   const [favs, setFavs] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('sidcord_fav_emojis') || '[]');
+      return JSON.parse(localStorage.getItem('concord_fav_emojis') || '[]');
     } catch {
       return [];
     }
   });
 
-  const [tone, setTone] = useState<number>(() => parseInt(localStorage.getItem('sidcord_skin_tone') || '0', 10));
+  const [tone, setTone] = useState<number>(() =>
+    parseInt(localStorage.getItem('concord_skin_tone') || '0', 10),
+  );
 
   // Tam Unicode seti (1900+) — lazy: picker ilk açıldığında yüklenir, sonra cache'ten gelir
   const [groups, setGroups] = useState<EmojiGroup[] | null>(null);
@@ -125,8 +126,14 @@ export function EmojiPicker({ onPick, onClose }: Props) {
 
   function toggleFav(emoji: string) {
     setFavs((prev) => {
-      const next = prev.includes(emoji) ? prev.filter((x) => x !== emoji) : [emoji, ...prev].slice(0, 24);
-      try { localStorage.setItem('sidcord_fav_emojis', JSON.stringify(next)); } catch { /* yoksay */ }
+      const next = prev.includes(emoji)
+        ? prev.filter((x) => x !== emoji)
+        : [emoji, ...prev].slice(0, 24);
+      try {
+        localStorage.setItem('concord_fav_emojis', JSON.stringify(next));
+      } catch {
+        /* yoksay */
+      }
       return next;
     });
   }
@@ -137,7 +144,7 @@ export function EmojiPicker({ onPick, onClose }: Props) {
       const next = [final, ...recent.filter((x) => x !== final)].slice(0, 16);
       setRecent(next);
       try {
-        localStorage.setItem('sidcord_recent_emojis', JSON.stringify(next));
+        localStorage.setItem('concord_recent_emojis', JSON.stringify(next));
       } catch {
         /* yoksay */
       }
@@ -147,12 +154,17 @@ export function EmojiPicker({ onPick, onClose }: Props) {
 
   useEffect(() => {
     if (!guildId) return;
-    api.emojis.list(guildId).then(setCustomEmojis).catch(() => {});
+    api.emojis
+      .list(guildId)
+      .then(setCustomEmojis)
+      .catch(() => {});
   }, [guildId]);
 
   // ESC ile kapat
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
@@ -175,7 +187,7 @@ export function EmojiPicker({ onPick, onClose }: Props) {
         }
       }
     }
-    return matches.length > 0 ? [{ name: 'Arama Sonuçları', emojis: matches }] : [];
+    return matches.length > 0 ? [{ name: t('member.searchResults'), emojis: matches }] : [];
   }, [groups, q]);
 
   const filteredCustom = q.trim()
@@ -186,12 +198,15 @@ export function EmojiPicker({ onPick, onClose }: Props) {
     <div className="anim-pop-in w-80 max-h-[400px] flex flex-col bg-surface-1 border border-line rounded-xl shadow-2xl overflow-hidden">
       <div className="p-2 border-b border-line">
         <div className="relative">
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-tertiary" />
+          <Search
+            size={14}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-tertiary"
+          />
           <input
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Emoji ara..."
+            placeholder={t('emoji.searchPlaceholder')}
             className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-md pl-8 pr-20 py-1.5 text-sm text-ink-primary placeholder:text-ink-tertiary"
           />
           {/* Ten rengi seçici */}
@@ -199,9 +214,19 @@ export function EmojiPicker({ onPick, onClose }: Props) {
             {TONE_SWATCH.map((sw, i) => (
               <button
                 key={i}
-                onClick={() => { setTone(i); try { localStorage.setItem('sidcord_skin_tone', String(i)); } catch { /* yoksay */ } }}
-                title={i === 0 ? 'Varsayılan ten' : 'Ten rengi ' + i}
-                className={'w-4 h-4 text-xs leading-none rounded-sm ' + (tone === i ? 'ring-1 ring-brand-500' : 'opacity-60 hover:opacity-100')}
+                onClick={() => {
+                  setTone(i);
+                  try {
+                    localStorage.setItem('concord_skin_tone', String(i));
+                  } catch {
+                    /* yoksay */
+                  }
+                }}
+                title={i === 0 ? t('emoji.defaultSkin') : t('emoji.skinPrefix') + i}
+                className={
+                  'w-4 h-4 text-xs leading-none rounded-sm ' +
+                  (tone === i ? 'ring-1 ring-brand-500' : 'opacity-60 hover:opacity-100')
+                }
               >
                 {sw}
               </button>
@@ -220,8 +245,12 @@ export function EmojiPicker({ onPick, onClose }: Props) {
                 <button
                   key={e + i}
                   onClick={() => pick(e)}
-                  onContextMenu={(ev) => { ev.preventDefault(); toggleFav(e); }}
-                  title="Sağ tık: favorilerden çıkar" aria-label="Sağ tık: favorilerden çıkar"
+                  onContextMenu={(ev) => {
+                    ev.preventDefault();
+                    toggleFav(e);
+                  }}
+                  title={t('emoji.unfavHint')}
+                  aria-label={t('emoji.unfavHint')}
                   className="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-2 text-lg"
                 >
                   {e}
@@ -240,7 +269,10 @@ export function EmojiPicker({ onPick, onClose }: Props) {
                 <button
                   key={e + i}
                   onClick={() => pick(e)}
-                  onContextMenu={(ev) => { ev.preventDefault(); toggleFav(e); }}
+                  onContextMenu={(ev) => {
+                    ev.preventDefault();
+                    toggleFav(e);
+                  }}
                   className="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-2 text-lg"
                 >
                   {e}
@@ -273,7 +305,10 @@ export function EmojiPicker({ onPick, onClose }: Props) {
         )}
         {groups === null && (
           <div className="py-8 flex justify-center">
-            <div className="w-5 h-5 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" aria-label="Emojiler yükleniyor" />
+            <div
+              className="w-5 h-5 rounded-full border-2 border-brand-500 border-t-transparent animate-spin"
+              aria-label={t('emoji.loading')}
+            />
           </div>
         )}
         {visibleCategories.map((cat) => (
@@ -286,9 +321,18 @@ export function EmojiPicker({ onPick, onClose }: Props) {
                 <button
                   key={x.e}
                   onClick={() => pick(x.e)}
-                  onContextMenu={(ev) => { ev.preventDefault(); toggleFav(x.e); }}
-                  title={x.n + (favs.includes(x.e) ? ' — sağ tık: favoriden çıkar' : ' — sağ tık: favorile')}
-                  className={'w-8 h-8 flex items-center justify-center rounded hover:bg-surface-2 text-lg ' + (favs.includes(x.e) ? 'ring-1 ring-brand-500/40' : '')}
+                  onContextMenu={(ev) => {
+                    ev.preventDefault();
+                    toggleFav(x.e);
+                  }}
+                  title={
+                    x.n +
+                    (favs.includes(x.e) ? ' — sağ tık: favoriden çıkar' : ' — sağ tık: favorile')
+                  }
+                  className={
+                    'w-8 h-8 flex items-center justify-center rounded hover:bg-surface-2 text-lg ' +
+                    (favs.includes(x.e) ? 'ring-1 ring-brand-500/40' : '')
+                  }
                 >
                   {x.e}
                 </button>

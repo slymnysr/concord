@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
 )
 
 type stickerView struct {
@@ -138,6 +139,9 @@ type pushSubReq struct {
 	Endpoint string `json:"endpoint"`
 	P256DH   string `json:"p256dh"`
 	Auth     string `json:"auth"`
+	// "web" (VAPID şifreli Web Push) veya "expo" (Expo Push Service → FCM/APNs).
+	// Boşsa p256dh/auth varlığına bakılır — eski web istemcileri platform göndermiyor.
+	Platform string `json:"platform"`
 }
 
 // PUT /api/v1/users/me/push-subscriptions
@@ -148,16 +152,50 @@ func (h *Handler) SubscribePush(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "bad_request", err.Error())
 		return
 	}
-	if req.Endpoint == "" || req.P256DH == "" || req.Auth == "" {
-		writeError(w, http.StatusBadRequest, "missing", "endpoint, p256dh, auth gerekli")
+	if req.Endpoint == "" {
+		writeError(w, http.StatusBadRequest, "missing", "endpoint gerekli")
 		return
 	}
+	// Platform ayrımı: Web Push payload'ı p256dh/auth ile ŞİFRELENİR (protokol gereği
+	// zorunlu); Expo token'ının böyle bir anahtarı YOKTUR. Üçünü birden zorunlu tutmak
+	// mobil kaydı her seferinde 400'lüyordu → hiçbir cihaz kayıtlı olmuyordu.
+	platform := req.Platform
+	if platform == "" {
+		platform = "web"
+		if req.P256DH == "" && req.Auth == "" {
+			platform = "expo"
+		}
+	}
+	switch platform {
+	case "web":
+		if req.P256DH == "" || req.Auth == "" {
+			writeError(w, http.StatusBadRequest, "missing", "web push için p256dh + auth gerekli")
+			return
+		}
+	case "expo":
+		if !strings.HasPrefix(req.Endpoint, "ExponentPushToken[") && !strings.HasPrefix(req.Endpoint, "ExpoPushToken[") {
+			writeError(w, http.StatusBadRequest, "bad_token", "geçersiz Expo push token'ı")
+			return
+		}
+	default:
+		writeError(w, http.StatusBadRequest, "bad_platform", "platform 'web' veya 'expo' olmalı")
+		return
+	}
+
+	var p256, auth *string
+	if req.P256DH != "" {
+		p256 = &req.P256DH
+	}
+	if req.Auth != "" {
+		auth = &req.Auth
+	}
 	_, err := h.Pool.Exec(r.Context(), `
-        INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent, platform)
+        VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT (user_id, endpoint) DO UPDATE
-        SET p256dh = EXCLUDED.p256dh, auth = EXCLUDED.auth, user_agent = EXCLUDED.user_agent
-    `, uid, req.Endpoint, req.P256DH, req.Auth, r.UserAgent())
+        SET p256dh = EXCLUDED.p256dh, auth = EXCLUDED.auth, user_agent = EXCLUDED.user_agent,
+            platform = EXCLUDED.platform, failed_at = NULL
+    `, uid, req.Endpoint, p256, auth, r.UserAgent(), platform)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", err.Error())
 		return

@@ -1,12 +1,12 @@
-// Sidcord API istemcisi — fetch tabanlı, auth header + token refresh
+// Concord API istemcisi — fetch tabanlı, auth header + token refresh
 export type Snowflake = string;
 
 import { httpUrl } from './serverConfig';
 
 const API_BASE = httpUrl('/api/v1');
-const TOKEN_KEY = 'sidcord_access';
-const REFRESH_KEY = 'sidcord_refresh';
-const SESSION_KEY = 'sidcord_session_id';
+const TOKEN_KEY = 'concord_access';
+const REFRESH_KEY = 'concord_refresh';
+const SESSION_KEY = 'concord_session_id';
 
 export interface APIUser {
   id: Snowflake;
@@ -51,7 +51,17 @@ export interface APIChannel {
   id: Snowflake;
   guild_id: Snowflake;
   parent_id?: Snowflake;
-  type: 'text' | 'voice' | 'announcement' | 'forum' | 'stage' | 'category' | 'media' | 'public_thread' | 'private_thread' | 'news_thread';
+  type:
+    | 'text'
+    | 'voice'
+    | 'announcement'
+    | 'forum'
+    | 'stage'
+    | 'category'
+    | 'media'
+    | 'public_thread'
+    | 'private_thread'
+    | 'news_thread';
   name: string;
   topic?: string;
   position: number;
@@ -76,8 +86,12 @@ export interface APIAttachment {
   message_id: Snowflake;
   filename: string;
   url: string;
+  // Sunucunun nesneden TESPİT ETTİĞİ metadata (istemci beyanı değil) — bkz. API-KONTRAT
   content_type?: string;
   size_bytes: number;
+  width?: number; // yalnızca görüntülerde
+  height?: number; // yalnızca görüntülerde
+  thumb_url?: string; // EXIF'siz JPEG thumbnail (uzun kenar 400px), yalnızca görüntülerde
   created_at: string;
 }
 
@@ -112,6 +126,7 @@ export interface APIMessage {
   mention_everyone?: boolean;
   system?: boolean;
   published_at?: string;
+  reactions?: APIReaction[];
 }
 
 export interface APIMember {
@@ -387,7 +402,11 @@ export interface AuthResponse {
 }
 
 export class APIError extends Error {
-  constructor(public status: number, public code: string, public detail: string) {
+  constructor(
+    public status: number,
+    public code: string,
+    public detail: string,
+  ) {
     super(`${code}: ${detail}`);
   }
 }
@@ -414,11 +433,7 @@ export const tokenStore = {
   },
 };
 
-async function request<T>(
-  path: string,
-  init: RequestInit = {},
-  retried = false,
-): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}, retried = false): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set('Content-Type', 'application/json');
   const token = tokenStore.access();
@@ -433,11 +448,7 @@ async function request<T>(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new APIError(
-      res.status,
-      body.error || 'unknown',
-      body.detail || res.statusText,
-    );
+    throw new APIError(res.status, body.error || 'unknown', body.detail || res.statusText);
   }
 
   if (res.status === 204) return undefined as T;
@@ -472,6 +483,8 @@ export const api = {
     email: string;
     display_name: string;
     password: string;
+    // Yaş kapısı (COPPA/DSA) — API bunu ZORUNLU tutar, YYYY-MM-DD
+    birth_date: string;
   }): Promise<AuthResponse> {
     const r = await request<AuthResponse>('/auth/register', {
       method: 'POST',
@@ -481,7 +494,11 @@ export const api = {
     return r;
   },
 
-  async login(input: { email: string; password: string; totp_code?: string }): Promise<AuthResponse> {
+  async login(input: {
+    email: string;
+    password: string;
+    totp_code?: string;
+  }): Promise<AuthResponse> {
     const r = await request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(input),
@@ -506,14 +523,18 @@ export const api = {
     }),
 
   me: () => request<APIUser>('/users/me'),
-  user: (userId: string) =>
-    request<APIPublicUser>(`/users/${userId}`),
+  user: (userId: string) => request<APIPublicUser>(`/users/${userId}`),
   users: {
     user: (userId: string) => request<APIPublicUser>(`/users/${userId}`),
     report: (userId: string, reason?: string) =>
-      request<void>(`/users/${userId}/report`, { method: 'POST', body: JSON.stringify({ reason: reason ?? '' }) }),
+      request<void>(`/users/${userId}/report`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: reason ?? '' }),
+      }),
     verifyEmail: () =>
-      request<{ sent: boolean; already_verified?: boolean }>(`/users/me/verify-email`, { method: 'POST' }),
+      request<{ sent: boolean; already_verified?: boolean }>(`/users/me/verify-email`, {
+        method: 'POST',
+      }),
     changeEmail: (newEmail: string, password: string) =>
       request<{ sent: boolean; pending_email: string }>(`/users/me/email`, {
         method: 'POST',
@@ -528,7 +549,11 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     }),
-  updateCustomStatus: (input: { custom_status_text?: string | null; custom_status_emoji?: string | null; clear_after_seconds?: number | null }) =>
+  updateCustomStatus: (input: {
+    custom_status_text?: string | null;
+    custom_status_emoji?: string | null;
+    clear_after_seconds?: number | null;
+  }) =>
     request<void>('/users/me/status', {
       method: 'PATCH',
       body: JSON.stringify(input),
@@ -543,25 +568,33 @@ export const api = {
   keywords: {
     list: () => request<string[]>('/users/me/keywords'),
     set: (keywords: string[]) =>
-      request<string[]>('/users/me/keywords', { method: 'PUT', body: JSON.stringify({ keywords }) }),
+      request<string[]>('/users/me/keywords', {
+        method: 'PUT',
+        body: JSON.stringify({ keywords }),
+      }),
   },
   privacy: {
     get: () => request<{ allow_dms_from: 'everyone' | 'friends' }>('/users/me/privacy'),
     set: (allowDmsFrom: 'everyone' | 'friends') =>
-      request<{ allow_dms_from: string }>('/users/me/privacy', { method: 'PUT', body: JSON.stringify({ allow_dms_from: allowDmsFrom }) }),
+      request<{ allow_dms_from: string }>('/users/me/privacy', {
+        method: 'PUT',
+        body: JSON.stringify({ allow_dms_from: allowDmsFrom }),
+      }),
   },
-  block: (userId: string) =>
-    request<void>(`/users/${userId}/block`, { method: 'PUT' }),
-  unblock: (userId: string) =>
-    request<void>(`/users/${userId}/block`, { method: 'DELETE' }),
+  block: (userId: string) => request<void>(`/users/${userId}/block`, { method: 'PUT' }),
+  unblock: (userId: string) => request<void>(`/users/${userId}/block`, { method: 'DELETE' }),
 
   sessions: {
     list: () =>
-      request<Array<{ id: Snowflake; user_agent: string; created_at: string; expires_at: string }>>('/users/me/sessions'),
+      request<Array<{ id: Snowflake; user_agent: string; created_at: string; expires_at: string }>>(
+        '/users/me/sessions',
+      ),
     revoke: (sessionId: string) =>
       request<void>(`/users/me/sessions/${sessionId}`, { method: 'DELETE' }),
     revokeOthers: (exceptId: string) =>
-      request<void>(`/users/me/sessions?except=${encodeURIComponent(exceptId)}`, { method: 'DELETE' }),
+      request<void>(`/users/me/sessions?except=${encodeURIComponent(exceptId)}`, {
+        method: 'DELETE',
+      }),
     current: () => tokenStore.session(),
   },
 
@@ -590,8 +623,7 @@ export const api = {
         explicit_content_filter: number;
         auto_role_id: string;
       }>,
-    ) =>
-      request<APIGuild>(`/guilds/${guildId}`, { method: 'PATCH', body: JSON.stringify(patch) }),
+    ) => request<APIGuild>(`/guilds/${guildId}`, { method: 'PATCH', body: JSON.stringify(patch) }),
     auditLog: (guildId: string) =>
       request<
         Array<{
@@ -649,9 +681,12 @@ export const api = {
       >('/discover/guilds'),
     joinPublic: (guildId: string) =>
       request<APIGuild>(`/discover/guilds/${guildId}/join`, { method: 'POST' }),
-    leave: (guildId: string) =>
-      request<void>(`/guilds/${guildId}/leave`, { method: 'POST' }),
-    notifSettings: (guildId: string, notifLevel: 'all' | 'mentions' | 'nothing', muteUntilSec?: number) =>
+    leave: (guildId: string) => request<void>(`/guilds/${guildId}/leave`, { method: 'POST' }),
+    notifSettings: (
+      guildId: string,
+      notifLevel: 'all' | 'mentions' | 'nothing',
+      muteUntilSec?: number,
+    ) =>
       request<void>(`/guilds/${guildId}/notif-settings`, {
         method: 'PUT',
         body: JSON.stringify({ notif_level: notifLevel, mute_until_sec: muteUntilSec ?? 0 }),
@@ -684,7 +719,14 @@ export const api = {
     roles: (guildId: string) => request<APIRole[]>(`/guilds/${guildId}/roles`),
     createRole: (
       guildId: string,
-      input: { name: string; color?: number; permissions?: string; hoist?: boolean; mentionable?: boolean; icon?: string },
+      input: {
+        name: string;
+        color?: number;
+        permissions?: string;
+        hoist?: boolean;
+        mentionable?: boolean;
+        icon?: string;
+      },
     ) =>
       request<APIRole>(`/guilds/${guildId}/roles`, {
         method: 'POST',
@@ -693,7 +735,15 @@ export const api = {
     updateRole: (
       guildId: string,
       roleId: string,
-      input: Partial<{ name: string; color: number; permissions: string; hoist: boolean; mentionable: boolean; position: number; icon: string }>,
+      input: Partial<{
+        name: string;
+        color: number;
+        permissions: string;
+        hoist: boolean;
+        mentionable: boolean;
+        position: number;
+        icon: string;
+      }>,
     ) =>
       request<APIRole>(`/guilds/${guildId}/roles/${roleId}`, {
         method: 'PATCH',
@@ -729,7 +779,10 @@ export const api = {
     ban: (guildId: string, userId: string, reason?: string, deleteMessageHours?: number) =>
       request<void>(`/guilds/${guildId}/bans/${userId}`, {
         method: 'PUT',
-        body: JSON.stringify({ reason: reason ?? '', delete_message_hours: deleteMessageHours ?? 0 }),
+        body: JSON.stringify({
+          reason: reason ?? '',
+          delete_message_hours: deleteMessageHours ?? 0,
+        }),
       }),
     unban: (guildId: string, userId: string) =>
       request<void>(`/guilds/${guildId}/bans/${userId}`, { method: 'DELETE' }),
@@ -772,14 +825,17 @@ export const api = {
         `/messages/${messageId}/reactions/${encodeURIComponent(emoji)}/users`,
       ),
     add: (messageId: string, emoji: string) =>
-      request<void>(`/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`, { method: 'PUT' }),
+      request<void>(`/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`, {
+        method: 'PUT',
+      }),
     remove: (messageId: string, emoji: string) =>
-      request<void>(`/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`, { method: 'DELETE' }),
+      request<void>(`/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`, {
+        method: 'DELETE',
+      }),
   },
 
   reactionRoles: {
-    list: (guildId: string) =>
-      request<APIReactionRole[]>(`/guilds/${guildId}/reaction-roles`),
+    list: (guildId: string) => request<APIReactionRole[]>(`/guilds/${guildId}/reaction-roles`),
     create: (
       guildId: string,
       input: { channel_id: string; message_id: string; emoji: string; role_id: string },
@@ -793,8 +849,7 @@ export const api = {
   },
 
   welcome: {
-    get: (guildId: string) =>
-      request<APIGuildWelcome>(`/guilds/${guildId}/welcome`),
+    get: (guildId: string) => request<APIGuildWelcome>(`/guilds/${guildId}/welcome`),
     update: (
       guildId: string,
       input: Partial<{
@@ -820,15 +875,24 @@ export const api = {
   webhooks: {
     list: (channelId: string) =>
       request<
-        Array<{ id: Snowflake; channel_id: Snowflake; guild_id: Snowflake; name: string; avatar_url?: string; created_at: string }>
+        Array<{
+          id: Snowflake;
+          channel_id: Snowflake;
+          guild_id: Snowflake;
+          name: string;
+          avatar_url?: string;
+          created_at: string;
+        }>
       >(`/channels/${channelId}/webhooks`),
     create: (channelId: string, name: string) =>
-      request<{ id: Snowflake; channel_id: Snowflake; name: string; token: string; created_at: string }>(
-        `/channels/${channelId}/webhooks`,
-        { method: 'POST', body: JSON.stringify({ name }) },
-      ),
-    delete: (webhookId: string) =>
-      request<void>(`/webhooks/${webhookId}`, { method: 'DELETE' }),
+      request<{
+        id: Snowflake;
+        channel_id: Snowflake;
+        name: string;
+        token: string;
+        created_at: string;
+      }>(`/channels/${channelId}/webhooks`, { method: 'POST', body: JSON.stringify({ name }) }),
+    delete: (webhookId: string) => request<void>(`/webhooks/${webhookId}`, { method: 'DELETE' }),
   },
 
   applications: {
@@ -838,8 +902,14 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ name, description: description || undefined }),
       }),
-    update: (applicationId: string, patch: Partial<{ name: string; description: string; public: boolean }>) =>
-      request<void>(`/applications/${applicationId}`, { method: 'PATCH', body: JSON.stringify(patch) }),
+    update: (
+      applicationId: string,
+      patch: Partial<{ name: string; description: string; public: boolean }>,
+    ) =>
+      request<void>(`/applications/${applicationId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(patch),
+      }),
     remove: (applicationId: string) =>
       request<void>(`/applications/${applicationId}`, { method: 'DELETE' }),
     resetToken: (applicationId: string) =>
@@ -886,8 +956,7 @@ export const api = {
           created_at: string;
         }>
       >(`/guilds/${guildId}/follows`),
-    remove: (followId: string) =>
-      request<void>(`/follows/${followId}`, { method: 'DELETE' }),
+    remove: (followId: string) => request<void>(`/follows/${followId}`, { method: 'DELETE' }),
     crosspost: (channelId: string, messageId: string) =>
       request<{ published: boolean; delivered_to: number }>(
         `/channels/${channelId}/messages/${messageId}/crosspost`,
@@ -946,12 +1015,13 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ content }),
       }),
-    delete: (messageId: string) =>
-      request<void>(`/messages/${messageId}`, { method: 'DELETE' }),
+    delete: (messageId: string) => request<void>(`/messages/${messageId}`, { method: 'DELETE' }),
     pin: (messageId: string) => request<void>(`/messages/${messageId}/pin`, { method: 'PUT' }),
     unpin: (messageId: string) => request<void>(`/messages/${messageId}/pin`, { method: 'DELETE' }),
     edits: (messageId: string) =>
-      request<Array<{ id: string; old_content: string; edited_at: string }>>(`/messages/${messageId}/edits`),
+      request<Array<{ id: string; old_content: string; edited_at: string }>>(
+        `/messages/${messageId}/edits`,
+      ),
   },
 
   events: {
@@ -1021,8 +1091,7 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(input),
       }),
-    delete: (stickerId: string) =>
-      request<void>(`/stickers/${stickerId}`, { method: 'DELETE' }),
+    delete: (stickerId: string) => request<void>(`/stickers/${stickerId}`, { method: 'DELETE' }),
   },
 
   push: {
@@ -1062,7 +1131,11 @@ export const api = {
   },
 
   stageInstances: {
-    create: (input: { channel_id: string; topic: string; privacy_level?: 'guild_only' | 'public' }) =>
+    create: (input: {
+      channel_id: string;
+      topic: string;
+      privacy_level?: 'guild_only' | 'public';
+    }) =>
       request<{ channel_id: Snowflake; topic: string }>(`/stage-instances`, {
         method: 'POST',
         body: JSON.stringify(input),
@@ -1104,15 +1177,16 @@ export const api = {
   },
 
   commands: {
-    list: (guildId: string) =>
-      request<APICommand[]>(`/guilds/${guildId}/commands`),
-    create: (guildId: string, input: { name: string; description: string; response: string; options?: APICommandOption[] }) =>
+    list: (guildId: string) => request<APICommand[]>(`/guilds/${guildId}/commands`),
+    create: (
+      guildId: string,
+      input: { name: string; description: string; response: string; options?: APICommandOption[] },
+    ) =>
       request<{ id: Snowflake }>(`/guilds/${guildId}/commands`, {
         method: 'POST',
         body: JSON.stringify(input),
       }),
-    delete: (commandId: string) =>
-      request<void>(`/commands/${commandId}`, { method: 'DELETE' }),
+    delete: (commandId: string) => request<void>(`/commands/${commandId}`, { method: 'DELETE' }),
     run: (channelId: string, name: string, args?: Record<string, string>) =>
       request<APIMessage>(`/channels/${channelId}/commands/run?name=${encodeURIComponent(name)}`, {
         method: 'POST',
@@ -1123,7 +1197,13 @@ export const api = {
   folders: {
     list: () =>
       request<
-        Array<{ id: Snowflake; name: string; color: number; position: number; guild_ids: Snowflake[] }>
+        Array<{
+          id: Snowflake;
+          name: string;
+          color: number;
+          position: number;
+          guild_ids: Snowflake[];
+        }>
       >('/users/me/folders'),
     create: (input: { name: string; color?: number; guild_ids?: string[] }) =>
       request<{ id: Snowflake }>('/users/me/folders', {
@@ -1132,8 +1212,7 @@ export const api = {
       }),
     update: (folderId: string, input: { name?: string; color?: number; guild_ids?: string[] }) =>
       request<void>(`/folders/${folderId}`, { method: 'PATCH', body: JSON.stringify(input) }),
-    delete: (folderId: string) =>
-      request<void>(`/folders/${folderId}`, { method: 'DELETE' }),
+    delete: (folderId: string) => request<void>(`/folders/${folderId}`, { method: 'DELETE' }),
   },
 
   embeds: {
@@ -1173,19 +1252,21 @@ export const api = {
       request<void>(`/polls/${pollId}/answers/${answerId}/vote`, { method: 'DELETE' }),
     close: (pollId: string) => request<void>(`/polls/${pollId}/close`, { method: 'POST' }),
     voters: (pollId: string, answerId: string) =>
-      request<Array<{ id: Snowflake; display_name: string; avatar_color: string; avatar_url?: string }>>(
-        `/polls/${pollId}/answers/${answerId}/voters`,
-      ),
+      request<
+        Array<{ id: Snowflake; display_name: string; avatar_color: string; avatar_url?: string }>
+      >(`/polls/${pollId}/answers/${answerId}/voters`),
   },
 
   savedMessages: {
     list: () => request<APISavedMessage[]>(`/users/me/saved-messages`),
     save: (messageId: string) => request<void>(`/messages/${messageId}/save`, { method: 'PUT' }),
-    unsave: (messageId: string) => request<void>(`/messages/${messageId}/save`, { method: 'DELETE' }),
+    unsave: (messageId: string) =>
+      request<void>(`/messages/${messageId}/save`, { method: 'DELETE' }),
   },
 
   twofa: {
-    enable: () => request<{ secret: string; otpauth_url: string }>(`/users/me/2fa/enable`, { method: 'POST' }),
+    enable: () =>
+      request<{ secret: string; otpauth_url: string }>(`/users/me/2fa/enable`, { method: 'POST' }),
     verify: (code: string) =>
       request<void>(`/users/me/2fa/verify`, { method: 'POST', body: JSON.stringify({ code }) }),
     disable: (code: string) =>
@@ -1199,8 +1280,7 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ remind_at: remindAt }),
       }),
-    delete: (reminderId: string) =>
-      request<void>(`/reminders/${reminderId}`, { method: 'DELETE' }),
+    delete: (reminderId: string) => request<void>(`/reminders/${reminderId}`, { method: 'DELETE' }),
   },
 
   scheduledMessages: {
@@ -1240,7 +1320,12 @@ export const api = {
   threads: {
     create: (
       channelId: string,
-      input: { name: string; type?: 'public_thread' | 'private_thread'; starter_message_id?: string; tag_ids?: string[] },
+      input: {
+        name: string;
+        type?: 'public_thread' | 'private_thread';
+        starter_message_id?: string;
+        tag_ids?: string[];
+      },
     ) =>
       request<APIChannel>(`/channels/${channelId}/threads`, {
         method: 'POST',
@@ -1248,33 +1333,60 @@ export const api = {
       }),
     list: (channelId: string, archived = false) =>
       request<
-        Array<APIChannel & { archived?: boolean; message_count?: number; member_count?: number; creator_id?: string; tag_ids?: string[] }>
+        Array<
+          APIChannel & {
+            archived?: boolean;
+            message_count?: number;
+            member_count?: number;
+            creator_id?: string;
+            tag_ids?: string[];
+          }
+        >
       >(`/channels/${channelId}/threads${archived ? '?archived=true' : ''}`),
     join: (channelId: string) =>
       request<void>(`/channels/${channelId}/thread-members/me`, { method: 'PUT' }),
     leave: (channelId: string) =>
       request<void>(`/channels/${channelId}/thread-members/me`, { method: 'DELETE' }),
     setState: (channelId: string, state: { archived?: boolean; locked?: boolean }) =>
-      request<void>(`/channels/${channelId}/thread-state`, { method: 'PATCH', body: JSON.stringify(state) }),
+      request<void>(`/channels/${channelId}/thread-state`, {
+        method: 'PATCH',
+        body: JSON.stringify(state),
+      }),
   },
 
   forumTags: {
     list: (channelId: string) =>
-      request<Array<{ id: string; name: string; emoji?: string; position: number }>>(`/channels/${channelId}/forum-tags`),
+      request<Array<{ id: string; name: string; emoji?: string; position: number }>>(
+        `/channels/${channelId}/forum-tags`,
+      ),
     create: (channelId: string, input: { name: string; emoji?: string }) =>
-      request<{ id: string; name: string; emoji?: string; position: number }>(`/channels/${channelId}/forum-tags`, {
-        method: 'POST',
-        body: JSON.stringify(input),
-      }),
-    delete: (tagId: string) =>
-      request<void>(`/forum-tags/${tagId}`, { method: 'DELETE' }),
+      request<{ id: string; name: string; emoji?: string; position: number }>(
+        `/channels/${channelId}/forum-tags`,
+        {
+          method: 'POST',
+          body: JSON.stringify(input),
+        },
+      ),
+    delete: (tagId: string) => request<void>(`/forum-tags/${tagId}`, { method: 'DELETE' }),
   },
 
   channels: {
-    create: (guildId: string, name: string, type = 'text', parentId?: string | null, topic?: string) =>
+    create: (
+      guildId: string,
+      name: string,
+      type = 'text',
+      parentId?: string | null,
+      topic?: string,
+    ) =>
       request<APIChannel>('/channels', {
         method: 'POST',
-        body: JSON.stringify({ guild_id: guildId, name, type, parent_id: parentId ?? undefined, topic: topic || undefined }),
+        body: JSON.stringify({
+          guild_id: guildId,
+          name,
+          type,
+          parent_id: parentId ?? undefined,
+          topic: topic || undefined,
+        }),
       }),
     update: (
       channelId: string,
@@ -1294,8 +1406,7 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify(patch),
       }),
-    delete: (channelId: string) =>
-      request<void>(`/channels/${channelId}`, { method: 'DELETE' }),
+    delete: (channelId: string) => request<void>(`/channels/${channelId}`, { method: 'DELETE' }),
     muteSettings: (
       channelId: string,
       input: {
@@ -1317,7 +1428,13 @@ export const api = {
       }),
     listOverrides: (channelId: string) =>
       request<
-        Array<{ channel_id: string; target_type: 'role' | 'user'; target_id: string; allow: string; deny: string }>
+        Array<{
+          channel_id: string;
+          target_type: 'role' | 'user';
+          target_id: string;
+          allow: string;
+          deny: string;
+        }>
       >(`/channels/${channelId}/overrides`),
     deleteOverride: (channelId: string, targetType: 'role' | 'user', targetId: string) =>
       request<void>(`/channels/${channelId}/overrides/${targetType}/${targetId}`, {

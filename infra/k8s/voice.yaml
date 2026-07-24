@@ -1,0 +1,115 @@
+# Voice SFU (mediasoup)
+#
+# ÇOK-REPLICA AÇIK (FAZ C): router cascade + SFU seçici yapıldı. Aynı kanal farklı pod'lara
+# düşse bile node'lar arası PipeTransport ile RTP taşınır → kullanıcılar birbirini duyar.
+# İstemci hangi pod'a bağlanacağını /sfu/select'ten öğrenir (kanalı barındıran pod öncelikli,
+# yoksa en az yüklü) — böylece gereksiz cascade açılmaz.
+#
+# ⚠️ Ağ: RTC medyası UDP/TCP port aralığından AKAR; Service/Ingress üzerinden proxy'lenemez.
+# hostNetwork + hostPort ile doğrudan node'a açılır. NAT arkasındaysa MS_ANNOUNCED_IP şarttır,
+# yoksa ICE başarısız olur (istemci sesi duymaz).
+#
+# ENV ADLARI: uygulamanın GERÇEKTEN okuduğu adlar kullanılır (apps/voice/src/config.ts).
+# Eskiden burada PORT/HTTP_PORT/ANNOUNCED_IP/RTC_*_PORT yazıyordu — hiçbirini kod okumuyordu.
+# Dördü varsayılanlar sayesinde tesadüfen çalışıyordu; ama ANNOUNCED_IP okunmadığı için voice
+# üretimde 127.0.0.1 ilan ediyordu → ICE her istemcide düşer, KİMSE KİMSEYİ DUYAMAZDI.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: voice
+  namespace: concord
+  labels: { app: voice }
+spec:
+  # StatefulSet: her pod'un SABİT bir kimliği (voice-0, voice-1…) olmalı. Küme kaydı node
+  # kimliğine dayanır; kimlik her yeniden başlatmada değişirse ölü node'lar TTL dolana kadar
+  # hayalet olarak kalır ve diğerleri onlara pipe kurmaya çalışır.
+  serviceName: voice-headless
+  replicas: 2
+  selector:
+    matchLabels: { app: voice }
+  template:
+    metadata:
+      labels: { app: voice }
+    spec:
+      # RTC portları için host ağı — mediasoup'un ilan ettiği IP'ye doğrudan erişim
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: voice
+          image: ghcr.io/slymnysr/concord-voice:latest
+          ports:
+            - { name: signaling, containerPort: 4443, hostPort: 4443 }
+            - { name: control, containerPort: 4444, hostPort: 4444 }
+          env:
+            - name: VOICE_PORT
+              value: '4443'
+            - name: VOICE_HTTP_PORT
+              value: '4444'
+            # Node'un DIŞARIDAN görünen IP'si — ICE adaylarında ilan edilir.
+            - name: MS_ANNOUNCED_IP
+              valueFrom: { fieldRef: { fieldPath: status.hostIP } }
+            - name: MS_RTC_MIN_PORT
+              value: '40000'
+            - name: MS_RTC_MAX_PORT
+              value: '40100'
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: JWT_SECRET } }
+            - name: VOICE_CONTROL_SECRET
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: VOICE_CONTROL_SECRET } }
+            - name: API_INTERNAL_URL
+              value: 'http://api:8080/api/v1'
+            # --- Çok-makine cascade (FAZ C) ---
+            - name: VOICE_CLUSTER_ENABLED
+              value: 'true'
+            # Coğrafi bölge (FAZ L). Uygulama GLOBAL: bu ayarlanmazsa tüm node'lar
+            # 'default' bölgesinde görünür ve Tokyo'daki kullanıcı Frankfurt'a düşebilir
+            # (250ms+). Her bölgedeki deployment'a kendi değeri verilmeli.
+            - name: VOICE_REGION
+              value: 'eu-central'
+            - name: POD_NAME
+              valueFrom: { fieldRef: { fieldPath: metadata.name } }
+            - name: HOST_IP
+              valueFrom: { fieldRef: { fieldPath: status.hostIP } }
+            - name: VOICE_NODE_ID
+              value: '$(POD_NAME)'
+            # Pipe transport'un DİĞER node'lardan erişilebilir IP'si. hostNetwork olduğu
+            # için host IP'si doğru adres; 127.0.0.1 bırakılırsa node'lar birbirine
+            # bağlanamaz ve cascade sessizce kurulamaz (kanal bölünür).
+            - name: VOICE_PIPE_IP
+              value: '$(HOST_IP)'
+            - name: VOICE_HTTP_URL
+              value: 'http://$(HOST_IP):4444'
+            - name: VOICE_WS_URL
+              value: 'ws://$(HOST_IP):4443'
+            - name: VOICE_CLUSTER_SECRET
+              valueFrom: { secretKeyRef: { name: concord-secrets, key: VOICE_CLUSTER_SECRET } }
+            - name: REDIS_HOST
+              value: 'redis'
+            - name: REDIS_PORT
+              value: '6379'
+          resources:
+            requests: { cpu: 500m, memory: 512Mi }
+            limits: { cpu: '4', memory: 2Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voice
+  namespace: concord
+spec:
+  selector: { app: voice }
+  ports:
+    - { name: signaling, port: 4443, targetPort: 4443 }
+    - { name: control, port: 4444, targetPort: 4444 }
+---
+# StatefulSet'in gerektirdiği headless servis (pod kimliklerinin DNS'i)
+apiVersion: v1
+kind: Service
+metadata:
+  name: voice-headless
+  namespace: concord
+spec:
+  clusterIP: None
+  selector: { app: voice }
+  ports:
+    - { name: control, port: 4444 }

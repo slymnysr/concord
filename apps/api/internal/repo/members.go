@@ -9,19 +9,19 @@ import (
 )
 
 type Member struct {
-	UserID      int64     `json:"user_id,string"`
-	GuildID     int64     `json:"guild_id,string"`
-	Nickname    *string   `json:"nickname,omitempty"`
-	GuildAvatarURL *string `json:"guild_avatar_url,omitempty"`
-	GuildBio    *string   `json:"guild_bio,omitempty"`
-	JoinedAt    time.Time `json:"joined_at"`
-	TimeoutUntil *time.Time `json:"timeout_until,omitempty"`
-	Username    string    `json:"username"`
-	DisplayName string    `json:"display_name"`
-	AvatarColor string    `json:"avatar_color"`
-	Status      string    `json:"status"`
-	Bot         bool      `json:"bot"`
-	RoleIDs     []string  `json:"role_ids"`
+	UserID         int64      `json:"user_id,string"`
+	GuildID        int64      `json:"guild_id,string"`
+	Nickname       *string    `json:"nickname,omitempty"`
+	GuildAvatarURL *string    `json:"guild_avatar_url,omitempty"`
+	GuildBio       *string    `json:"guild_bio,omitempty"`
+	JoinedAt       time.Time  `json:"joined_at"`
+	TimeoutUntil   *time.Time `json:"timeout_until,omitempty"`
+	Username       string     `json:"username"`
+	DisplayName    string     `json:"display_name"`
+	AvatarColor    string     `json:"avatar_color"`
+	Status         string     `json:"status"`
+	Bot            bool       `json:"bot"`
+	RoleIDs        []string   `json:"role_ids"`
 }
 
 type Members struct{ pool *pgxpool.Pool }

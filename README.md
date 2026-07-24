@@ -1,22 +1,22 @@
-# Sidcord
+# Concord
 
 Türkiye için yerli Discord alternatifi. **İşlevsel parite hedefine ulaşıldı** (~300 özellik: metin/ses/video, forum-sahne-duyuru kanalları, roller/izinler, AutoMod, bot API'si, anketler, 2FA, e-posta akışları, oyun algılamalı masaüstü uygulaması...). Ayrıntılı parite haritası: [`DISCORD_GAP_ANALIZ.md`](DISCORD_GAP_ANALIZ.md).
 
 ## Mimari
 
-| Bileşen | Teknoloji | Klasör |
-|---------|-----------|--------|
-| Gateway (WebSocket) | Elixir/Phoenix | `apps/gateway` |
-| API (REST) | Go + chi | `apps/api` |
-| Voice/Video SFU | Node.js + mediasoup | `apps/voice` |
-| Web istemcisi | React + Vite + Redux Toolkit + Tailwind | `apps/web` |
-| Masaüstü | **Tauri 2** (WebView2/webkit2gtk) | `apps/desktop` ([README](apps/desktop/README.md)) |
-| Mobil | React Native (planlı) | `apps/mobile` |
-| Ana DB | PostgreSQL | docker compose |
-| Cache/PubSub | Redis | docker compose |
-| Object storage | MinIO (dev) → Cloudflare R2 (prod) | docker compose |
-| Dev SMTP | MailHog (`http://localhost:8025`) | docker compose |
-| Mesaj DB (ölçek fazı) | ScyllaDB | docker compose |
+| Bileşen               | Teknoloji                               | Klasör                                            |
+| --------------------- | --------------------------------------- | ------------------------------------------------- |
+| Gateway (WebSocket)   | Elixir/Phoenix                          | `apps/gateway`                                    |
+| API (REST)            | Go + chi                                | `apps/api`                                        |
+| Voice/Video SFU       | Node.js + mediasoup                     | `apps/voice`                                      |
+| Web istemcisi         | React + Vite + Redux Toolkit + Tailwind | `apps/web`                                        |
+| Masaüstü              | **Tauri 2** (WebView2/webkit2gtk)       | `apps/desktop` ([README](apps/desktop/README.md)) |
+| Mobil                 | React Native (planlı)                   | `apps/mobile`                                     |
+| Ana DB                | PostgreSQL                              | docker compose                                    |
+| Cache/PubSub          | Redis                                   | docker compose                                    |
+| Object storage        | MinIO (dev) → Cloudflare R2 (prod)      | docker compose                                    |
+| Dev SMTP              | MailHog (`http://localhost:8025`)       | docker compose                                    |
+| Mesaj DB (ölçek fazı) | ScyllaDB                                | docker compose                                    |
 
 ## Geliştirme Ortamı
 
@@ -52,7 +52,7 @@ pnpm db:up   # PostgreSQL(5433) Redis MinIO MailHog ScyllaDB
 Migration'lar `apps/api/migrations/` altında (şu an 53). Uygulama:
 
 ```bash
-PGPASSWORD=sidcord_dev psql -h localhost -p 5433 -U sidcord -d sidcord -f apps/api/migrations/XXXX.up.sql
+PGPASSWORD=concord_dev psql -h localhost -p 5433 -U concord -d concord -f apps/api/migrations/XXXX.up.sql
 ```
 
 ### 3. Bağımlılıklar
@@ -64,6 +64,13 @@ cd apps/api && go mod download && cd ../..
 ```
 
 ### 4. Servisler
+
+> **Ayarlar tek yerden:** dört servis de (API, gateway, voice, web) **depo kökündeki `.env`**
+> dosyasını kendi okur — servisi başlatırken env değişkeni export etmen gerekmez. Anahtar
+> değiştirdiğinde (`JWT_SECRET` vb.) **hepsini yeniden başlat**: biri eski secret'la kalırsa
+> HTTP çalışmaya devam eder ama WebSocket'ler 403 alır ve yalnızca realtime/ses sessizce ölür.
+> Zaten set edilmiş env değişkenleri `.env`'i EZER (k8s/CI böyle çalışır).
+> Yeni anahtar üretmek için: `cd apps/api && go run ./cmd/genkeys`
 
 ```bash
 # Gateway (4000)

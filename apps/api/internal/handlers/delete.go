@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
 )
 
 func (h *Handler) DeleteChannel(w http.ResponseWriter, r *http.Request) {

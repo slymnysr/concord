@@ -1,7 +1,34 @@
 import { useEffect, useRef, useState } from 'react';
-import { Hash, Volume2, Megaphone, MessagesSquare, Mic, Users, UserPlus, Bell, Search, AtSign, Pin, Clock, Menu, type LucideIcon } from 'lucide-react';
-import { useAppDispatch, useAppSelector, toggleMemberList, setMobileNav, openModal, openProfileCard, selectChannel, switchToGuild, switchToDM, selectDM } from '../store';
+import {
+  Hash,
+  Volume2,
+  Megaphone,
+  MessagesSquare,
+  Mic,
+  Users,
+  UserPlus,
+  Bell,
+  Search,
+  AtSign,
+  Pin,
+  Clock,
+  Menu,
+  type LucideIcon,
+} from 'lucide-react';
+import {
+  useAppDispatch,
+  useAppSelector,
+  toggleMemberList,
+  setMobileNav,
+  openModal,
+  openProfileCard,
+  selectChannel,
+  switchToGuild,
+  switchToDM,
+  selectDM,
+} from '../store';
 import { api, type APIPublicUser } from '../api';
+import { t, localeTag } from '../i18n';
 
 const Icon: Record<string, LucideIcon> = {
   text: Hash,
@@ -21,9 +48,11 @@ export function ChannelHeader() {
     guildId && channelId ? s.channels.byGuild[guildId]?.find((c) => c.id === channelId) : null,
   );
   const showMembers = useAppSelector((s) => s.ui.showMemberList);
-  const memberCount = useAppSelector((s) => (guildId ? s.members.byGuild[guildId]?.length ?? 0 : 0));
+  const memberCount = useAppSelector((s) =>
+    guildId ? (s.members.byGuild[guildId]?.length ?? 0) : 0,
+  );
   const dispatch = useAppDispatch();
-  const Ico = mode === 'dm' ? AtSign : channel ? Icon[channel.type] ?? Hash : Hash;
+  const Ico = mode === 'dm' ? AtSign : channel ? (Icon[channel.type] ?? Hash) : Hash;
 
   const [dmPartner, setDmPartner] = useState<APIPublicUser | null>(null);
   useEffect(() => {
@@ -53,7 +82,8 @@ export function ChannelHeader() {
       <button
         onClick={() => dispatch(setMobileNav(true))}
         className="md:hidden w-8 h-8 -ml-1 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 shrink-0"
-        title="Menü" aria-label="Menü"
+        title={t('common.menu')}
+        aria-label={t('common.menu')}
       >
         <Menu size={20} />
       </button>
@@ -61,8 +91,9 @@ export function ChannelHeader() {
       <div className="flex items-baseline gap-3 min-w-0">
         <h1 className="text-ink-primary font-semibold truncate">
           {mode === 'dm'
-            ? dmPartner?.display_name ?? (channelId ? 'Yükleniyor...' : 'Bir konuşma seç')
-            : channel?.name ?? '—'}
+            ? (dmPartner?.display_name ??
+              (channelId ? t('common.loading') : t('dm.pickConversation')))
+            : (channel?.name ?? '—')}
         </h1>
         {channel?.type === 'announcement' && (
           <span className="text-[10px] font-bold uppercase tracking-wider bg-brand-500/15 text-brand-400 px-1.5 py-0.5 rounded shrink-0">
@@ -75,7 +106,11 @@ export function ChannelHeader() {
           </span>
         )}
         {channel && channel.rate_limit_sec > 0 && (
-          <span className="text-ink-tertiary text-[11px] flex items-center gap-0.5 shrink-0" title="Yavaş mod aktif" aria-label="Yavaş mod aktif">
+          <span
+            className="text-ink-tertiary text-[11px] flex items-center gap-0.5 shrink-0"
+            title={t('channel.slowmodeActive')}
+            aria-label={t('channel.slowmodeActive')}
+          >
             <Clock size={12} /> {channel.rate_limit_sec}sn
           </span>
         )}
@@ -90,10 +125,10 @@ export function ChannelHeader() {
                 ? `@${dmPartner.username}`
                 : ''
               : channel?.type === 'voice'
-                ? 'Sesli kanal'
+                ? t('channel.voiceChannel')
                 : channel?.type === 'announcement'
-                  ? 'Duyuru kanalı'
-                  : 'Sohbet'}
+                  ? t('channel.announcementChannel')
+                  : t('channel.chat')}
           </span>
         )}
       </div>
@@ -103,19 +138,20 @@ export function ChannelHeader() {
           <button
             type="button"
             onClick={() => dispatch(openModal('follow_channel'))}
-            title="Bu duyuru kanalını başka bir sunucudan takip et"
-            aria-label="Kanalı takip et"
+            title={t('channel.followHint')}
+            aria-label={t('channel.follow')}
             className="h-9 px-3 rounded-lg bg-surface-2 hover:bg-surface-3 text-ink-secondary hover:text-ink-primary text-sm font-semibold flex items-center gap-1.5 transition-colors"
           >
             <Megaphone size={16} />
-            <span className="hidden md:inline">Takip Et</span>
+            <span className="hidden md:inline">{t('channel.followBtn')}</span>
           </button>
         )}
         {channelId && mode !== 'dm' && <ThreadsButton channelId={channelId} />}
         {channelId && mode !== 'dm' && <PinsButton channelId={channelId} />}
         <button
           onClick={() => dispatch(openModal('search'))}
-          title="Ara" aria-label="Ara"
+          title={t('common.search')}
+          aria-label={t('common.search')}
           className="w-9 h-9 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 hover:text-ink-primary transition-colors"
         >
           <Search size={18} />
@@ -125,21 +161,24 @@ export function ChannelHeader() {
           <button
             type="button"
             onClick={() => dispatch(openModal('invite_link'))}
-            title="Sunucuya davet bağlantısı oluştur" aria-label="Sunucuya davet bağlantısı oluştur"
+            title={t('guild.createInviteLink')}
+            aria-label={t('guild.createInviteLink')}
             className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold flex items-center gap-1.5 transition-colors"
           >
             <UserPlus size={16} />
-            <span>Davet Et</span>
+            <span>{t('guild.inviteBtn')}</span>
           </button>
         )}
         <button
           type="button"
           onClick={() => dispatch(toggleMemberList())}
-          title={mode === 'dm' ? 'Profili aç/kapat' : 'Üye listesini aç/kapat'}
-          aria-label={mode === 'dm' ? 'Profili aç/kapat' : 'Üye listesini aç/kapat'}
+          title={mode === 'dm' ? t('profile.toggle') : t('member.toggleList')}
+          aria-label={mode === 'dm' ? t('profile.toggle') : t('member.toggleList')}
           className={
             'h-9 px-2 min-w-9 rounded-lg flex items-center justify-center gap-1 transition-colors text-ink-secondary ' +
-            (showMembers ? 'bg-brand-500/15 text-brand-500' : 'hover:bg-surface-2 hover:text-ink-primary')
+            (showMembers
+              ? 'bg-brand-500/15 text-brand-500'
+              : 'hover:bg-surface-2 hover:text-ink-primary')
           }
         >
           <Users size={18} />
@@ -174,11 +213,13 @@ function NotificationsBell() {
     refreshCount();
     const t = setInterval(refreshCount, 15000);
     // Gerçek-zamanlı: yeni bildirim gelince (App → gateway → window) anında tazele
-    function onNotif() { refreshCount(); }
-    window.addEventListener('sidcord:notification', onNotif);
+    function onNotif() {
+      refreshCount();
+    }
+    window.addEventListener('concord:notification', onNotif);
     return () => {
       clearInterval(t);
-      window.removeEventListener('sidcord:notification', onNotif);
+      window.removeEventListener('concord:notification', onNotif);
     };
   }, []);
 
@@ -196,7 +237,8 @@ function NotificationsBell() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        title="Bildirimler" aria-label="Bildirimler"
+        title="Bildirimler"
+        aria-label="Bildirimler"
         className="w-9 h-9 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 hover:text-ink-primary transition-colors relative"
       >
         <Bell size={18} />
@@ -209,7 +251,7 @@ function NotificationsBell() {
       {open && (
         <div className="absolute right-0 top-11 w-80 max-h-[480px] flex flex-col bg-surface-1 border border-line rounded-xl shadow-2xl z-30">
           <div className="flex items-center justify-between px-4 py-3 border-b border-line shrink-0">
-            <h3 className="font-semibold text-ink-primary">Bildirimler</h3>
+            <h3 className="font-semibold text-ink-primary">{t('settings.notifications')}</h3>
             {count > 0 && (
               <button onClick={markAll} className="text-xs text-brand-500 hover:underline">
                 Hepsini okundu işaretle
@@ -270,14 +312,14 @@ function NotificationItem({ n }: { n: import('../api').APINotification }) {
     title = `${actor} senden bahsetti`;
     body = n.message_preview ? `${where} — ${n.message_preview}` : where;
   } else if (n.type === 'friend_request') {
-    title = `${actor} sana arkadaşlık isteği gönderdi`;
+    title = t('notif.friendRequest', { actor });
   } else if (n.type === 'reply') {
-    title = `${actor} mesajına yanıt verdi`;
+    title = t('notif.repliedToYou', { actor });
     body = n.message_preview ?? '';
   } else if (n.type === 'reminder') {
     title = '⏰ Hatırlatma';
     const where = n.channel_name ? `#${n.channel_name}` : '';
-    body = n.message_preview ? `${where} — ${n.message_preview}` : (where || 'Kaydettiğin mesaj');
+    body = n.message_preview ? `${where} — ${n.message_preview}` : where || 'Kaydettiğin mesaj';
   } else {
     title = n.type;
     body = n.message_preview ?? '';
@@ -311,9 +353,7 @@ function NotificationItem({ n }: { n: import('../api').APINotification }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm text-ink-primary leading-snug">{title}</div>
-          {body && (
-            <div className="text-xs text-ink-tertiary truncate mt-0.5">{body}</div>
-          )}
+          {body && <div className="text-xs text-ink-tertiary truncate mt-0.5">{body}</div>}
           <div className="text-[10px] text-ink-muted mt-1">{rel}</div>
         </div>
         {unread && <span className="w-2 h-2 rounded-full bg-brand-500 mt-2 shrink-0" />}
@@ -326,12 +366,12 @@ function formatRel(d: Date): string {
   const diff = Date.now() - d.getTime();
   const m = Math.floor(diff / 60000);
   if (m < 1) return 'şimdi';
-  if (m < 60) return `${m} dk önce`;
+  if (m < 60) return t('time.minAgo', { n: m });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h} sa önce`;
+  if (h < 24) return t('time.hourAgo', { n: h });
   const days = Math.floor(h / 24);
-  if (days < 7) return `${days} gün önce`;
-  return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
+  if (days < 7) return t('time.dayAgo', { n: days });
+  return d.toLocaleDateString(localeTag(), { day: '2-digit', month: 'short' });
 }
 
 function PinsButton({ channelId }: { channelId: string }) {
@@ -350,18 +390,31 @@ function PinsButton({ channelId }: { channelId: string }) {
 
   const [count, setCount] = useState(0);
   useEffect(() => {
-    api.channels.pins(channelId).then((p) => { setItems(p); setCount(p.length); }).catch(() => {});
+    api.channels
+      .pins(channelId)
+      .then((p) => {
+        setItems(p);
+        setCount(p.length);
+      })
+      .catch(() => {});
   }, [channelId]);
   useEffect(() => {
     if (!open) return;
-    api.channels.pins(channelId).then((p) => { setItems(p); setCount(p.length); }).catch(() => {});
+    api.channels
+      .pins(channelId)
+      .then((p) => {
+        setItems(p);
+        setCount(p.length);
+      })
+      .catch(() => {});
   }, [open, channelId]);
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        title="Sabitlenmiş mesajlar" aria-label="Sabitlenmiş mesajlar"
+        title={t('msg.pinnedMessages')}
+        aria-label={t('msg.pinnedMessages')}
         className="w-9 h-9 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 hover:text-ink-primary transition-colors relative"
       >
         <Pin size={18} />
@@ -374,7 +427,9 @@ function PinsButton({ channelId }: { channelId: string }) {
       {open && (
         <div className="absolute right-0 top-11 w-96 max-h-[500px] flex flex-col bg-surface-1 border border-line rounded-xl shadow-2xl z-30">
           <div className="px-4 py-3 border-b border-line">
-            <h3 className="font-semibold text-ink-primary text-sm">Sabitlenmiş Mesajlar</h3>
+            <h3 className="font-semibold text-ink-primary text-sm">
+              {t('ui.sabitlenmisMesajlar')}
+            </h3>
           </div>
           <div className="overflow-y-auto flex-1">
             {items.length === 0 ? (
@@ -394,7 +449,11 @@ function PinsButton({ channelId }: { channelId: string }) {
                       onClick={() => {
                         setOpen(false);
                         setTimeout(() => {
-                          window.dispatchEvent(new CustomEvent('sidcord:jump-to-message', { detail: { messageId: m.id, channelId } }));
+                          window.dispatchEvent(
+                            new CustomEvent('concord:jump-to-message', {
+                              detail: { messageId: m.id, channelId },
+                            }),
+                          );
                         }, 100);
                       }}
                     >
@@ -409,7 +468,7 @@ function PinsButton({ channelId }: { channelId: string }) {
                           <div className="flex items-baseline gap-2">
                             <span className="text-sm font-semibold text-ink-primary">{name}</span>
                             <span className="text-[10px] text-ink-tertiary">
-                              {new Date(m.created_at).toLocaleDateString('tr-TR', {
+                              {new Date(m.created_at).toLocaleDateString(localeTag(), {
                                 day: '2-digit',
                                 month: 'short',
                               })}
@@ -424,7 +483,8 @@ function PinsButton({ channelId }: { channelId: string }) {
                             await api.messages.unpin(m.id).catch(() => {});
                             setItems((xs) => xs.filter((x) => x.id !== m.id));
                           }}
-                          title="Sabitlemeyi kaldır" aria-label="Sabitlemeyi kaldır"
+                          title={t('msg.unpin')}
+                          aria-label={t('msg.unpin')}
                           className="text-ink-tertiary hover:text-accent-500 text-xs shrink-0"
                         >
                           ✕
@@ -458,14 +518,18 @@ function ThreadsButton({ channelId }: { channelId: string }) {
 
   useEffect(() => {
     if (!open) return;
-    api.threads.list(channelId).then(setItems).catch(() => setItems([]));
+    api.threads
+      .list(channelId)
+      .then(setItems)
+      .catch(() => setItems([]));
   }, [open, channelId]);
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        title="Thread'ler" aria-label="Thread'ler"
+        title="Thread'ler"
+        aria-label="Thread'ler"
         className="w-9 h-9 rounded-lg flex items-center justify-center text-ink-secondary hover:bg-surface-2 hover:text-ink-primary transition-colors"
       >
         <MessagesSquare size={18} />
@@ -494,9 +558,11 @@ function ThreadsButton({ channelId }: { channelId: string }) {
                     >
                       <MessagesSquare size={14} className="text-ink-tertiary mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-ink-primary truncate">{t.name}</div>
+                        <div className="text-sm font-semibold text-ink-primary truncate">
+                          {t.name}
+                        </div>
                         <div className="text-[10px] text-ink-tertiary mt-0.5">
-                          {(t.message_count ?? 0)} mesaj · {(t.member_count ?? 0)} katılımcı
+                          {t.message_count ?? 0} mesaj · {t.member_count ?? 0} katılımcı
                         </div>
                       </div>
                     </button>

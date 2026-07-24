@@ -2,8 +2,16 @@ import { useState, useRef, useEffect } from 'react';
 import { httpUrl } from '../serverConfig';
 import clsx from 'clsx';
 import { Plus, Compass, Folder } from 'lucide-react';
-import { useAppDispatch, useAppSelector, openModal, switchToDM, switchToGuild, switchToDiscover } from '../store';
+import {
+  useAppDispatch,
+  useAppSelector,
+  openModal,
+  switchToDM,
+  switchToGuild,
+  switchToDiscover,
+} from '../store';
 import { api, type APIGuild } from '../api';
+import { t } from '../i18n';
 
 interface FolderView {
   id: string;
@@ -33,11 +41,14 @@ export function ServerRail() {
   return (
     <aside className="w-[76px] bg-bg flex flex-col items-center py-4 gap-3 border-r border-line">
       <button
-        title="Arkadaşlar / Direkt Mesajlar" aria-label="Arkadaşlar / Direkt Mesajlar"
+        title={t('rail.friendsDM')}
+        aria-label={t('rail.friendsDM')}
         onClick={() => dispatch(switchToDM())}
         className={
           'w-12 h-12 rounded-xl bg-surface-1 border border-line hover:border-brand-500/40 hover:scale-105 flex items-center justify-center overflow-hidden transition-all ' +
-          (mode === 'dm' ? 'ring-2 ring-brand-500 ring-offset-2 ring-offset-bg shadow-glow border-brand-500 scale-105' : '')
+          (mode === 'dm'
+            ? 'ring-2 ring-brand-500 ring-offset-2 ring-offset-bg shadow-glow border-brand-500 scale-105'
+            : '')
         }
       >
         <img src="/brand/logo.svg" width={36} height={36} alt="" />
@@ -47,7 +58,7 @@ export function ServerRail() {
       <div className="flex flex-col gap-2.5 flex-1 overflow-y-auto w-full items-center">
         {guilds.length === 0 && (
           <p className="text-[10px] text-ink-tertiary text-center px-2 pt-3">
-            Henüz sunucun yok
+            {t('guild.noneYet')}
           </p>
         )}
 
@@ -67,7 +78,7 @@ export function ServerRail() {
               refreshFolders();
             }}
             onRemove={async () => {
-              if (!confirm(`"${f.name}" klasörünü sil?`)) return;
+              if (!confirm(t('rail.folderDeleteConfirm', { name: f.name }))) return;
               await api.folders.delete(f.id);
               refreshFolders();
             }}
@@ -82,23 +93,27 @@ export function ServerRail() {
               key={g.id}
               draggable
               onDragStart={(e) => {
-                e.dataTransfer.setData('text/sidcord-guild', g.id);
+                e.dataTransfer.setData('text/concord-guild', g.id);
                 e.dataTransfer.effectAllowed = 'move';
               }}
               onDragOver={(e) => {
-                if (e.dataTransfer.types.includes('text/sidcord-guild')) e.preventDefault();
+                if (e.dataTransfer.types.includes('text/concord-guild')) e.preventDefault();
               }}
               onDrop={(e) => {
                 e.preventDefault();
-                const draggedId = e.dataTransfer.getData('text/sidcord-guild');
+                const draggedId = e.dataTransfer.getData('text/concord-guild');
                 if (!draggedId || draggedId === g.id) return;
                 try {
-                  const order = JSON.parse(localStorage.getItem('sidcord_guild_order') ?? '[]') as string[];
-                  const filtered = order.filter((id) => id !== draggedId && guilds.some((x) => x.id === id));
+                  const order = JSON.parse(
+                    localStorage.getItem('concord_guild_order') ?? '[]',
+                  ) as string[];
+                  const filtered = order.filter(
+                    (id) => id !== draggedId && guilds.some((x) => x.id === id),
+                  );
                   const targetIdx = filtered.indexOf(g.id);
                   const insertAt = targetIdx >= 0 ? targetIdx : idx;
                   filtered.splice(insertAt, 0, draggedId);
-                  localStorage.setItem('sidcord_guild_order', JSON.stringify(filtered));
+                  localStorage.setItem('concord_guild_order', JSON.stringify(filtered));
                   location.reload();
                 } catch {}
               }}
@@ -107,16 +122,18 @@ export function ServerRail() {
             </div>
           ))}
 
-        {/* Yeni klasör oluştur */}
-        {guilds.length > 0 && (
+        {/* Yeni klasör oluştur — sunucu ikonlarını gruplamak için (Discord tarzı).
+            Yalnızca birkaç sunucu varken göster; azken gereksiz kalabalık yapmasın. */}
+        {guilds.length >= 3 && (
           <button
             onClick={async () => {
-              const name = prompt('Klasör adı?');
+              const name = prompt(t('rail.folderName'));
               if (!name?.trim()) return;
               await api.folders.create({ name: name.trim() });
               refreshFolders();
             }}
-            title="Yeni Klasör" aria-label="Yeni Klasör"
+            title={t('rail.newFolder')}
+            aria-label={t('rail.newFolder')}
             className="w-12 h-12 rounded-xl bg-surface-1 border border-dashed border-line hover:border-brand-500/40 text-ink-tertiary hover:text-brand-500 flex items-center justify-center transition-colors"
           >
             <Folder size={18} />
@@ -128,7 +145,8 @@ export function ServerRail() {
         <button
           onClick={() => dispatch(openModal('create_guild'))}
           className="w-12 h-12 rounded-xl bg-surface-1 hover:bg-brand-500/15 hover:text-brand-500 text-ink-secondary transition-colors flex items-center justify-center border border-line"
-          title="Sunucu Ekle" aria-label="Sunucu Ekle"
+          title={t('rail.addServer')}
+          aria-label={t('rail.addServer')}
         >
           <Plus size={20} strokeWidth={2.5} />
         </button>
@@ -136,9 +154,11 @@ export function ServerRail() {
           onClick={() => dispatch(switchToDiscover())}
           className={clsx(
             'w-12 h-12 rounded-xl bg-surface-1 hover:bg-brand-500/15 hover:text-brand-500 text-ink-secondary transition-colors flex items-center justify-center border border-line',
-            mode === 'discover' && 'ring-2 ring-brand-500 ring-offset-2 ring-offset-bg border-brand-500 text-brand-500',
+            mode === 'discover' &&
+              'ring-2 ring-brand-500 ring-offset-2 ring-offset-bg border-brand-500 text-brand-500',
           )}
-          title="Sunucuları Keşfet" aria-label="Sunucuları Keşfet"
+          title={t('rail.discover')}
+          aria-label={t('rail.discover')}
         >
           <Compass size={20} />
         </button>
@@ -159,16 +179,15 @@ function GuildIcon({ guild, active }: { guild: APIGuild; active: boolean }) {
       if (ch.type === 'category') continue;
       const rs = s.readStates.byChannel[ch.id];
       mentions += rs?.mention_count ?? 0;
-      if (
-        ch.last_message_id &&
-        (!rs?.last_message_id || rs.last_message_id < ch.last_message_id)
-      ) {
+      if (ch.last_message_id && (!rs?.last_message_id || rs.last_message_id < ch.last_message_id)) {
         unread = true;
       }
     }
     return { hasUnread: unread, totalMentions: mentions };
   });
-  const muted = typeof localStorage !== 'undefined' && localStorage.getItem('sidcord_guildmute_' + guild.id) === '1';
+  const muted =
+    typeof localStorage !== 'undefined' &&
+    localStorage.getItem('concord_guildmute_' + guild.id) === '1';
 
   return (
     <div className={'relative ' + (muted ? 'opacity-50' : '')}>
@@ -188,7 +207,11 @@ function GuildIcon({ guild, active }: { guild: APIGuild; active: boolean }) {
         style={{ backgroundColor: guild.icon_color }}
       >
         {(guild as any).icon_url_v2 ? (
-          <img src={(guild as any).icon_url_v2} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <img
+            src={(guild as any).icon_url_v2}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
         ) : (
           guild.icon_text
         )}
@@ -205,7 +228,9 @@ function GuildIcon({ guild, active }: { guild: APIGuild; active: boolean }) {
           {totalMentions > 99 ? '99+' : totalMentions}
         </span>
       )}
-      {menu && <GuildContextMenu guild={guild} x={menu.x} y={menu.y} onClose={() => setMenu(null)} />}
+      {menu && (
+        <GuildContextMenu guild={guild} x={menu.x} y={menu.y} onClose={() => setMenu(null)} />
+      )}
     </div>
   );
 }
@@ -236,11 +261,11 @@ function GuildContextMenu({
   if (left + w > window.innerWidth) left = window.innerWidth - w - 8;
   if (top + 200 > window.innerHeight) top = window.innerHeight - 200 - 8;
   async function leave() {
-    if (!confirm(`${guild.name} sunucusundan ayrılmak istiyor musun?`)) return;
+    if (!confirm(t('guild.leaveConfirm', { name: guild.name }))) return;
     try {
       await fetch(httpUrl(`/api/v1/guilds/${guild.id}/leave`), {
         method: 'POST',
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('sidcord_access') },
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('concord_access') },
       });
       location.reload();
     } catch {}
@@ -269,14 +294,14 @@ function GuildContextMenu({
           }}
           className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink-primary hover:bg-surface-2"
         >
-          Sunucu Ayarları
+          {t('ui.sunucuAyarlari')}
         </button>
         <div className="my-1 h-px bg-line" />
         <button
           onClick={leave}
           className="w-full text-left px-3 py-2 rounded-lg text-sm text-accent-500 hover:bg-accent-500/10"
         >
-          Sunucudan Ayrıl
+          {t('ui.sunucudanAyril')}
         </button>
       </div>
     </div>
@@ -311,7 +336,7 @@ function FolderView({
           onRemove();
         }}
         onDragOver={(e) => {
-          if (e.dataTransfer.types.includes('text/sidcord-guild')) {
+          if (e.dataTransfer.types.includes('text/concord-guild')) {
             e.preventDefault();
             setOver(true);
           }
@@ -320,7 +345,7 @@ function FolderView({
         onDrop={(e) => {
           e.preventDefault();
           setOver(false);
-          const id = e.dataTransfer.getData('text/sidcord-guild');
+          const id = e.dataTransfer.getData('text/concord-guild');
           if (id) onDropToFolder(id);
         }}
         title={folder.name + ' (sağ tık ile sil)'}

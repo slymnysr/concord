@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS data_exports;
+ALTER TABLE users DROP COLUMN IF EXISTS birth_date;

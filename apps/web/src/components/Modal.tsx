@@ -1,6 +1,7 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { X } from 'lucide-react';
 import { useAppDispatch, useAppSelector, closeModal } from '../store';
+import { t } from '../i18n';
 import { CreateGuildModal } from './CreateGuildModal';
 import { JoinGuildModal } from './JoinGuildModal';
 import { InviteLinkModal } from './InviteLinkModal';
@@ -10,17 +11,30 @@ import { NewDMModal } from './NewDMModal';
 import { FollowChannelModal } from './FollowChannelModal';
 
 // Ağır modallar — on-demand (kod-bölme): yalnızca açıldıklarında indirilir
-const ServerSettingsModal = lazy(() => import('./ServerSettingsModal').then((m) => ({ default: m.ServerSettingsModal })));
-const UserSettingsModal = lazy(() => import('./UserSettingsModal').then((m) => ({ default: m.UserSettingsModal })));
-const ChannelSettingsModal = lazy(() => import('./ChannelSettingsModal').then((m) => ({ default: m.ChannelSettingsModal })));
-const ChannelPermissionsModal = lazy(() => import('./ChannelPermissionsModal').then((m) => ({ default: m.ChannelPermissionsModal })));
+const ServerSettingsModal = lazy(() =>
+  import('./ServerSettingsModal').then((m) => ({ default: m.ServerSettingsModal })),
+);
+const UserSettingsModal = lazy(() =>
+  import('./UserSettingsModal').then((m) => ({ default: m.UserSettingsModal })),
+);
+const ChannelSettingsModal = lazy(() =>
+  import('./ChannelSettingsModal').then((m) => ({ default: m.ChannelSettingsModal })),
+);
+const ChannelPermissionsModal = lazy(() =>
+  import('./ChannelPermissionsModal').then((m) => ({ default: m.ChannelPermissionsModal })),
+);
 const SearchModal = lazy(() => import('./SearchModal').then((m) => ({ default: m.SearchModal })));
-const AddFriendModal = lazy(() => import('./AddFriendModal').then((m) => ({ default: m.AddFriendModal })));
+const AddFriendModal = lazy(() =>
+  import('./AddFriendModal').then((m) => ({ default: m.AddFriendModal })),
+);
 
 function ModalFallback() {
   return (
     <div className="p-10 flex items-center justify-center">
-      <div className="w-6 h-6 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" aria-label="Yükleniyor" />
+      <div
+        className="w-6 h-6 rounded-full border-2 border-brand-500 border-t-transparent animate-spin"
+        aria-label={t('common.loading')}
+      />
     </div>
   );
 }
@@ -61,19 +75,20 @@ export function Modal() {
             ? 'w-full max-w-4xl'
             : modal === 'channel_perms'
               ? 'w-full max-w-3xl overflow-hidden'
-            : modal === 'channel_settings'
-              ? 'w-full max-w-3xl overflow-hidden'
-              : modal === 'friends' || modal === 'search'
-                ? 'w-full max-w-2xl'
-                : modal === 'new_dm'
-                  ? 'w-full max-w-md'
-                  : 'w-full max-w-md')
+              : modal === 'channel_settings'
+                ? 'w-full max-w-3xl overflow-hidden'
+                : modal === 'friends' || modal === 'search'
+                  ? 'w-full max-w-2xl'
+                  : modal === 'new_dm'
+                    ? 'w-full max-w-md'
+                    : 'w-full max-w-md')
         }
       >
         <button
           onClick={() => dispatch(closeModal())}
           className="absolute top-3 right-3 w-8 h-8 rounded-lg hover:bg-surface-2 text-ink-secondary hover:text-ink-primary flex items-center justify-center"
-          title="Kapat" aria-label="Kapat"
+          title={t('common.close')}
+          aria-label={t('common.close')}
         >
           <X size={18} />
         </button>
@@ -85,9 +100,15 @@ export function Modal() {
           {modal === 'friends' && <AddFriendModal />}
           {modal === 'search' && <SearchModal />}
           {modal === 'create_channel' && <CreateChannelModal />}
-          {modal === 'edit_channel' && editingChannel && <ChannelEditModal channel={editingChannel} />}
-          {modal === 'channel_perms' && editingChannel && <ChannelPermissionsModal channel={editingChannel} />}
-          {modal === 'channel_settings' && editingChannel && <ChannelSettingsModal channel={editingChannel} />}
+          {modal === 'edit_channel' && editingChannel && (
+            <ChannelEditModal channel={editingChannel} />
+          )}
+          {modal === 'channel_perms' && editingChannel && (
+            <ChannelPermissionsModal channel={editingChannel} />
+          )}
+          {modal === 'channel_settings' && editingChannel && (
+            <ChannelSettingsModal channel={editingChannel} />
+          )}
           {modal === 'user_settings' && <UserSettingsModal />}
           {modal === 'new_dm' && <NewDMModal />}
           {modal === 'follow_channel' && <FollowChannelModal />}

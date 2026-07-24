@@ -1,7 +1,10 @@
 import Config
 
 config :gateway, GatewayWeb.Endpoint,
-  http: [ip: {0, 0, 0, 0}, port: 4000],
+  # Port env'den: kümelemeyi yerelde denemek için AYNI makinede birden çok node
+  # gerekiyor (GATEWAY_PORT=4001 ... 4002 ...). Sabit port bunu imkânsız kılıyordu.
+  # Prod ile aynı değişken adı (runtime.exs) — iki yerde iki isim olmasın.
+  http: [ip: {0, 0, 0, 0}, port: String.to_integer(System.get_env("GATEWAY_PORT") || "4000")],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,

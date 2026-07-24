@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/concord/api/internal/middleware"
 	"github.com/go-chi/chi/v5"
-	"github.com/sidcord/api/internal/middleware"
 )
 
 type createGroupDMReq struct {

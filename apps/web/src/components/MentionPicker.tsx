@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Hash, Volume2, AtSign, Slash } from 'lucide-react';
 import { useAppSelector } from '../store';
 import { api } from '../api';
+import { t } from '../i18n';
 
 interface Props {
   type: '@' | '#' | ':' | '/';
@@ -12,22 +13,34 @@ interface Props {
 
 export function MentionPicker({ type, query, onPick, onClose }: Props) {
   const guildId = useAppSelector((s) => s.guilds.selectedId);
-  const members = useAppSelector((s) => (guildId ? s.members.byGuild[guildId] ?? [] : []));
-  const channels = useAppSelector((s) => (guildId ? s.channels.byGuild[guildId] ?? [] : []));
+  const members = useAppSelector((s) => (guildId ? (s.members.byGuild[guildId] ?? []) : []));
+  const channels = useAppSelector((s) => (guildId ? (s.channels.byGuild[guildId] ?? []) : []));
   const [emojis, setEmojis] = useState<Awaited<ReturnType<typeof api.emojis.list>>>([]);
   const [commands, setCommands] = useState<Awaited<ReturnType<typeof api.commands.list>>>([]);
 
   useEffect(() => {
     if (!guildId) return;
-    if (type === ':') api.emojis.list(guildId).then(setEmojis).catch(() => {});
-    if (type === '/') api.commands.list(guildId).then(setCommands).catch(() => {});
+    if (type === ':')
+      api.emojis
+        .list(guildId)
+        .then(setEmojis)
+        .catch(() => {});
+    if (type === '/')
+      api.commands
+        .list(guildId)
+        .then(setCommands)
+        .catch(() => {});
   }, [type, guildId]);
 
   const items = useMemo(() => {
     const q = query.toLowerCase();
     if (type === '@') {
       const u = members
-        .filter((m) => (m.nickname ?? m.display_name).toLowerCase().includes(q) || m.username.toLowerCase().includes(q))
+        .filter(
+          (m) =>
+            (m.nickname ?? m.display_name).toLowerCase().includes(q) ||
+            m.username.toLowerCase().includes(q),
+        )
         .slice(0, 8);
       return u.map((m) => ({
         key: m.user_id,
@@ -42,7 +55,7 @@ export function MentionPicker({ type, query, onPick, onClose }: Props) {
       return matches.map((e) => ({
         key: e.id,
         label: ':' + e.name + ':',
-        sub: 'özel emoji',
+        sub: t('mention.customEmoji'),
         color: '#5865F2',
         replacement: `<:${e.name}:${e.id}>`,
         imageUrl: e.url,
@@ -51,7 +64,9 @@ export function MentionPicker({ type, query, onPick, onClose }: Props) {
     if (type === '/') {
       const matches = commands.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 10);
       return matches.map((c) => {
-        const hint = (c.options ?? []).map((o) => (o.required ? `<${o.name}>` : `[${o.name}]`)).join(' ');
+        const hint = (c.options ?? [])
+          .map((o) => (o.required ? `<${o.name}>` : `[${o.name}]`))
+          .join(' ');
         return {
           key: c.id,
           label: '/' + c.name + (hint ? ' ' + hint : ''),
@@ -68,7 +83,7 @@ export function MentionPicker({ type, query, onPick, onClose }: Props) {
     return cs.map((c) => ({
       key: c.id,
       label: c.name,
-      sub: c.type === 'voice' ? 'sesli' : c.type,
+      sub: c.type === 'voice' ? t('mention.voice') : c.type,
       color: c.type === 'voice' ? '#7C7CDD' : '#5865F2',
       replacement: `<#${c.id}>`,
     }));
@@ -98,8 +113,14 @@ export function MentionPicker({ type, query, onPick, onClose }: Props) {
         ) : (
           <span>:</span>
         )}
-        {type === '@' ? 'Üyeler' : type === '#' ? 'Kanallar' : type === ':' ? 'Emojiler' : 'Komutlar'}
-        <span className="text-ink-muted">— {items.length} sonuç</span>
+        {type === '@'
+          ? t('mention.members')
+          : type === '#'
+            ? t('mention.channels')
+            : type === ':'
+              ? t('mention.emojis')
+              : t('mention.commands')}
+        <span className="text-ink-muted">— {t('common.resultCount', { n: items.length })}</span>
       </div>
       <ul>
         {items.map((it) => (
@@ -120,12 +141,16 @@ export function MentionPicker({ type, query, onPick, onClose }: Props) {
                   {it.label.slice(0, 1).toUpperCase()}
                 </div>
               ) : type === ':' && (it as any).imageUrl ? (
-                <img src={(it as any).imageUrl} alt="" className="w-6 h-6 object-contain shrink-0" />
+                <img
+                  src={(it as any).imageUrl}
+                  alt=""
+                  className="w-6 h-6 object-contain shrink-0"
+                />
               ) : type === '/' ? (
                 <Slash size={14} className="text-ink-tertiary shrink-0" />
               ) : (
                 <span className="w-6 h-6 flex items-center justify-center shrink-0">
-                  {it.sub === 'sesli' ? (
+                  {it.sub === t('mention.voice') ? (
                     <Volume2 size={14} className="text-ink-tertiary" />
                   ) : (
                     <Hash size={14} className="text-ink-tertiary" />

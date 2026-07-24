@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/repo"
 )
 
 // notifyKeywords — guild mesajında, anahtar kelimesi eşleşen (ve üye olan) kullanıcılara bildirim gönderir.
@@ -58,7 +58,7 @@ func (h *Handler) notifyKeywords(ctx context.Context, ch *repo.Channel, m *repo.
 				"notification": n,
 				"ts":           time.Now().UnixMilli(),
 			})
-			_, _ = h.Redis.Publish(ctx, "sidcord:user:"+strconv.FormatInt(uid, 10), payload).Result()
+			_, _ = h.Redis.Publish(ctx, "concord:user:"+strconv.FormatInt(uid, 10), payload).Result()
 		}
 	}
 }

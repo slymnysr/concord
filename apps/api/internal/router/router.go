@@ -2,42 +2,56 @@ package router
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/concord/api/internal/auth"
+	"github.com/concord/api/internal/handlers"
+	mw "github.com/concord/api/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/sidcord/api/internal/auth"
-	"github.com/sidcord/api/internal/handlers"
-	mw "github.com/sidcord/api/internal/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 	r := chi.NewRouter()
+	cfg := h.Config()
+	limiter := mw.NewLimiter(h.Redis)
 
 	r.Use(chimw.RequestID)
 	r.Use(chimw.RealIP)
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.Compress(5))
+	r.Use(mw.Metrics)      // Prometheus RED metrikleri
+	r.Use(securityHeaders(cfg.Environment == "production")) // güvenlik başlıkları (+ prod'da HSTS)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "https://*.sidcord.com"},
+		AllowedOrigins:   cfg.AllowedOrigins, // env: ALLOWED_ORIGINS
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
+	// Genel çit: per-user (giriş yapılmışsa) / per-IP token-bucket
+	r.Use(limiter.Limit("global", cfg.APIRateLimitPerMin, time.Minute))
 
 	r.Get("/health", h.Health)
 	r.Get("/version", h.Version)
+	r.Handle("/metrics", promhttp.Handler())
 
 	r.Route("/api/v1", func(r chi.Router) {
-		// Anonim
-		r.Post("/auth/register", h.Register)
-		r.Post("/auth/login", h.Login)
+		// Anonim — per-IP kaba çit; asıl brute-force savunması hesap kapsamlı (handlers/auth.go)
+		r.Group(func(r chi.Router) {
+			r.Use(limiter.Limit("auth", cfg.AuthRateLimitPerMin, time.Minute))
+			r.Post("/auth/register", h.Register)
+			r.Post("/auth/login", h.Login)
+			r.Post("/auth/forgot-password", h.ForgotPassword)
+			r.Post("/auth/reset-password", h.ResetPassword)
+		})
 		r.Post("/auth/refresh", h.Refresh)
-		// Şifre sıfırlama + e-posta doğrulama (mail bağlantıları, anonim)
-		r.Post("/auth/forgot-password", h.ForgotPassword)
-		r.Post("/auth/reset-password", h.ResetPassword)
 		r.Get("/auth/verify-email", h.ConfirmEmailVerify)
+		// Altyapıdan gelen kimliksiz çağrılar (kullanıcı JWT'si yok) — bkz. routes_media.go
+		mountMediaRoutes(r, h)
+
 		// Voice server → API (x-voice-secret ile korunur, kullanıcı JWT'si yok)
 		r.Get("/voice-internal/state", h.GetPersistedVoiceStateInternal)
 		r.Get("/voice-internal/can-join", h.CanJoinVoiceInternal)
@@ -134,6 +148,7 @@ func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 			r.Post("/users/me/2fa/enable", h.Enable2FA)
 			r.Post("/users/me/2fa/verify", h.Verify2FA)
 			r.Post("/users/me/2fa/disable", h.Disable2FA)
+			r.Post("/users/me/2fa/recovery-codes", h.RegenerateRecoveryCodes)
 
 			r.Get("/guilds/{id}/reaction-roles", h.ListReactionRoles)
 			r.Post("/guilds/{id}/reaction-roles", h.CreateReactionRole)
@@ -171,6 +186,12 @@ func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 			r.Post("/users/me/verify-email", h.VerifyMyEmail)
 			r.Post("/users/me/email", h.ChangeEmail)
 			r.Delete("/users/me", h.DeleteMyAccount)
+
+			// Uyum (FAZ M) — GDPR Md.15 (erişim hakkı). Md.17 (silme/unutulma) yukarıdaki
+			// DELETE /users/me ile karşılanıyor: anonimleştirir, login'i engeller.
+			r.Post("/users/me/data-export", h.RequestDataExport)
+			r.Get("/users/me/data-exports", h.ListDataExports)
+			r.Get("/users/me/data-exports/{exportID}", h.DownloadDataExport)
 			// DM gizliliği
 			r.Get("/users/me/privacy", h.GetMyPrivacy)
 			r.Put("/users/me/privacy", h.UpdateMyPrivacy)
@@ -294,4 +315,29 @@ func New(h *handlers.Handler, iss *auth.Issuer) http.Handler {
 	})
 
 	return r
+}
+
+// securityHeaders — güvenlik başlıkları (MIME-sniff, clickjacking, referrer sızıntısı,
+// CSP, HSTS). prod parametresi HSTS'i yalnızca üretimde açar.
+func securityHeaders(prod bool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			h := w.Header()
+			h.Set("X-Content-Type-Options", "nosniff")
+			h.Set("X-Frame-Options", "DENY")
+			h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+			// CSP: bu API YALNIZCA JSON döndürür, hiç HTML/script sunmaz. O yüzden en katı
+			// politika güvenli — bir yanıt tarayıcıda bir şekilde render edilse bile hiçbir
+			// kaynak yükleyemez, iframe'lenemez. (Web SPA'nın kendi CSP'si ayrıdır: script
+			// çalıştırdığı için index.html'de tanımlanır.)
+			h.Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
+			// HSTS: tarayıcıyı bu alan adına yalnızca HTTPS ile bağlanmaya zorlar (SSL-stripping
+			// savunması). Sadece ÜRETİMDE: dev'de localhost HTTP'dir, HSTS onu ileride HTTPS'e
+			// zorlar ve geliştiriciyi kilitler. 1 yıl + alt alan adları + preload listesi.
+			if prod {
+				h.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }

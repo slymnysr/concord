@@ -5,18 +5,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sidcord/api/internal/middleware"
-	"github.com/sidcord/api/internal/perms"
-	"github.com/sidcord/api/internal/repo"
+	"github.com/concord/api/internal/middleware"
+	"github.com/concord/api/internal/perms"
+	"github.com/concord/api/internal/repo"
 )
 
 type createThreadReq struct {
-	Name                string   `json:"name"`
-	Type                string   `json:"type"`  // public_thread | private_thread
-	AutoArchiveMinutes  int32    `json:"auto_archive_minutes,omitempty"`
-	StarterMessageID    string   `json:"starter_message_id,omitempty"`
-	Invitable           *bool    `json:"invitable,omitempty"`
-	TagIDs              []string `json:"tag_ids,omitempty"` // forum etiketleri
+	Name               string   `json:"name"`
+	Type               string   `json:"type"` // public_thread | private_thread
+	AutoArchiveMinutes int32    `json:"auto_archive_minutes,omitempty"`
+	StarterMessageID   string   `json:"starter_message_id,omitempty"`
+	Invitable          *bool    `json:"invitable,omitempty"`
+	TagIDs             []string `json:"tag_ids,omitempty"` // forum etiketleri
 }
 
 func (h *Handler) CreateThread(w http.ResponseWriter, r *http.Request) {
@@ -187,13 +187,13 @@ func (h *Handler) ListThreads(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 	type threadView struct {
 		repo.Channel
-		Archived           bool   `json:"archived"`
-		ArchiveTimestamp   *string `json:"archive_timestamp,omitempty"`
-		AutoArchiveMinutes int32  `json:"auto_archive_minutes"`
-		Locked             bool   `json:"locked"`
-		CreatorID          int64  `json:"creator_id,string"`
-		MessageCount       int32  `json:"message_count"`
-		MemberCount        int32  `json:"member_count"`
+		Archived           bool     `json:"archived"`
+		ArchiveTimestamp   *string  `json:"archive_timestamp,omitempty"`
+		AutoArchiveMinutes int32    `json:"auto_archive_minutes"`
+		Locked             bool     `json:"locked"`
+		CreatorID          int64    `json:"creator_id,string"`
+		MessageCount       int32    `json:"message_count"`
+		MemberCount        int32    `json:"member_count"`
 		TagIDs             []string `json:"tag_ids"`
 	}
 	out := []threadView{}

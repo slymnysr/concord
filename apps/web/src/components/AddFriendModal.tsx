@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react';
 import { httpUrl } from '../serverConfig';
 import { UserPlus, Check, X, Mail } from 'lucide-react';
 import { api } from '../api';
-import { useAppDispatch, useAppSelector, openModal } from '../store';
+import {
+  useAppDispatch,
+  useAppSelector,
+  openModal,
+  setMode,
+  selectDM,
+  selectChannel,
+  setPendingDM,
+} from '../store';
+import { t, errText } from '../i18n';
 
 interface FriendItem {
   user_id: string;
@@ -24,11 +33,11 @@ export function AddFriendModal() {
   const me = useAppSelector((s) => s.auth.user);
 
   async function refresh() {
-    const r = (await api as any).request?.('/friends') as any;
+    const r = ((await api) as any).request?.('/friends') as any;
     // basit: doğrudan fetch et
     try {
       const res = await fetch(httpUrl('/api/v1/friends'), {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('sidcord_access') },
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('concord_access') },
       });
       setList(await res.json());
     } catch {}
@@ -49,7 +58,7 @@ export function AddFriendModal() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + localStorage.getItem('sidcord_access'),
+          Authorization: 'Bearer ' + localStorage.getItem('concord_access'),
         },
         body: JSON.stringify({ username: username.trim() }),
       });
@@ -58,11 +67,11 @@ export function AddFriendModal() {
         setError(body.detail ?? 'istek gönderilemedi');
         return;
       }
-      setSuccess('İstek gönderildi.');
+      setSuccess(t('friend.requestSentDot'));
       setUsername('');
       refresh();
     } catch (e: any) {
-      setError(e?.message ?? 'hata');
+      setError(errText(e, 'hata'));
     } finally {
       setBusy(false);
     }
@@ -71,33 +80,33 @@ export function AddFriendModal() {
   async function accept(userId: string) {
     await fetch(httpUrl(`/api/v1/friends/${userId}/accept`), {
       method: 'PUT',
-      headers: { Authorization: 'Bearer ' + localStorage.getItem('sidcord_access') },
+      headers: { Authorization: 'Bearer ' + localStorage.getItem('concord_access') },
     });
     refresh();
   }
 
   async function remove(userId: string) {
-    if (!confirm('Arkadaşlığı sonlandırmak istiyor musun?')) return;
+    if (!confirm(t('friend.endConfirm'))) return;
     await fetch(httpUrl(`/api/v1/friends/${userId}`), {
       method: 'DELETE',
-      headers: { Authorization: 'Bearer ' + localStorage.getItem('sidcord_access') },
+      headers: { Authorization: 'Bearer ' + localStorage.getItem('concord_access') },
     });
     refresh();
   }
 
   async function openDM(userId: string) {
-    const res = await fetch(httpUrl('/api/v1/users/me/channels'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + localStorage.getItem('sidcord_access'),
-      },
-      body: JSON.stringify({ user_id: userId }),
-    });
-    if (res.ok) {
+    try {
+      const channelID = (await api.dms.open(userId)).channel_id;
+      // DM'e gerçekten yönlendir (UserProfileCard/NewDMModal ile aynı akış). Eskiden burada
+      // yalnızca bir "Faz 5.4.x yapılacak" alert'i vardı — kullanıcıya çıkan bir placeholder'dı.
+      dispatch(setMode('dm'));
+      dispatch(selectDM(channelID));
+      dispatch(selectChannel(channelID));
+      // Mesajsız DM olabilir → DM kenar çubuğunda pinned göster
+      dispatch(setPendingDM({ channelId: channelID, partnerId: userId }));
       dispatch(openModal(null));
-      // TODO: navigate to DM channel
-      alert('DM açıldı. Faz 5.4.x: DM sayfası entegrasyonu yapılacak.');
+    } catch {
+      // Sessiz: buton yine kapanır; hata errText ile üst akışta gösterilir
     }
   }
 
@@ -111,7 +120,7 @@ export function AddFriendModal() {
         <div className="w-10 h-10 rounded-xl bg-brand-500/15 text-brand-500 flex items-center justify-center">
           <UserPlus size={20} />
         </div>
-        <h2 className="text-xl font-bold text-ink-primary">Arkadaşlar</h2>
+        <h2 className="text-xl font-bold text-ink-primary">{t('friend.title')}</h2>
       </div>
 
       <div className="flex gap-1 mb-4 border-b border-line">
@@ -132,7 +141,7 @@ export function AddFriendModal() {
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder={`örn. ${me?.username ?? 'kullanici'}`}
+              placeholder={t('friend.usernamePlaceholder', { name: me?.username ?? 'user' })}
               className="flex-1 bg-surface-2 border border-line rounded-lg px-3 py-2 text-ink-primary focus:border-brand-500/50 focus:outline-none"
             />
             <button
@@ -151,7 +160,7 @@ export function AddFriendModal() {
       {tab === 'list' && (
         <div className="space-y-4">
           {incoming.length > 0 && (
-            <FriendSection title={`Gelen İstekler (${incoming.length})`}>
+            <FriendSection title={t('friend.incomingCount', { n: incoming.length })}>
               {incoming.map((f) => (
                 <FriendRow key={f.user_id} f={f}>
                   <button
@@ -171,7 +180,7 @@ export function AddFriendModal() {
             </FriendSection>
           )}
           {outgoing.length > 0 && (
-            <FriendSection title={`Bekleyen İstekler (${outgoing.length})`}>
+            <FriendSection title={t('friend.outgoingCount', { n: outgoing.length })}>
               {outgoing.map((f) => (
                 <FriendRow key={f.user_id} f={f}>
                   <button
@@ -185,7 +194,7 @@ export function AddFriendModal() {
             </FriendSection>
           )}
           {accepted.length > 0 && (
-            <FriendSection title={`Arkadaşlar (${accepted.length})`}>
+            <FriendSection title={t('friend.acceptedCount', { n: accepted.length })}>
               {accepted.map((f) => (
                 <FriendRow key={f.user_id} f={f}>
                   <button

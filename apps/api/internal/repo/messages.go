@@ -9,20 +9,22 @@ import (
 )
 
 type Message struct {
-	ID              int64        `json:"id,string"`
-	ChannelID       int64        `json:"channel_id,string"`
-	AuthorID        int64        `json:"author_id,string"`
-	Content         string       `json:"content"`
-	EditedAt        *time.Time   `json:"edited_at,omitempty"`
-	CreatedAt       time.Time    `json:"created_at"`
-	RepliedToID     *int64       `json:"replied_to_id,string,omitempty"`
-	MentionEveryone bool         `json:"mention_everyone,omitempty"`
-	System          bool         `json:"system,omitempty"`
-	PublishedAt     *time.Time   `json:"published_at,omitempty"`
-	Attachments     []Attachment `json:"attachments,omitempty"`
+	ID              int64             `json:"id,string"`
+	ChannelID       int64             `json:"channel_id,string"`
+	AuthorID        int64             `json:"author_id,string"`
+	Content         string            `json:"content"`
+	EditedAt        *time.Time        `json:"edited_at,omitempty"`
+	CreatedAt       time.Time         `json:"created_at"`
+	RepliedToID     *int64            `json:"replied_to_id,string,omitempty"`
+	MentionEveryone bool              `json:"mention_everyone,omitempty"`
+	System          bool              `json:"system,omitempty"`
+	PublishedAt     *time.Time        `json:"published_at,omitempty"`
+	Attachments     []Attachment      `json:"attachments,omitempty"`
 	Embeds          []json.RawMessage `json:"embeds,omitempty"` // zengin embed payload'ları
-	WebhookUsername *string      `json:"webhook_username,omitempty"`
-	WebhookAvatar   *string      `json:"webhook_avatar,omitempty"`
+	WebhookUsername *string           `json:"webhook_username,omitempty"`
+	WebhookAvatar   *string           `json:"webhook_avatar,omitempty"`
+	// Reactions — mesaj listesinde gömülü gelir (viewer'a göre "me"); N+1 önler.
+	Reactions []ReactionSummary `json:"reactions,omitempty"`
 }
 
 type Messages struct{ pool *pgxpool.Pool }
@@ -115,8 +117,12 @@ func (r *Messages) ListByChannel(ctx context.Context, channelID int64, before in
 	for _, m := range list {
 		ids = append(ids, m.ID)
 	}
+	// width/height/thumb_url ŞART: UI mesaj listesini BURADAN alır. Eksik bırakıldığında
+	// (eski hali) her görsel satır içinde TAM BOY iniyordu ve <img> boyutsuz olduğu için
+	// liste ziplıyordu — ForMessage doğru seçiyordu, bu toplu sorgu unutulmuştu.
 	attRows, err := r.pool.Query(ctx, `
-        SELECT id, message_id, filename, url, content_type, size_bytes, created_at
+        SELECT id, message_id, filename, url, content_type, size_bytes,
+               width, height, thumb_url, created_at
         FROM attachments WHERE message_id = ANY($1)
     `, ids)
 	if err != nil {
@@ -125,7 +131,8 @@ func (r *Messages) ListByChannel(ctx context.Context, channelID int64, before in
 	defer attRows.Close()
 	for attRows.Next() {
 		var a Attachment
-		if err := attRows.Scan(&a.ID, &a.MessageID, &a.Filename, &a.URL, &a.ContentType, &a.SizeBytes, &a.CreatedAt); err != nil {
+		if err := attRows.Scan(&a.ID, &a.MessageID, &a.Filename, &a.URL, &a.ContentType, &a.SizeBytes,
+			&a.Width, &a.Height, &a.ThumbURL, &a.CreatedAt); err != nil {
 			continue
 		}
 		if i, ok := idIndex[a.MessageID]; ok {

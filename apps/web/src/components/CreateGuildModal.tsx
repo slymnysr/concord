@@ -12,6 +12,7 @@ import {
   Camera,
 } from 'lucide-react';
 import { api } from '../api';
+import { t, errText } from '../i18n';
 import {
   useAppDispatch,
   createGuildThunk,
@@ -33,11 +34,36 @@ interface Template {
 
 const TEMPLATES: Template[] = [
   { key: 'gaming', label: 'Oyun', icon: <Gamepad2 size={18} />, suggestedName: 'Oyun Topluluğu' },
-  { key: 'friends', label: 'Arkadaşlar', icon: <Users size={18} />, suggestedName: 'Arkadaş Grubu' },
-  { key: 'study', label: 'Çalışma Grubu', icon: <BookOpen size={18} />, suggestedName: 'Çalışma Grubu' },
-  { key: 'school', label: 'Okul Kulübü', icon: <GraduationCap size={18} />, suggestedName: 'Okul Kulübü' },
-  { key: 'local', label: 'Yerel Topluluk', icon: <MapPin size={18} />, suggestedName: 'Yerel Topluluk' },
-  { key: 'artists', label: 'Sanatçılar ve Zanaatkarlar', icon: <Palette size={18} />, suggestedName: 'Sanat Topluluğu' },
+  {
+    key: 'friends',
+    label: 'Arkadaşlar',
+    icon: <Users size={18} />,
+    suggestedName: 'Arkadaş Grubu',
+  },
+  {
+    key: 'study',
+    label: 'Çalışma Grubu',
+    icon: <BookOpen size={18} />,
+    suggestedName: 'Çalışma Grubu',
+  },
+  {
+    key: 'school',
+    label: 'Okul Kulübü',
+    icon: <GraduationCap size={18} />,
+    suggestedName: 'Okul Kulübü',
+  },
+  {
+    key: 'local',
+    label: 'Yerel Topluluk',
+    icon: <MapPin size={18} />,
+    suggestedName: 'Yerel Topluluk',
+  },
+  {
+    key: 'artists',
+    label: 'Sanatçılar ve Zanaatkarlar',
+    icon: <Palette size={18} />,
+    suggestedName: 'Sanat Topluluğu',
+  },
 ];
 
 export function CreateGuildModal() {
@@ -58,14 +84,16 @@ export function CreateGuildModal() {
   function normalizeCode(input: string): string {
     const m = input
       .trim()
-      .match(/(?:(?:sidcord\.com|localhost(?::\d+)?|127\.0\.0\.1(?::\d+)?)\/(?:invite|davet)\/)?([a-z0-9]{4,16})/i);
+      .match(
+        /(?:(?:concord\.com|localhost(?::\d+)?|127\.0\.0\.1(?::\d+)?)\/(?:invite|davet)\/)?([a-z0-9]{4,16})/i,
+      );
     return m?.[1] ?? '';
   }
 
   async function createServer() {
     const v = name.trim();
     if (v.length < 2) {
-      setError('Sunucu adı en az 2 karakter olmalı');
+      setError(t('guild.nameMin'));
       return;
     }
     setLoading(true);
@@ -92,7 +120,7 @@ export function CreateGuildModal() {
       }
       dispatch(closeModal());
     } catch (e: any) {
-      setError(e?.message || 'Oluşturulamadı');
+      setError(errText(e, t('guild.createFailed')));
     } finally {
       setLoading(false);
     }
@@ -101,7 +129,7 @@ export function CreateGuildModal() {
   async function joinServer() {
     const code = normalizeCode(inviteInput);
     if (!code) {
-      setError('Geçerli bir davet bağlantısı veya kodu gir');
+      setError(t('invite.invalid'));
       return;
     }
     setLoading(true);
@@ -110,10 +138,10 @@ export function CreateGuildModal() {
       const guild = await dispatch(acceptInviteThunk(code)).unwrap();
       dispatch(setMode('guild'));
       dispatch(selectGuild(guild.id));
-      dispatch(addToast({ kind: 'success', message: `${guild.name} sunucusuna katıldın` }));
+      dispatch(addToast({ kind: 'success', message: t('guild.joined', { name: guild.name }) }));
       dispatch(closeModal());
     } catch (e: any) {
-      setError(e?.message || 'Katılınamadı');
+      setError(errText(e, t('invite.joinFailed')));
     } finally {
       setLoading(false);
     }
@@ -123,7 +151,7 @@ export function CreateGuildModal() {
   if (step === 'home') {
     return (
       <div className="p-6">
-        <h2 className="text-xl font-bold text-ink-primary text-center">Sunucunu Oluştur</h2>
+        <h2 className="text-xl font-bold text-ink-primary text-center">{t('guild.createTitle')}</h2>
         <p className="text-sm text-ink-secondary text-center mt-1 mb-5">
           Sunucun, sen ve arkadaşlarının takıldığı yerdir. Kendininkini oluştur ve sohbete başla.
         </p>
@@ -140,7 +168,9 @@ export function CreateGuildModal() {
           <span className="w-10 h-10 rounded-xl bg-brand-500/15 text-brand-500 flex items-center justify-center shrink-0">
             <Sparkles size={20} />
           </span>
-          <span className="flex-1 text-left font-semibold text-ink-primary">Kendim Oluşturayım</span>
+          <span className="flex-1 text-left font-semibold text-ink-primary">
+            {t('guild.createMyself')}
+          </span>
           <ChevronRight size={18} className="text-ink-tertiary" />
         </button>
 
@@ -162,7 +192,9 @@ export function CreateGuildModal() {
               <span className="w-9 h-9 rounded-lg bg-surface-3 text-ink-secondary flex items-center justify-center shrink-0">
                 {t.icon}
               </span>
-              <span className="flex-1 text-left text-sm font-medium text-ink-primary">{t.label}</span>
+              <span className="flex-1 text-left text-sm font-medium text-ink-primary">
+                {t.label}
+              </span>
               <ChevronRight size={16} className="text-ink-tertiary" />
             </button>
           ))}
@@ -170,7 +202,7 @@ export function CreateGuildModal() {
 
         {/* Zaten davetin var mı */}
         <div className="mt-6 pt-5 border-t border-line text-center">
-          <p className="text-sm text-ink-secondary mb-2">Zaten bir davetin var mı?</p>
+          <p className="text-sm text-ink-secondary mb-2">{t('guild.haveInvite')}</p>
           <button
             onClick={() => {
               setInviteInput('');
@@ -179,7 +211,7 @@ export function CreateGuildModal() {
             }}
             className="w-full py-2.5 rounded-xl bg-surface-3 hover:bg-surface-2 text-ink-primary font-semibold transition-colors"
           >
-            Bir Sunucuya Katıl
+            {t('ui.birSunucuyaKatil')}
           </button>
         </div>
       </div>
@@ -199,7 +231,7 @@ export function CreateGuildModal() {
         >
           <ArrowLeft size={16} /> Geri
         </button>
-        <h2 className="text-xl font-bold text-ink-primary text-center">Bize biraz sunucundan bahset</h2>
+        <h2 className="text-xl font-bold text-ink-primary text-center">{t('guild.tellUs')}</h2>
         <p className="text-sm text-ink-secondary text-center mt-1 mb-5">
           Sunucunu doğru kişilerle kurmamıza yardımcı olur. Sonra istediğini değiştirebilirsin.
         </p>
@@ -210,7 +242,9 @@ export function CreateGuildModal() {
           <span className="w-10 h-10 rounded-xl bg-brand-500/15 text-brand-500 flex items-center justify-center shrink-0">
             <Users size={20} />
           </span>
-          <span className="flex-1 text-left font-semibold text-ink-primary">Benim ve arkadaşlarım için</span>
+          <span className="flex-1 text-left font-semibold text-ink-primary">
+            {t('guild.forFriends')}
+          </span>
           <ChevronRight size={18} className="text-ink-tertiary" />
         </button>
         <button
@@ -220,12 +254,17 @@ export function CreateGuildModal() {
           <span className="w-10 h-10 rounded-xl bg-accent-500/15 text-accent-500 flex items-center justify-center shrink-0">
             <BookOpen size={20} />
           </span>
-          <span className="flex-1 text-left font-semibold text-ink-primary">Bir kulüp veya topluluk için</span>
+          <span className="flex-1 text-left font-semibold text-ink-primary">
+            {t('guild.forClub')}
+          </span>
           <ChevronRight size={18} className="text-ink-tertiary" />
         </button>
         <div className="mt-5 text-center text-sm text-ink-secondary">
           Emin değil misin?{' '}
-          <button onClick={() => setStep('create')} className="text-brand-400 hover:underline font-medium">
+          <button
+            onClick={() => setStep('create')}
+            className="text-brand-400 hover:underline font-medium"
+          >
             Bu soruyu şimdilik geçebilirsin
           </button>
         </div>
@@ -246,7 +285,9 @@ export function CreateGuildModal() {
         >
           <ArrowLeft size={16} /> Geri
         </button>
-        <h2 className="text-xl font-bold text-ink-primary text-center mb-1">Sunucunu Özelleştir</h2>
+        <h2 className="text-xl font-bold text-ink-primary text-center mb-1">
+          {t('guild.customize')}
+        </h2>
         <p className="text-sm text-ink-secondary text-center mb-5">
           Yeni sunucuna bir kişilik kat. İstediğin zaman değiştirebilirsin.
         </p>
@@ -259,7 +300,7 @@ export function CreateGuildModal() {
             ) : (
               <span className="w-full h-full rounded-full border-2 border-dashed border-line flex flex-col items-center justify-center text-ink-tertiary group-hover:border-brand-500/60 group-hover:text-brand-500 transition-colors">
                 <Camera size={20} />
-                <span className="text-[9px] font-bold uppercase mt-0.5">Yükle</span>
+                <span className="text-[9px] font-bold uppercase mt-0.5">{t('common.upload')}</span>
               </span>
             )}
             <input
@@ -271,13 +312,15 @@ export function CreateGuildModal() {
           </label>
         </div>
 
-        <label className="block text-sm font-semibold text-ink-primary mb-1.5">Sunucu adı</label>
+        <label className="block text-sm font-semibold text-ink-primary mb-1.5">
+          {t('guild.nameLabel')}
+        </label>
         <input
           autoFocus
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && createServer()}
-          placeholder="Örn. Yazılım Türkiye"
+          placeholder={t('guild.namePlaceholder2')}
           maxLength={64}
           className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2.5 text-ink-primary placeholder:text-ink-tertiary"
         />
@@ -305,17 +348,19 @@ export function CreateGuildModal() {
       >
         <ArrowLeft size={16} /> Geri
       </button>
-      <h2 className="text-xl font-bold text-ink-primary mb-1">Bir Sunucuya Katıl</h2>
+      <h2 className="text-xl font-bold text-ink-primary mb-1">{t('ui.birSunucuyaKatil')}</h2>
       <p className="text-sm text-ink-secondary mb-5">
         Aşağıya bir davet bağlantısı girerek mevcut bir sunucuya katıl.
       </p>
-      <label className="block text-sm font-semibold text-ink-primary mb-1.5">Davet bağlantısı</label>
+      <label className="block text-sm font-semibold text-ink-primary mb-1.5">
+        {t('guild.inviteLink')}
+      </label>
       <input
         autoFocus
         value={inviteInput}
         onChange={(e) => setInviteInput(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && joinServer()}
-        placeholder="sidcord.com/davet/abcd1234"
+        placeholder="concord.com/davet/abcd1234"
         className="w-full bg-surface-2 border border-line focus:border-brand-500/50 focus:outline-none rounded-lg px-3 py-2.5 text-ink-primary placeholder:text-ink-tertiary font-mono"
       />
       {error && <p className="text-accent-500 text-sm mt-2">{error}</p>}

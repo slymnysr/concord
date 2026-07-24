@@ -1,4 +1,4 @@
-// Sidcord AutoMod — mesaj öncesi içerik kontrol katmanı.
+// Concord AutoMod — mesaj öncesi içerik kontrol katmanı.
 // Türkiye pazarı için kritik: BTK düzenlemeleri (5651 + içerik kaldırma).
 package automod
 
@@ -41,8 +41,8 @@ type Rule struct {
 	TriggerType      TriggerType     `json:"trigger_type"`
 	TriggerData      json.RawMessage `json:"trigger_data"`
 	Actions          json.RawMessage `json:"actions"`
-	ExemptRoleIDs   []int64         `json:"exempt_role_ids"`
-	ExemptChannelIDs []int64        `json:"exempt_channel_ids"`
+	ExemptRoleIDs    []int64         `json:"exempt_role_ids"`
+	ExemptChannelIDs []int64         `json:"exempt_channel_ids"`
 }
 
 // Action — uygulanacak aksiyon
@@ -55,11 +55,11 @@ type Action struct {
 
 // Decision — engine'in mesaj için verdiği karar
 type Decision struct {
-	Triggered    bool
-	RuleID       int64
-	RuleName     string
-	MatchedText  string
-	Actions      []Action
+	Triggered   bool
+	RuleID      int64
+	RuleName    string
+	MatchedText string
+	Actions     []Action
 }
 
 type Engine struct {
@@ -212,7 +212,7 @@ func check(tt TriggerType, data json.RawMessage, content string) string {
 			}
 		}
 	case TriggerInviteBlacklist:
-		// İçinde sidcord davet kodu (8 char) veya başka chat platformu daveti varsa
+		// İçinde concord davet kodu (8 char) veya başka chat platformu daveti varsa
 		if matchInvitePattern(content) {
 			return "invite-link"
 		}
@@ -261,7 +261,7 @@ func check(tt TriggerType, data json.RawMessage, content string) string {
 	return ""
 }
 
-var inviteRegex = regexp.MustCompile(`(?:sidcord\.com/invite/|discord\.gg/|discord\.com/invite/|t\.me/|telegram\.me/)`)
+var inviteRegex = regexp.MustCompile(`(?:concord\.com/invite/|discord\.gg/|discord\.com/invite/|t\.me/|telegram\.me/)`)
 
 func matchInvitePattern(content string) bool {
 	return inviteRegex.MatchString(strings.ToLower(content))

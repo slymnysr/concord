@@ -1,5 +1,5 @@
 {
-  "name": "@sidcord/config",
+  "name": "@concord/config",
   "version": "0.0.1",
   "private": true,
   "description": "Paylaşımlı ESLint, TS, Prettier yapılandırması"

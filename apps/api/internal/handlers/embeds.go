@@ -32,7 +32,7 @@ func (h *Handler) parseAndStoreEmbeds(messageID int64, content string) {
 		if err != nil {
 			continue
 		}
-		req.Header.Set("User-Agent", "Sidcord-LinkPreview/1.0")
+		req.Header.Set("User-Agent", "Concord-LinkPreview/1.0")
 		resp, err := client.Do(req)
 		if err != nil {
 			continue
@@ -99,13 +99,13 @@ func firstMatch(re *regexp.Regexp, s string) string {
 }
 
 type embedView struct {
-	ID          string `json:"id"`
-	URL         string `json:"url"`
-	Title       *string `json:"title,omitempty"`
-	Description *string `json:"description,omitempty"`
-	ImageURL    *string `json:"image_url,omitempty"`
-	SiteName    *string `json:"site_name,omitempty"`
-	EmbedType   string `json:"embed_type"`
+	ID          string          `json:"id"`
+	URL         string          `json:"url"`
+	Title       *string         `json:"title,omitempty"`
+	Description *string         `json:"description,omitempty"`
+	ImageURL    *string         `json:"image_url,omitempty"`
+	SiteName    *string         `json:"site_name,omitempty"`
+	EmbedType   string          `json:"embed_type"`
 	Payload     json.RawMessage `json:"payload,omitempty"`
 }
 

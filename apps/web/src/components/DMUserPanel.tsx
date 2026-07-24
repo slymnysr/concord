@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Users,
 } from 'lucide-react';
+import { t, errText, localeTag } from '../i18n';
 import { api, type APIPublicUser } from '../api';
 import { ConnectionChips } from './connectionMeta';
 import { useAppDispatch, useAppSelector, addToast, toggleIgnore, switchToDM } from '../store';
@@ -23,10 +24,10 @@ const statusColor: Record<string, string> = {
   offline: 'bg-status-offline',
 };
 const statusLabel: Record<string, string> = {
-  online: 'Çevrimiçi',
-  idle: 'Uzakta',
-  dnd: 'Rahatsız Etmeyin',
-  offline: 'Çevrimdışı',
+  online: t('status.online'),
+  idle: t('status.idle'),
+  dnd: t('status.dnd'),
+  offline: t('status.offline'),
 };
 
 // DM görünümünde sağ taraftaki kullanıcı profil paneli.
@@ -67,7 +68,7 @@ export function DMUserPanel({ channelId }: { channelId: string }) {
   if (!partnerId) {
     return (
       <aside className="w-72 bg-surface-1 border-l border-line flex items-center justify-center">
-        <p className="text-sm text-ink-tertiary">Yükleniyor...</p>
+        <p className="text-sm text-ink-tertiary">{t('common.loading')}</p>
       </aside>
     );
   }
@@ -96,7 +97,10 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
   }
 
   useEffect(() => {
-    api.users.user(userId).then(setUser).catch(() => setUser(null));
+    api.users
+      .user(userId)
+      .then(setUser)
+      .catch(() => setUser(null));
   }, [userId]);
 
   useEffect(() => {
@@ -113,7 +117,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
   if (!user) {
     return (
       <aside className="w-72 bg-surface-1 border-l border-line flex items-center justify-center">
-        <p className="text-sm text-ink-tertiary">Yükleniyor...</p>
+        <p className="text-sm text-ink-tertiary">{t('common.loading')}</p>
       </aside>
     );
   }
@@ -123,22 +127,22 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
     setBusy(true);
     try {
       if (user.friendship_state === 'accepted') {
-        if (confirm(`${user.display_name} arkadaşlıktan çıkarılsın mı?`)) {
+        if (confirm(t('friend.removeConfirm', { name: user.display_name }))) {
           await api.friends.remove(user.id);
           setUser({ ...user, friendship_state: undefined });
-          dispatch(addToast({ kind: 'info', message: 'Arkadaşlıktan çıkarıldı' }));
+          dispatch(addToast({ kind: 'info', message: t('friend.removed') }));
         }
       } else if (user.friendship_state === 'pending_received') {
         await api.friends.accept(user.id);
         setUser({ ...user, friendship_state: 'accepted' });
-        dispatch(addToast({ kind: 'success', message: 'Arkadaşlık kabul edildi' }));
+        dispatch(addToast({ kind: 'success', message: t('friend.accepted') }));
       } else if (!user.friendship_state) {
         await api.friends.send({ user_id: user.id });
         setUser({ ...user, friendship_state: 'pending_sent' });
-        dispatch(addToast({ kind: 'success', message: 'Arkadaşlık isteği gönderildi' }));
+        dispatch(addToast({ kind: 'success', message: t('friend.requestSent') }));
       }
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'İşlem başarısız' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, t('common.actionFailed')) }));
     } finally {
       setBusy(false);
     }
@@ -150,9 +154,9 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
     try {
       await api.block(user.id);
       setUser({ ...user, friendship_state: 'blocked' });
-      dispatch(addToast({ kind: 'info', message: 'Kullanıcı engellendi' }));
+      dispatch(addToast({ kind: 'info', message: t('user.blocked') }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Engellenemedi' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, t('user.blockFailed')) }));
     }
     setMenuOpen(false);
   }
@@ -169,15 +173,15 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
         payload: msg,
         meta: { arg: { channelId, content: link } },
       });
-      dispatch(addToast({ kind: 'success', message: `${guildName} daveti gönderildi` }));
+      dispatch(addToast({ kind: 'success', message: t('invite.sentTo', { guild: guildName }) }));
     } catch (e: any) {
       // Davet izni yoksa backend hata döner → kullanıcıyı bilgilendir
       dispatch(
         addToast({
           kind: 'error',
-          message: e?.message?.includes('forbidden')
-            ? 'Bu sunucuya davet etme iznin yok'
-            : 'Davet oluşturulamadı',
+          message: errText(e)?.includes('forbidden')
+            ? t('invite.noPermission')
+            : t('invite.createFailed'),
         }),
       );
     }
@@ -206,12 +210,12 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
             disabled={busy || fs === 'pending_sent' || fs === 'blocked'}
             title={
               fs === 'accepted'
-                ? 'Arkadaşsın'
+                ? t('friend.areFriends')
                 : fs === 'pending_sent'
-                  ? 'İstek gönderildi'
+                  ? t('friend.requestPending')
                   : fs === 'pending_received'
-                    ? 'İsteği kabul et'
-                    : 'Arkadaş ekle'
+                    ? t('friend.acceptRequest')
+                    : t('friend.add')
             }
             className={
               'w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors ' +
@@ -232,7 +236,8 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
             <button
               ref={triggerRef}
               onClick={openMenu}
-              title="Daha fazla" aria-label="Daha fazla"
+              title={t('common.more')}
+              aria-label={t('common.more')}
               className="w-8 h-8 rounded-full flex items-center justify-center bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm"
             >
               <MoreHorizontal size={16} />
@@ -254,7 +259,9 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
                   <div
                     className={
                       'w-full px-3 py-2 flex items-center justify-between cursor-default ' +
-                      (inviteOpen ? 'bg-surface-3 text-ink-primary' : 'text-ink-primary hover:bg-surface-3')
+                      (inviteOpen
+                        ? 'bg-surface-3 text-ink-primary'
+                        : 'text-ink-primary hover:bg-surface-3')
                     }
                   >
                     <span className="flex items-center gap-2">
@@ -265,7 +272,9 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
                   {inviteOpen && (
                     <div className="absolute right-full top-0 mr-1 w-52 max-h-60 overflow-y-auto bg-surface-2 border border-line rounded-xl shadow-2xl py-1.5">
                       {myGuilds.length === 0 ? (
-                        <p className="px-3 py-2 text-xs text-ink-tertiary">Sunucun yok.</p>
+                        <p className="px-3 py-2 text-xs text-ink-tertiary">
+                          {t('guild.noneOwned')}
+                        </p>
                       ) : (
                         <>
                           {visibleGuilds.map((g) => (
@@ -296,12 +305,17 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
                 <button
                   onClick={() => {
                     dispatch(toggleIgnore(user.id));
-                    dispatch(addToast({ kind: 'info', message: isIgnored ? 'Yoksayma kaldırıldı' : 'Kullanıcı yoksayıldı' }));
+                    dispatch(
+                      addToast({
+                        kind: 'info',
+                        message: isIgnored ? t('user.unignored') : t('user.ignored'),
+                      }),
+                    );
                     setMenuOpen(false);
                   }}
                   className="w-full px-3 py-2 flex items-center gap-2 text-ink-primary hover:bg-surface-3"
                 >
-                  <EyeOff size={15} /> {isIgnored ? 'Yoksaymayı Kaldır' : 'Yoksay'}
+                  <EyeOff size={15} /> {isIgnored ? t('user.unignore') : t('user.ignore')}
                 </button>
                 <button
                   onClick={block}
@@ -312,12 +326,14 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
                 <button
                   onClick={async () => {
                     setMenuOpen(false);
-                    const reason = prompt('Bildirim sebebi (opsiyonel):') ?? undefined;
+                    const reason = prompt(t('report.reasonPrompt')) ?? undefined;
                     try {
                       await api.users.report(user.id, reason);
-                      dispatch(addToast({ kind: 'success', message: 'Bildirin alındı, inceleyeceğiz' }));
+                      dispatch(addToast({ kind: 'success', message: t('report.received') }));
                     } catch (e: any) {
-                      dispatch(addToast({ kind: 'error', message: e?.message || 'Bildirilemedi' }));
+                      dispatch(
+                        addToast({ kind: 'error', message: errText(e, t('report.failed')) }),
+                      );
                     }
                   }}
                   className="w-full px-3 py-2 flex items-center gap-2 text-accent-400 hover:bg-accent-500/10"
@@ -338,7 +354,11 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
             style={{ backgroundColor: user.avatar_color }}
           >
             {user.avatar_url ? (
-              <img src={user.avatar_url} alt={user.display_name} className="w-full h-full object-cover" />
+              <img
+                src={user.avatar_url}
+                alt={user.display_name}
+                className="w-full h-full object-cover"
+              />
             ) : (
               user.display_name.slice(0, 1).toUpperCase()
             )}
@@ -376,12 +396,14 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
           )}
 
           {fs === 'blocked' && (
-            <div className="mt-2 text-xs text-accent-400 font-medium">Bu kullanıcı engellendi</div>
+            <div className="mt-2 text-xs text-accent-400 font-medium">{t('user.isBlocked')}</div>
           )}
 
           {user.bio && (
-            <Section title="Hakkımda" aria-label="Hakkımda">
-              <p className="text-sm text-ink-primary leading-snug whitespace-pre-wrap">{user.bio}</p>
+            <Section title={t('profile.about')} aria-label={t('profile.about')}>
+              <p className="text-sm text-ink-primary leading-snug whitespace-pre-wrap">
+                {user.bio}
+              </p>
             </Section>
           )}
 
@@ -391,9 +413,12 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
             </div>
           )}
 
-          <Section title="Sidcord Üyeliği" aria-label="Sidcord Üyeliği">
+          <Section
+            title={t('profile.concordMembership')}
+            aria-label={t('profile.concordMembership')}
+          >
             <p className="text-xs text-ink-secondary">
-              {new Date(user.created_at).toLocaleDateString('tr-TR', {
+              {new Date(user.created_at).toLocaleDateString(localeTag(), {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',
@@ -420,7 +445,7 @@ function ProfileContent({ userId, channelId }: { userId: string; channelId: stri
           )}
 
           {user.mutual_friends && user.mutual_friends.length > 0 && (
-            <Section title={`Ortak Arkadaşlar — ${user.mutual_friends.length}`}>
+            <Section title={t('profile.mutualFriends', { n: user.mutual_friends.length })}>
               <div className="flex flex-wrap gap-1">
                 {user.mutual_friends.map((f) => (
                   <div
@@ -467,10 +492,13 @@ function UserNote({ userId }: { userId: string }) {
       }}
       onBlur={() => {
         if (saved) return;
-        api.users.setNote(userId, note).then(() => setSaved(true)).catch(() => {});
+        api.users
+          .setNote(userId, note)
+          .then(() => setSaved(true))
+          .catch(() => {});
       }}
       rows={2}
-      placeholder="Bu kullanıcı hakkında not ekle (sadece sen görürsün)"
+      placeholder={t('profile.notePlaceholder')}
       className="w-full bg-surface-1 border border-line rounded-lg px-2.5 py-2 text-sm text-ink-primary placeholder:text-ink-tertiary resize-none focus:outline-none focus:border-brand-500/50"
     />
   );
@@ -485,7 +513,9 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
-  const [friends, setFriends] = useState<{ user_id: string; display_name: string; avatar_color: string; friendship: string }[]>([]);
+  const [friends, setFriends] = useState<
+    { user_id: string; display_name: string; avatar_color: string; friendship: string }[]
+  >([]);
 
   async function renameGroup() {
     const v = prompt('Grubun yeni adı:', groupName);
@@ -497,23 +527,26 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
       setGroupName(name);
       dispatch(addToast({ kind: 'success', message: 'Grup adı güncellendi' }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Ad değiştirilemedi' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Ad değiştirilemedi') }));
     }
   }
 
   async function removeMember(userId: string, name: string) {
-    if (!confirm(`${name} gruptan çıkarılsın mı?`)) return;
+    if (!confirm(t('dm.removeFromGroupConfirm', { name }))) return;
     try {
       await api.dms.removeRecipient(channelId, userId);
       setReloadKey((k) => k + 1);
-      dispatch(addToast({ kind: 'success', message: `${name} gruptan çıkarıldı` }));
+      dispatch(addToast({ kind: 'success', message: t('dm.removedFromGroup', { name }) }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Çıkarılamadı' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Çıkarılamadı') }));
     }
   }
 
   useEffect(() => {
-    api.friends.list().then((l) => setFriends(l.filter((f) => f.friendship === 'accepted'))).catch(() => {});
+    api.friends
+      .list()
+      .then((l) => setFriends(l.filter((f) => f.friendship === 'accepted')))
+      .catch(() => {});
   }, []);
 
   async function addMember(userId: string) {
@@ -523,7 +556,7 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
       setAddOpen(false);
       dispatch(addToast({ kind: 'success', message: 'Kişi eklendi' }));
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Eklenemedi' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Eklenemedi') }));
     }
   }
   async function leaveGroup() {
@@ -532,7 +565,7 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
       await api.dms.removeRecipient(channelId, me.id);
       dispatch(switchToDM());
     } catch (e: any) {
-      dispatch(addToast({ kind: 'error', message: e?.message || 'Ayrılınamadı' }));
+      dispatch(addToast({ kind: 'error', message: errText(e, 'Ayrılınamadı') }));
     }
   }
 
@@ -570,7 +603,8 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
           <button
             onClick={renameGroup}
             className="text-ink-tertiary hover:text-ink-primary"
-            title="Grubu yeniden adlandır" aria-label="Grubu yeniden adlandır"
+            title={t('dm.renameGroup')}
+            aria-label={t('dm.renameGroup')}
           >
             ✏️
           </button>
@@ -582,17 +616,24 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
           Üyeler — {members.length}
         </h3>
         {loading ? (
-          <p className="px-2 py-3 text-sm text-ink-tertiary">Yükleniyor...</p>
+          <p className="px-2 py-3 text-sm text-ink-tertiary">{t('common.loading')}</p>
         ) : (
           members.map((u) => (
-            <div key={u.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-surface-2">
+            <div
+              key={u.id}
+              className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-surface-2"
+            >
               <div className="relative shrink-0">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold overflow-hidden"
                   style={{ backgroundColor: u.avatar_color }}
                 >
                   {u.avatar_url ? (
-                    <img src={u.avatar_url} alt={u.display_name} className="w-full h-full object-cover" />
+                    <img
+                      src={u.avatar_url}
+                      alt={u.display_name}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     u.display_name.slice(0, 1).toUpperCase()
                   )}
@@ -607,13 +648,18 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
               <span className="text-sm text-ink-primary truncate flex-1">
                 {u.display_name}
                 {u.id === me?.id && <span className="text-ink-tertiary text-xs"> (sen)</span>}
-                {u.id === ownerId && <span className="ml-1 text-[10px]" title="Grup kurucusu">👑</span>}
+                {u.id === ownerId && (
+                  <span className="ml-1 text-[10px]" title="Grup kurucusu">
+                    👑
+                  </span>
+                )}
               </span>
               {ownerId === me?.id && u.id !== me?.id && (
                 <button
                   onClick={() => removeMember(u.id, u.display_name)}
                   className="shrink-0 w-6 h-6 rounded hover:bg-accent-500/15 text-ink-tertiary hover:text-accent-500 flex items-center justify-center text-xs"
-                  title="Gruptan çıkar" aria-label={u.display_name + ' kullanıcısını gruptan çıkar'}
+                  title={t('dm.removeFromGroup')}
+                  aria-label={u.display_name + ' kullanıcısını gruptan çıkar'}
                 >
                   ✕
                 </button>
@@ -632,7 +678,7 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
         {addOpen && (
           <div className="max-h-40 overflow-y-auto bg-surface-2 rounded-lg p-1">
             {friends.filter((f) => !members.some((m) => m.id === f.user_id)).length === 0 ? (
-              <p className="text-xs text-ink-tertiary px-2 py-1.5">Eklenecek arkadaş yok.</p>
+              <p className="text-xs text-ink-tertiary px-2 py-1.5">{t('ui.eklenecekArkadasYok')}</p>
             ) : (
               friends
                 .filter((f) => !members.some((m) => m.id === f.user_id))
@@ -642,7 +688,10 @@ function GroupMembersPanel({ channelId }: { channelId: string }) {
                     onClick={() => addMember(f.user_id)}
                     className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-3 text-left"
                   >
-                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: f.avatar_color }}>
+                    <span
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                      style={{ backgroundColor: f.avatar_color }}
+                    >
                       {f.display_name.slice(0, 1).toUpperCase()}
                     </span>
                     <span className="text-sm text-ink-primary truncate">{f.display_name}</span>

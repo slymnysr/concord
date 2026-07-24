@@ -1,22 +1,33 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
+	"github.com/concord/api/internal/auth"
+	"github.com/concord/api/internal/automod"
+	"github.com/concord/api/internal/config"
+	"github.com/concord/api/internal/events"
+	"github.com/concord/api/internal/mailer"
+	"github.com/concord/api/internal/push"
+	"github.com/concord/api/internal/repo"
+	"github.com/concord/api/internal/search"
+	"github.com/concord/api/internal/snowflake"
+	"github.com/concord/api/internal/storage"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
-	"github.com/sidcord/api/internal/auth"
-	"github.com/sidcord/api/internal/automod"
-	"github.com/sidcord/api/internal/config"
-	"github.com/sidcord/api/internal/events"
-	"github.com/sidcord/api/internal/mailer"
-	"github.com/sidcord/api/internal/repo"
-	"github.com/sidcord/api/internal/snowflake"
-	"github.com/sidcord/api/internal/storage"
 	"go.uber.org/zap"
 )
+
+// mailSender — Handler mail göndermek için yalnızca Send'e ihtiyaç duyar. Interface olması
+// testte sahte (yavaş/bloklayan) gönderici enjekte edip asenkron gönderimi deterministik
+// doğrulamayı sağlar. *mailer.Mailer bunu karşılar.
+type mailSender interface {
+	Send(to, subject, htmlBody string) error
+}
 
 type Handler struct {
 	logger *zap.Logger
@@ -29,7 +40,9 @@ type Handler struct {
 	Storage *storage.Storage
 	Events  *events.Publisher
 	AutoMod *automod.Engine
-	Mailer  *mailer.Mailer
+	Mailer  mailSender
+	Push    *push.Sender
+	Search  search.Driver
 
 	Users         *repo.Users
 	Guilds        *repo.Guilds
@@ -43,17 +56,30 @@ type Handler struct {
 	Moderation    *repo.Moderation
 	DMs           *repo.DMs
 	Reactions     *repo.Reactions
+	MediaObjects  *repo.MediaObjects
+	PushSubs      *repo.PushSubs
 	Attachments   *repo.Attachments
 	Mentions      *repo.Mentions
 	Notifications *repo.Notifications
 	Friends       *repo.Friends
 	LoginAttempts *repo.LoginAttempts
+	RecoveryCodes *repo.RecoveryCodes
 }
+
+// Config — router gibi paketlerin config'e erişmesi için (CORS origin'leri vb.).
+func (h *Handler) Config() *config.Config { return h.cfg }
 
 func New(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool, rdb *redis.Client, ids *snowflake.Generator, iss *auth.Issuer, store *storage.Storage) *Handler {
 	return &Handler{
-		logger:        logger,
-		cfg:           cfg,
+		logger: logger,
+		cfg:    cfg,
+		Search: newSearchDriver(logger, cfg, pool),
+		Push: push.NewSender(push.Config{
+			ExpoAccessToken: cfg.ExpoAccessToken,
+			VAPIDPublicKey:  cfg.VAPIDPublicKey,
+			VAPIDPrivateKey: cfg.VAPIDPrivateKey,
+			VAPIDSubject:    cfg.VAPIDSubject,
+		}),
 		IDs:           ids,
 		Iss:           iss,
 		Pool:          pool,
@@ -61,7 +87,7 @@ func New(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool, rdb *redis.
 		Storage:       store,
 		Events:        events.New(rdb),
 		AutoMod:       automod.New(pool),
-		Mailer:        mailer.New(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass, cfg.MailFrom),
+		Mailer:        mailer.New(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass, cfg.MailFrom, cfg.SMTPRequireTLS),
 		Users:         repo.NewUsers(pool),
 		Guilds:        repo.NewGuilds(pool),
 		Channels:      repo.NewChannels(pool),
@@ -74,18 +100,21 @@ func New(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool, rdb *redis.
 		Moderation:    repo.NewModeration(pool),
 		DMs:           repo.NewDMs(pool),
 		Reactions:     repo.NewReactions(pool),
+		MediaObjects:  repo.NewMediaObjects(pool),
+		PushSubs:      repo.NewPushSubs(pool),
 		Attachments:   repo.NewAttachments(pool),
 		Mentions:      repo.NewMentions(pool),
 		Notifications: repo.NewNotifications(pool),
 		Friends:       repo.NewFriends(pool),
 		LoginAttempts: repo.NewLoginAttempts(pool),
+		RecoveryCodes: repo.NewRecoveryCodes(pool),
 	}
 }
 
 func (h *Handler) Health(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status":  "ok",
-		"service": "sidcord-api",
+		"service": "concord-api",
 	})
 }
 
@@ -117,4 +146,45 @@ func readJSON(r *http.Request, v any) error {
 		return errors.New("invalid JSON: " + err.Error())
 	}
 	return nil
+}
+
+// readJSONLenient — bilinmeyen alanları YOK SAYAR. Yalnızca şemasını BİZİM KONTROL ETMEDİĞİMİZ
+// dış kaynaklar için (ör. MinIO bucket-notification): readJSON'ın DisallowUnknownFields'ı
+// kullanıcı girdisinde doğrudur (yazım hatası/mass-assignment yakalar) ama üçüncü-parti
+// webhook'ta yanlıştır — MinIO'nun S3 olayı onlarca ek alan taşır ve sürümle yenileri eklenir;
+// katı çözücü tüm olayları 400'le reddediyordu (dosyalar sessizce taranmadan kalıyordu).
+// KULLANICI girdisinde ASLA kullanma.
+func readJSONLenient(r *http.Request, v any) error {
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
+		return errors.New("invalid JSON: " + err.Error())
+	}
+	return nil
+}
+
+// newSearchDriver — Meilisearch yapılandırılmışsa onu, değilse Postgres FTS'i seçer.
+//
+// Düşüş SESSİZ DEĞİL: seçilen motor loglanır ve /health'te raporlanır. Postgres yedeği
+// CJK'da arama YAPAMAZ (docs/DENETIM-GLOBAL.md) → üretimde config.MustSecure zaten
+// MEILI_ADDR'i zorunlu kılar; bu yol yalnızca yerel geliştirme içindir.
+func newSearchDriver(logger *zap.Logger, cfg *config.Config, pool *pgxpool.Pool) search.Driver {
+	if cfg.MeiliAddr == "" {
+		logger.Warn("MEILI_ADDR yok → arama Postgres FTS'e düşüyor; CJK (JP/ZH/KO) aramaları ÇALIŞMAZ")
+		return search.NewPostgres(pool)
+	}
+	m := search.NewMeili(cfg.MeiliAddr, cfg.MeiliKey)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := m.Ready(ctx); err != nil {
+		// Açılışta erişilemiyorsa yedeğe düş — ama GÖRÜNÜR şekilde. Burada panic atmak
+		// Meilisearch'ün geçici bir hıçkırığında tüm API'yi indirirdi.
+		logger.Error("Meilisearch'e ulaşılamadı → Postgres FTS yedeği; CJK aramaları ÇALIŞMAZ", zap.Error(err))
+		return search.NewPostgres(pool)
+	}
+	if err := m.Setup(ctx); err != nil {
+		logger.Error("Meilisearch indeks kurulumu başarısız → Postgres FTS yedeği", zap.Error(err))
+		return search.NewPostgres(pool)
+	}
+	logger.Info("arama motoru: meilisearch", zap.String("addr", cfg.MeiliAddr))
+	return m
 }

@@ -32,7 +32,8 @@ defmodule Gateway.MixProject do
       {:joken, "~> 2.6"},
       {:corsica, "~> 2.1"},
       {:telemetry_metrics, "~> 0.6"},
-      {:telemetry_poller, "~> 1.0"}
+      {:telemetry_poller, "~> 1.0"},
+      {:libcluster, "~> 3.3"}
     ]
   end
 end

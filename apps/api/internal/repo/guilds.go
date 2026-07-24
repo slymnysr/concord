@@ -10,23 +10,23 @@ import (
 )
 
 type Guild struct {
-	ID          int64     `json:"id,string"`
-	Name        string    `json:"name"`
-	IconText    string    `json:"icon_text"`
-	IconColor   string    `json:"icon_color"`
-	IconURLv2   *string   `json:"icon_url_v2,omitempty"`
-	BannerURL   *string   `json:"banner_url,omitempty"`
-	OwnerID     int64     `json:"owner_id,string"`
-	Description *string   `json:"description,omitempty"`
-	IsPublic    bool      `json:"is_public"`
-	VanityURLCode     *string `json:"vanity_url_code,omitempty"`
-	AfkChannelID      *int64  `json:"afk_channel_id,string,omitempty"`
-	AfkTimeoutSec     int32   `json:"afk_timeout_sec"`
-	SystemChannelID   *int64  `json:"system_channel_id,string,omitempty"`
-	VerificationLevel int32   `json:"verification_level"`
-	ExplicitContentFilter int32 `json:"explicit_content_filter"`
-	AutoRoleID  *int64    `json:"auto_role_id,string,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID                    int64     `json:"id,string"`
+	Name                  string    `json:"name"`
+	IconText              string    `json:"icon_text"`
+	IconColor             string    `json:"icon_color"`
+	IconURLv2             *string   `json:"icon_url_v2,omitempty"`
+	BannerURL             *string   `json:"banner_url,omitempty"`
+	OwnerID               int64     `json:"owner_id,string"`
+	Description           *string   `json:"description,omitempty"`
+	IsPublic              bool      `json:"is_public"`
+	VanityURLCode         *string   `json:"vanity_url_code,omitempty"`
+	AfkChannelID          *int64    `json:"afk_channel_id,string,omitempty"`
+	AfkTimeoutSec         int32     `json:"afk_timeout_sec"`
+	SystemChannelID       *int64    `json:"system_channel_id,string,omitempty"`
+	VerificationLevel     int32     `json:"verification_level"`
+	ExplicitContentFilter int32     `json:"explicit_content_filter"`
+	AutoRoleID            *int64    `json:"auto_role_id,string,omitempty"`
+	CreatedAt             time.Time `json:"created_at"`
 }
 
 type Guilds struct{ pool *pgxpool.Pool }
@@ -73,7 +73,7 @@ func (r *Guilds) ByID(ctx context.Context, id int64) (*Guild, error) {
 
 func (r *Guilds) ForUser(ctx context.Context, userID int64) ([]Guild, error) {
 	rows, err := r.pool.Query(ctx, `
-        SELECT g.id, g.name, g.icon_text, g.icon_color, g.icon_url_v2, g.banner_url, g.owner_id, g.description, g.is_public, g.vanity_url_code, g.afk_channel_id, g.system_channel_id, g.verification_level, g.explicit_content_filter, g.auto_role_id, g.created_at
+        SELECT g.id, g.name, g.icon_text, g.icon_color, g.icon_url_v2, g.banner_url, g.owner_id, g.description, g.is_public, g.vanity_url_code, g.afk_channel_id, g.afk_timeout_sec, g.system_channel_id, g.verification_level, g.explicit_content_filter, g.auto_role_id, g.created_at
         FROM guilds g
         JOIN guild_members m ON m.guild_id = g.id
         WHERE m.user_id = $1

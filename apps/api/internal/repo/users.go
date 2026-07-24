@@ -10,27 +10,33 @@ import (
 )
 
 type User struct {
-	ID           int64     `json:"id,string"`
-	Username     string    `json:"username"`
-	Email        string    `json:"email"`
-	DisplayName  string    `json:"display_name"`
-	PasswordHash string    `json:"-"`
-	AvatarColor  string    `json:"avatar_color"`
-	AvatarURL    *string   `json:"avatar_url,omitempty"`
-	Bio          *string   `json:"bio,omitempty"`
-	BannerURL    *string   `json:"banner_url,omitempty"`
-	Pronouns      *string  `json:"pronouns,omitempty"`
-	AccentColor   *string  `json:"accent_color,omitempty"`
-	CustomStatusText  *string `json:"custom_status_text,omitempty"`
-	CustomStatusEmoji *string `json:"custom_status_emoji,omitempty"`
+	ID                    int64      `json:"id,string"`
+	Username              string     `json:"username"`
+	Email                 string     `json:"email"`
+	DisplayName           string     `json:"display_name"`
+	PasswordHash          string     `json:"-"`
+	AvatarColor           string     `json:"avatar_color"`
+	AvatarURL             *string    `json:"avatar_url,omitempty"`
+	Bio                   *string    `json:"bio,omitempty"`
+	BannerURL             *string    `json:"banner_url,omitempty"`
+	Pronouns              *string    `json:"pronouns,omitempty"`
+	AccentColor           *string    `json:"accent_color,omitempty"`
+	CustomStatusText      *string    `json:"custom_status_text,omitempty"`
+	CustomStatusEmoji     *string    `json:"custom_status_emoji,omitempty"`
 	CustomStatusExpiresAt *time.Time `json:"custom_status_expires_at,omitempty"`
-	TOTPSecret    *string  `json:"-"`
-	TOTPEnabled   bool     `json:"totp_enabled"`
-	AvatarDecoration *string `json:"avatar_decoration,omitempty"`
-	EmailVerified bool     `json:"email_verified"`
-	Status       string    `json:"status"`
-	Bot          bool      `json:"bot"`
-	CreatedAt    time.Time `json:"created_at"`
+	TOTPSecret            *string    `json:"-"`
+	TOTPEnabled           bool       `json:"totp_enabled"`
+	AvatarDecoration      *string    `json:"avatar_decoration,omitempty"`
+	EmailVerified         bool       `json:"email_verified"`
+	Status                string     `json:"status"`
+	Bot                   bool       `json:"bot"`
+	CreatedAt             time.Time  `json:"created_at"`
+	// Doğum tarihi — yaş kapısı (COPPA/DSA). JSON'da GİZLİ: hassas veri, başkasının
+	// profilinde görünmemeli; kullanıcı kendi verisini data-export ile alır.
+	BirthDate *time.Time `json:"-"`
+	// Dil — işlem maillerinin dili (mailler API'den gider, çeviri sunucuda olmalı).
+	// nil = bilinmiyor → mailer İngilizceye düşer.
+	Locale *string `json:"locale,omitempty"`
 }
 
 var ErrNotFound = errors.New("repo: not found")
@@ -42,9 +48,9 @@ func NewUsers(p *pgxpool.Pool) *Users { return &Users{pool: p} }
 
 func (r *Users) Create(ctx context.Context, u *User) error {
 	_, err := r.pool.Exec(ctx, `
-        INSERT INTO users (id, username, email, display_name, password_hash, avatar_color)
-        VALUES ($1, $2, $3, $4, $5, $6)
-    `, u.ID, u.Username, u.Email, u.DisplayName, u.PasswordHash, u.AvatarColor)
+        INSERT INTO users (id, username, email, display_name, password_hash, avatar_color, birth_date, locale)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `, u.ID, u.Username, u.Email, u.DisplayName, u.PasswordHash, u.AvatarColor, u.BirthDate, u.Locale)
 	if err != nil {
 		if isUniqueViolation(err) {
 			return ErrConflict
